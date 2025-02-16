@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.protobuf)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.secrets)
 }
 
 android {
@@ -68,9 +67,6 @@ dependencies {
 
     implementation(libs.bundles.ktor)
 
-    implementation(libs.maps.compose)
-    implementation(libs.play.services.maps)
-    implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.compose.material.iconsExtended)
     implementation(libs.androidx.navigation.compose)
@@ -95,8 +91,4 @@ sqldelight {
             schemaOutputDirectory.set(file("src/main/sqldelight/databases"))
         }
     }
-}
-
-secrets {
-    defaultPropertiesFileName = "local.properties"
 }

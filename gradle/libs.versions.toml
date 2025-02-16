@@ -12,7 +12,6 @@ activityCompose = "1.10.0"
 composeBom = "2025.01.01"
 hilt = "2.53.1"
 hiltNavigationCompose = "1.2.0"
-mapsCompose = "2.0.0"
 protobufPlugin = "0.9.4"
 protobufJavaLite = "4.29.1"
 datastore = "1.1.2"
@@ -21,9 +20,6 @@ sqldelight = "2.0.2"
 kotlinxSerialization = "1.7.3"
 ktorClient = "2.3.5"
 ksp = "2.1.0-1.0.29"
-secrets-gradle-plugin = "2.0.1"
-play-services-maps = "19.0.0"
-play-services-location = "21.3.0"
 androidxCompose = "1.7.7"
 navigationCompose = "2.8.6"
 
@@ -49,7 +45,6 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 androidx-compose-material-iconsExtended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "androidxCompose" }
 
 
-maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktorClient" }
@@ -74,9 +69,6 @@ sqldelight-primitive-adapters = { group = "app.cash.sqldelight", name = "primiti
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
 protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobufJavaLite" }
 
-play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "play-services-maps" }
-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
-
 [bundles]
 sqldelight = ["sqldelight-android-driver", "sqldelight-coroutines-extensions", "sqldelight-primitive-adapters"]
 ktor = ["ktor-client-core", "ktor-client-android", "ktor-serialization-xml", "kotlinx-serialization-core", "ktor-client-logging", "ktor-client-content-negotiation", "ktor-client-okhttp",]
@@ -90,4 +82,3 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secrets-gradle-plugin" }
