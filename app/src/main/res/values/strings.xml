@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Luas</string>
+    <string name="forecast_tab_title_green_line">Green</string>
+    <string name="forecast_tab_title_red_line">Red</string>
+    <string name="forecast_title_outbound">Outbound</string>
+    <string name="forecast_title_inbound">Inbound</string>
+    <string name="label_due_now_to">Due now to</string>
+    <string name="label_due_in_mins_placeholder">Due in %1$s minutes to</string>
+    <string name="nav_title_forecast">Forecast</string>
+    <string name="nav_title_map">Map</string>
+</resources>

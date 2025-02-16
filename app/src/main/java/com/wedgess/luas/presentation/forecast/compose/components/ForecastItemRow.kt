@@ -1,0 +1,43 @@
+package com.wedgess.luas.presentation.forecast.compose.components
+
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.wedgess.luas.R
+
+@Composable
+fun ForecastItemRow(dueInMins: Int, destination: String) {
+    val animatedValue by animateIntAsState(
+        targetValue = dueInMins,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "Animated Number"
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = if (animatedValue == 0) {
+                stringResource(R.string.label_due_now_to)
+            } else {
+                stringResource(R.string.label_due_in_mins_placeholder, animatedValue)
+            },
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = destination,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+        )
+    }
+}
