@@ -6,9 +6,9 @@ import androidx.compose.runtime.Composable
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.wedgess.luas.presentation.EmptyContent
-import com.wedgess.luas.presentation.ErrorContent
-import com.wedgess.luas.presentation.LoadingContent
+import com.wedgess.luas.presentation.components.EmptyContent
+import com.wedgess.luas.presentation.components.ErrorContent
+import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.map.MapContract
 import com.wedgess.luas.presentation.map.compose.components.MapLibreMap
 import com.wedgess.luas.presentation.model.Compose

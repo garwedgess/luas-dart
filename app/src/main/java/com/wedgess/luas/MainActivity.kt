@@ -11,6 +11,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.wedgess.luas.presentation.components.MainTopAppbar
 import com.wedgess.luas.presentation.navigation.BottomNavigationBar
 import com.wedgess.luas.presentation.navigation.MainNavigationGraph
 import com.wedgess.luas.ui.theme.LuasTheme
@@ -19,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
             LuasTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    topBar = { MainTopAppbar() },
                     bottomBar = {
                         BottomAppBar {
                             BottomNavigationBar(

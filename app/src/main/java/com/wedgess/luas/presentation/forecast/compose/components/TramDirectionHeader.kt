@@ -32,10 +32,13 @@ fun TramDirectionHeader(
                 .padding(8.dp),
             text = title,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
-            style = MaterialTheme.typography.titleSmall
+            style = MaterialTheme.typography.titleMedium
         )
         AnimatedVisibility(noTramsDue) {
-            Text(text = "No trams forecasted")
+            Text(
+                text = "No trams forecasted",
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }

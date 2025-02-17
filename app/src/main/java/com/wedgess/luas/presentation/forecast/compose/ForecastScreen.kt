@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.presentation.AnimatedTabContainer
+import com.wedgess.luas.presentation.components.AnimatedTabContainer
 import com.wedgess.luas.presentation.forecast.compose.components.ForecastTabContent
 import com.wedgess.luas.presentation.forecast.model.ForecastTab
 import com.wedgess.luas.ui.theme.LuasTheme

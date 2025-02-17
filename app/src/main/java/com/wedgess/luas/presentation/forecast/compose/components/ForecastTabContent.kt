@@ -20,10 +20,10 @@ import com.wedgess.luas.R
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.StopEntity
-import com.wedgess.luas.presentation.DropdownTextField
-import com.wedgess.luas.presentation.EmptyContent
-import com.wedgess.luas.presentation.ErrorContent
-import com.wedgess.luas.presentation.LoadingContent
+import com.wedgess.luas.presentation.components.DropdownTextField
+import com.wedgess.luas.presentation.components.EmptyContent
+import com.wedgess.luas.presentation.components.ErrorContent
+import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.forecast.ForecastContract
 import com.wedgess.luas.presentation.forecast.viewmodel.ForecastViewModel
 import com.wedgess.luas.presentation.model.Compose
@@ -80,6 +80,9 @@ fun TabListContent(uiState: ForecastContract.UiState, onStopSelected: (StopEntit
                 selectedValue = uiState.selectedStop,
                 onValueChange = onStopSelected
             )
+        }
+        item {
+            ForecastStatusMessage(uiState.forecast.message)
         }
         item {
             TramDirectionHeader(

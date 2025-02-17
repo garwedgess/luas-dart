@@ -1,7 +1,6 @@
-package com.wedgess.luas.presentation
+package com.wedgess.luas.presentation.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager

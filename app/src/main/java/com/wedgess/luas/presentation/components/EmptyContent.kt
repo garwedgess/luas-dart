@@ -1,9 +1,12 @@
-package com.wedgess.luas.presentation
+package com.wedgess.luas.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -15,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoadingContent(
+fun EmptyContent(
     title: String,
     modifier: Modifier = Modifier,
     subTitle: String? = null
@@ -25,7 +28,12 @@ fun LoadingContent(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator()
+        Icon(
+            modifier = Modifier.size(56.dp),
+            imageVector = Icons.Outlined.Clear,
+            contentDescription = "empty",
+            tint = MaterialTheme.colorScheme.error
+        )
 
         Text(
             text = title,
@@ -41,12 +49,12 @@ fun LoadingContent(
 
 @Preview
 @Composable
-private fun LoadingContentPreview() {
+private fun EmptyContentPreview() {
     Surface {
-        LoadingContent(
+        EmptyContent(
             modifier = Modifier.fillMaxSize(),
-            title = "Loading content",
-            subTitle = "Retrieving profile info"
+            title = "No data found",
+            subTitle = "No profile date for user"
         )
     }
 }

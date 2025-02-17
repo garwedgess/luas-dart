@@ -67,6 +67,8 @@ dependencies {
 
     implementation(libs.bundles.ktor)
 
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.compose.material.iconsExtended)
     implementation(libs.androidx.navigation.compose)

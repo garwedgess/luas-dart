@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation
+package com.wedgess.luas.presentation.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons

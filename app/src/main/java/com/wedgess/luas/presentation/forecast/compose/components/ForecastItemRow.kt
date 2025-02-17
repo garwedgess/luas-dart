@@ -33,11 +33,11 @@ fun ForecastItemRow(dueInMins: Int, destination: String) {
             } else {
                 stringResource(R.string.label_due_in_mins_placeholder, animatedValue)
             },
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyLarge
         )
         Text(
             text = destination,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
         )
     }
 }

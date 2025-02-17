@@ -20,6 +20,8 @@ sqldelight = "2.0.2"
 kotlinxSerialization = "1.7.3"
 ktorClient = "2.3.5"
 ksp = "2.1.0-1.0.29"
+play-services-maps = "19.0.0"
+play-services-location = "21.3.0"
 androidxCompose = "1.7.7"
 navigationCompose = "2.8.6"
 
@@ -68,6 +70,9 @@ sqldelight-primitive-adapters = { group = "app.cash.sqldelight", name = "primiti
 
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
 protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobufJavaLite" }
+
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "play-services-maps" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 
 [bundles]
 sqldelight = ["sqldelight-android-driver", "sqldelight-coroutines-extensions", "sqldelight-primitive-adapters"]
