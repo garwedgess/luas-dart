@@ -10,10 +10,12 @@ interface ForecastContract {
         val stops: List<StopEntity> = emptyList(),
         val selectedStop: StopEntity = StopEntity.initial(),
         val forecast: ForcastEntity = ForcastEntity.initial(),
+        val refreshProgress: Float = 0f,
         val line: LuasLineEntity = LuasLineEntity.RED
     )
 
     sealed interface Event {
         data class OnStopSelected(val stopAbrv: StopEntity) : Event
+        data object OnRefresh : Event
     }
 }

@@ -4,17 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.wedgess.luas.presentation.components.MainTopAppbar
-import com.wedgess.luas.presentation.navigation.BottomNavigationBar
-import com.wedgess.luas.presentation.navigation.MainNavigationGraph
-import com.wedgess.luas.ui.theme.LuasTheme
+import com.wedgess.luas.presentation.main.compose.MainContent
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -25,34 +15,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-
-            val navHostController = rememberNavController()
-            val backStackEntry = navHostController.currentBackStackEntryAsState()
-
-
-            LuasTheme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    topBar = { MainTopAppbar() },
-                    bottomBar = {
-                        BottomAppBar {
-                            BottomNavigationBar(
-                                selectedItemRoute = backStackEntry.value?.destination?.route,
-                                onNavigateTo = { route ->
-                                    if (route != backStackEntry.value?.destination) {
-                                        navHostController.navigate(route)
-                                    }
-                                }
-                            )
-                        }
-                    }
-                ) { innerPadding ->
-                    MainNavigationGraph(
-                        navController = navHostController,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            MainContent()
         }
     }
 }

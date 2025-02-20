@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.forecast.compose.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,16 +24,18 @@ fun ForecastStatusMessage(message: String) {
     } else {
         Color(0xFFBC8C00)
     }
-    Text(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = color)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        text = message,
-        style = MaterialTheme.typography.labelMedium,
-        color = Color.White,
-        textAlign = TextAlign.Center
-    )
+    AnimatedVisibility(visible = message.isNotBlank()) {
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = color)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            text = message,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 @Preview
@@ -51,6 +54,7 @@ private class ForecastStatusMessagePreviewProvider : PreviewParameterProvider<St
     override val values: Sequence<String>
         get() = sequenceOf(
             "Services operating normally",
-            "Services operating with delays"
+            "Services operating with delays",
+            ""
         )
 }

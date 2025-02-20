@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -30,7 +31,11 @@ import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
-fun ForecastTabContent(line: LuasLineEntity) {
+fun ForecastTabContent(
+    line: LuasLineEntity,
+    onRefreshAction: (() -> Unit) -> Unit,
+    onProgressChange: (Float) -> Unit
+) {
     val stopsViewModel: ForecastViewModel = hiltViewModel(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
@@ -38,39 +43,62 @@ fun ForecastTabContent(line: LuasLineEntity) {
         }
     )
     val uiResult by stopsViewModel.uiResult.collectAsStateWithLifecycle()
-
-    Surface {
-        uiResult.Compose(
-            onLoading = {
-                LoadingContent("Loading forecast")
-            },
-            onError = {
-                ErrorContent("Failed to load forecast", subTitle = it)
-            },
-            onEmpty = {
-                EmptyContent(it)
-            },
-            onSuccess = {
-                TabListContent(
-                    uiState = it,
-                    onStopSelected = {
-                        stopsViewModel.onEvent((ForecastContract.Event.OnStopSelected(it)))
-                    }
-                )
-            }
-        )
+    LaunchedEffect(Unit) {
+        onRefreshAction { stopsViewModel.onEvent(ForecastContract.Event.OnRefresh) }
     }
+    uiResult.Compose(
+        onLoading = {
+            LoadingContent("Loading forecast")
+        },
+        onError = {
+            ErrorContent("Failed to load forecast", subTitle = it)
+        },
+        onEmpty = {
+            EmptyContent(it)
+        },
+        onSuccess = {
+            TabListContent(
+                uiState = it,
+                onStopSelected = {
+                    stopsViewModel.onEvent((ForecastContract.Event.OnStopSelected(it)))
+                },
+                onProgressChange = onProgressChange
+            )
+        }
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TabListContent(uiState: ForecastContract.UiState, onStopSelected: (StopEntity) -> Unit) {
+fun TabListContent(
+    uiState: ForecastContract.UiState,
+    onStopSelected: (StopEntity) -> Unit,
+    onProgressChange: (Float) -> Unit
+) {
+//    val animatedRefreshProgress by animateFloatAsState(
+//        targetValue = uiState.refreshProgress,
+//        animationSpec = tween(durationMillis = 400),
+//        label = "progress"
+//    )
+    onProgressChange(uiState.refreshProgress)
+
     LazyColumn(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+//        item {
+//            LinearProgressIndicator(
+//                modifier = Modifier.fillMaxSize(),
+//                progress = { animatedRefreshProgress },
+//                trackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+//                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+//                drawStopIndicator = {},
+//                strokeCap = StrokeCap.Butt,
+//                gapSize = 0.dp
+//            )
+//        }
         stickyHeader {
             DropdownTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -117,7 +145,7 @@ fun TabListContent(uiState: ForecastContract.UiState, onStopSelected: (StopEntit
 private fun ForecastTabContentPreview() {
     LuasTheme {
         Surface {
-            ForecastTabContent(LuasLineEntity.GREEN)
+            ForecastTabContent(LuasLineEntity.GREEN, onRefreshAction = {}, onProgressChange = {})
         }
     }
 }

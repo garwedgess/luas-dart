@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.model.LuasLineEntity
+import com.wedgess.luas.domain.model.RefreshMode
+import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.model.StopEntity
 import com.wedgess.luas.domain.usecase.FetchForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
@@ -26,7 +28,7 @@ import kotlinx.coroutines.flow.update
 class ForecastViewModel @AssistedInject constructor(
     @Assisted val luasLine: LuasLineEntity,
     fetchStopsUseCase: FetchStopsUseCase,
-    fetchForecastUseCase: FetchForecastUseCase
+    private val fetchForecastUseCase: FetchForecastUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ForecastContract.UiState())
@@ -50,21 +52,20 @@ class ForecastViewModel @AssistedInject constructor(
                         flowOf(UiResult.Empty("No stops found"))
                     } else {
                         fetchForecastUseCase(stopsState.selectedStop.abbreviation)
-                            .map { forecastResult ->
-                                forecastResult.fold(
-                                    onSuccess = { forecast ->
-                                        UiResult.Success(
-                                            stopsState.copy(
-                                                forecast = forecast
-                                            )
+                            .map { forecastRefreshResult ->
+                                when (forecastRefreshResult) {
+                                    is RefreshState.Error -> UiResult.Error(
+                                        forecastRefreshResult.exception.message
+                                            ?: "Failed to fetch forecast"
+                                    )
+
+                                    is RefreshState.Success -> UiResult.Success(
+                                        stopsState.copy(
+                                            refreshProgress = forecastRefreshResult.progress,
+                                            forecast = forecastRefreshResult.data
                                         )
-                                    },
-                                    onFailure = { throwable ->
-                                        UiResult.Error(
-                                            throwable.message ?: "Failed to fetch forecast"
-                                        )
-                                    }
-                                )
+                                    )
+                                }
                             }
                     }
                 },
@@ -79,6 +80,7 @@ class ForecastViewModel @AssistedInject constructor(
     fun onEvent(event: ForecastContract.Event) {
         when (event) {
             is ForecastContract.Event.OnStopSelected -> onStopSelected((event.stopAbrv))
+            ForecastContract.Event.OnRefresh -> fetchForecastUseCase.refresh(RefreshMode.MANUAL)
         }
     }
 
