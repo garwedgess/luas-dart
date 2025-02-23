@@ -43,6 +43,7 @@ fun ForecastTabContent(
         }
     )
     val uiResult by stopsViewModel.uiResult.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         onRefreshAction { stopsViewModel.onEvent(ForecastContract.Event.OnRefresh) }
     }
@@ -75,12 +76,9 @@ fun TabListContent(
     onStopSelected: (StopEntity) -> Unit,
     onProgressChange: (Float) -> Unit
 ) {
-//    val animatedRefreshProgress by animateFloatAsState(
-//        targetValue = uiState.refreshProgress,
-//        animationSpec = tween(durationMillis = 400),
-//        label = "progress"
-//    )
-    onProgressChange(uiState.refreshProgress)
+    LaunchedEffect(uiState.refreshProgress) {
+        onProgressChange(uiState.refreshProgress)
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -88,17 +86,6 @@ fun TabListContent(
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-//        item {
-//            LinearProgressIndicator(
-//                modifier = Modifier.fillMaxSize(),
-//                progress = { animatedRefreshProgress },
-//                trackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-//                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-//                drawStopIndicator = {},
-//                strokeCap = StrokeCap.Butt,
-//                gapSize = 0.dp
-//            )
-//        }
         stickyHeader {
             DropdownTextField(
                 modifier = Modifier.fillMaxWidth(),

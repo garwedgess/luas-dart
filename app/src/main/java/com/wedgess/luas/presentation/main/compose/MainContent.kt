@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +31,7 @@ fun MainContent() {
     var topAppBarState by remember {
         mutableStateOf(TopAppBarState(title = "Luas"))
     }
-    val refreshProgress by remember {
-        derivedStateOf { mutableFloatStateOf(0f) }
-    }
+    var refreshProgress by remember { mutableFloatStateOf(0f) }
 
     LuasTheme {
         Scaffold(
@@ -43,7 +40,7 @@ fun MainContent() {
                 Column(Modifier.wrapContentHeight()) {
                     MainTopAppbar(topAppBarState = topAppBarState)
                     AnimatedVisibility(visible = topAppBarState.hasProgress) {
-                        RefreshProgressIndicator(refreshProgress.floatValue)
+                        RefreshProgressIndicator(refreshProgress)
                     }
                 }
             },
@@ -67,7 +64,7 @@ fun MainContent() {
                     topAppBarState = newState
                 },
                 onRefreshProgressChanged = {
-                    refreshProgress.floatValue = it
+                    refreshProgress = it
                 }
             )
         }

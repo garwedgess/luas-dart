@@ -64,27 +64,9 @@ fun MapLibreMap(uiState: MapContract.UiState) {
 
     DisposableEffect(Unit) {
         mapView.onCreate(null)
-        mapView.apply {
-            getMapAsync { map ->
-                setupMap(uiState)
-                map.setupStyle { style ->
-                    style.addLinesMarkersAndLabels(map, "red", uiState.redLineLocations, "#E53935", context)
-                    style.addLinesMarkersAndLabels(map, "green", uiState.greenLineLocations, "#66BF63", context)
-                    map.locationComponentSetup(style, context)
-                    map.uiSetup()
-                }
-            }
-        }
 
         onDispose {
             (mapView.parent as? ViewGroup)?.removeView(mapView)
-            mapView.onStop()
-            mapView.onDestroy()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
             mapView.onStop()
             mapView.onDestroy()
         }
@@ -94,7 +76,31 @@ fun MapLibreMap(uiState: MapContract.UiState) {
         modifier = Modifier
             .fillMaxSize()
             .zIndex(0f),
-        factory = { mapView },
+        factory = {
+            mapView.apply {
+                getMapAsync { map ->
+                    setupMap(uiState)
+                    map.setupStyle { style ->
+                        style.addLinesMarkersAndLabels(
+                            map,
+                            "red",
+                            uiState.redLineLocations,
+                            "#E53935",
+                            context
+                        )
+                        style.addLinesMarkersAndLabels(
+                            map,
+                            "green",
+                            uiState.greenLineLocations,
+                            "#66BF63",
+                            context
+                        )
+                        map.locationComponentSetup(style, context)
+                        map.uiSetup()
+                    }
+                }
+            }
+        },
         update = { mv ->
             mv.getMapAsync { map ->
                 map.style?.let { style ->
@@ -388,7 +394,11 @@ private fun createTooltipBitmap(
     val bitmapWidth = rectangleWidth.toInt()
     val bitmapHeight = (rectangleHeight + triangleHeight).toInt()
 
-    val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight + tooltipOffset.toInt(), Bitmap.Config.ARGB_8888)
+    val bitmap = Bitmap.createBitmap(
+        bitmapWidth,
+        bitmapHeight + tooltipOffset.toInt(),
+        Bitmap.Config.ARGB_8888
+    )
     val canvas = Canvas(bitmap)
 
     val rectangleX = 0f

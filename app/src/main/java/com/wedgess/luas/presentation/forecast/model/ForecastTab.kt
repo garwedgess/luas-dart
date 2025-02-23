@@ -1,18 +1,21 @@
 package com.wedgess.luas.presentation.forecast.model
 
 import com.wedgess.luas.R
+import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.presentation.model.TabItem
 import com.wedgess.luas.presentation.model.UiText
 
-sealed class ForecastTab(override val title: UiText) :
+sealed class ForecastTab(override val title: UiText, val line: LuasLineEntity) :
     TabItem(title = title, icon = null) {
 
     data object GreenLine : ForecastTab(
         title = UiText.StringResource(R.string.forecast_tab_title_green_line),
+        line = LuasLineEntity.GREEN
     )
 
     data object RedLine : ForecastTab(
-        title = UiText.StringResource(R.string.forecast_tab_title_red_line)
+        title = UiText.StringResource(R.string.forecast_tab_title_red_line),
+        line = LuasLineEntity.RED
     )
 
     companion object {

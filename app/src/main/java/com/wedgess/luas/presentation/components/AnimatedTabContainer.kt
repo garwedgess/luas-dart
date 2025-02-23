@@ -37,12 +37,13 @@ fun <T : TabItem> AnimatedTabContainer(
     })
 
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }
+        snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
             .collect { page ->
                 onTabIndexChange?.invoke(page)
             }
     }
+
     val indicatorColor by animateColorAsState(
         targetValue = if (indicatorColors.size > 1) {
             indicatorColors[pagerState.currentPage]
@@ -66,7 +67,9 @@ fun <T : TabItem> AnimatedTabContainer(
                 Tab(
                     selected = index == pagerState.currentPage,
                     onClick = {
-                        scope.launch { pagerState.animateScrollToPage(index) }
+                        scope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
                     },
                     text = { Text(tab.title.asString()) },
                     icon = tab.icon?.let { icon ->
@@ -80,7 +83,10 @@ fun <T : TabItem> AnimatedTabContainer(
                 )
             }
         }
-        HorizontalPager(state = pagerState) { page ->
+        HorizontalPager(
+            state = pagerState,
+            beyondViewportPageCount = 0
+        ) { page ->
             onTabSelected(tabItems[page])
         }
     }
