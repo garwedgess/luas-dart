@@ -1,6 +1,8 @@
 package com.wedgess.luas.presentation.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -19,9 +21,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.util.lerp
 import com.wedgess.luas.presentation.model.TabItem
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 @Composable
 fun <T : TabItem> AnimatedTabContainer(
@@ -68,7 +73,10 @@ fun <T : TabItem> AnimatedTabContainer(
                     selected = index == pagerState.currentPage,
                     onClick = {
                         scope.launch {
-                            pagerState.animateScrollToPage(index)
+                            pagerState.animateScrollToPage(
+                                index,
+                                animationSpec = tween(durationMillis = 1000)
+                            )
                         }
                     },
                     text = { Text(tab.title.asString()) },
@@ -87,7 +95,32 @@ fun <T : TabItem> AnimatedTabContainer(
             state = pagerState,
             beyondViewportPageCount = 0
         ) { page ->
-            onTabSelected(tabItems[page])
+            val pageOffset = (
+                    (pagerState.currentPage - page) + pagerState
+                        .currentPageOffsetFraction
+                    ).absoluteValue
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val scale = lerp(
+                            start = 0.85f,
+                            stop = 1f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                        )
+                        scaleX = scale
+                        scaleY = scale
+
+                        alpha = lerp(
+                            start = 0.5f,
+                            stop = 1f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                        )
+                    }
+            ) {
+                onTabSelected(tabItems[page])
+            }
         }
     }
 }

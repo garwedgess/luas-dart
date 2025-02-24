@@ -1,6 +1,7 @@
 package com.wedgess.luas.presentation.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Tram
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,7 +26,13 @@ sealed class BottomNavItem<T>(
         Icons.Outlined.Map
     )
 
+    data object Alerts : BottomNavItem<Screens.Alerts>(
+        route = Screens.Alerts,
+        UiText.StringResource(R.string.nav_title_alerts),
+        Icons.Outlined.Info
+    )
+
     companion object {
-        fun all() = listOf(Forecast, Map)
+        fun all() = listOf(Forecast, Map, Alerts)
     }
 }

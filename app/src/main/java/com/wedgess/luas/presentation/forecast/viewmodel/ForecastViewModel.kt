@@ -10,6 +10,7 @@ import com.wedgess.luas.domain.model.StopEntity
 import com.wedgess.luas.domain.usecase.FetchForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
 import com.wedgess.luas.presentation.forecast.ForecastContract
+import com.wedgess.luas.presentation.forecast.model.ForecastDialogState
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -81,6 +82,13 @@ class ForecastViewModel @AssistedInject constructor(
         when (event) {
             is ForecastContract.Event.OnStopSelected -> onStopSelected((event.stopAbrv))
             ForecastContract.Event.OnRefresh -> fetchForecastUseCase.refresh(RefreshMode.MANUAL)
+            ForecastContract.Event.OnDismissTravelUpdatesDialog -> _uiState.update {
+                it.copy(dialog = ForecastDialogState.None)
+            }
+
+            ForecastContract.Event.OnShowTravelUpdatesDialog -> _uiState.update {
+                it.copy(dialog = ForecastDialogState.TravelUpdatesAlert)
+            }
         }
     }
 

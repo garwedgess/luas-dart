@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import com.wedgess.luas.presentation.alerts.compose.navigation.alertsRoot
 import com.wedgess.luas.presentation.forecast.compose.navigation.forecastRoot
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.map.compose.navigation.mapRoot
@@ -22,5 +23,6 @@ fun MainNavigationGraph(
     ) {
         forecastRoot(onUpdateAppbarState, onRefreshProgressChanged)
         mapRoot(onUpdateAppbarState)
+        alertsRoot(onUpdateAppbarState)
     }
 }

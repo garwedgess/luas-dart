@@ -59,7 +59,9 @@ fun MainContent() {
         ) { innerPadding ->
             MainNavigationGraph(
                 navController = navHostController,
-                modifier = Modifier.padding(innerPadding),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
                 onUpdateAppbarState = { newState ->
                     topAppBarState = newState
                 },

@@ -8,4 +8,7 @@ sealed interface Screens {
 
     @Serializable
     data object Map : Screens
+
+    @Serializable
+    data object Alerts : Screens
 }

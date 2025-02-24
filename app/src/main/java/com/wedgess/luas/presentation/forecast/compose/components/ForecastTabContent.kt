@@ -63,7 +63,16 @@ fun ForecastTabContent(
                 onStopSelected = {
                     stopsViewModel.onEvent((ForecastContract.Event.OnStopSelected(it)))
                 },
-                onProgressChange = onProgressChange
+                onProgressChange = onProgressChange,
+                onShowTravelUpdatesDialog = {
+                    stopsViewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
+                }
+            )
+            ForecastDialogs(
+                dialogsState = it.dialog,
+                onDismissDialog = {
+                    stopsViewModel.onEvent(ForecastContract.Event.OnDismissTravelUpdatesDialog)
+                }
             )
         }
     )
@@ -73,6 +82,7 @@ fun ForecastTabContent(
 @Composable
 fun TabListContent(
     uiState: ForecastContract.UiState,
+    onShowTravelUpdatesDialog: () -> Unit,
     onStopSelected: (StopEntity) -> Unit,
     onProgressChange: (Float) -> Unit
 ) {
@@ -97,7 +107,10 @@ fun TabListContent(
             )
         }
         item {
-            ForecastStatusMessage(uiState.forecast.message)
+            ForecastStatusMessage(
+                message = uiState.forecast.message,
+                showTravelUpdatesDialog = onShowTravelUpdatesDialog
+            )
         }
         item {
             TramDirectionHeader(
