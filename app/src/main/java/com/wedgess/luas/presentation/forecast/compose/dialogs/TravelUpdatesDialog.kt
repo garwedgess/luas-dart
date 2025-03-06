@@ -1,3 +1,5 @@
+package com.wedgess.luas.presentation.forecast.compose.dialogs
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

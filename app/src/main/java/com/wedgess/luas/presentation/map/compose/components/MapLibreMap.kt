@@ -58,7 +58,6 @@ import com.wedgess.luas.presentation.map.MapContract
 @SuppressLint("MissingPermission")
 @Composable
 fun MapLibreMap(uiState: MapContract.UiState) {
-
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
 

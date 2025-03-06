@@ -24,7 +24,6 @@ data class StopsResponseData(
         @XmlElement(true) val stop: List<StopData>
     ) {
 
-
         @Serializable
         @XmlSerialName("stop", namespace = "", prefix = "")
         data class StopData(

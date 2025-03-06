@@ -2,11 +2,11 @@ package com.wedgess.luas.data.repository
 
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
-import com.wedgess.luas.data.api.resultOf
 import com.wedgess.luas.data.db.dao.StopsDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toEntity
+import com.wedgess.luas.data.utils.resultOf
 import com.wedgess.luas.domain.model.ForcastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.StopEntity

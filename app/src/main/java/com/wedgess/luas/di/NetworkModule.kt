@@ -26,6 +26,9 @@ import timber.log.Timber
 import java.io.File
 import javax.inject.Singleton
 
+private const val XML_INDENTATION = 4
+private const val CACHE_SIZE: Long = 10 * 1024 * 1024
+
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -47,7 +50,7 @@ object NetworkModule {
         return HttpClient(OkHttp) {
             engine {
                 config {
-                    cache(Cache(File(context.cacheDir, "ktor"), 10 * 1024 * 1024))
+                    cache(Cache(File(context.cacheDir, "ktor"), CACHE_SIZE))
                 }
                 preconfigured = okHttpClient
             }
@@ -57,12 +60,15 @@ object NetworkModule {
         }
     }
 
-    private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installContentNegotiation() =
+    fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installContentNegotiation() =
         install(ContentNegotiation) {
-            xml(XML {
-                indent = 4
-                autoPolymorphic = false
-            }, contentType = ContentType.Text.Html)
+            xml(
+                XML {
+                    indent = XML_INDENTATION
+                    autoPolymorphic = false
+                },
+                contentType = ContentType.Text.Html
+            )
         }
 
     private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installLogging() =

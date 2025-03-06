@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>BlockCommentInitialStarAlignment:Theme.kt$/* Other default colors to override background = Color(0xFFFFFBFE), surface = Color(0xFFFFFBFE), onPrimary = Color.White, onSecondary = Color.White, onTertiary = Color.White, onBackground = Color(0xFF1C1B1F), onSurface = Color(0xFF1C1B1F), */</ID>
+    <ID>BlockCommentInitialStarAlignment:Type.kt$/* Other default text styles to override titleLarge = TextStyle( fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = 0.sp ), labelSmall = TextStyle( fontFamily = FontFamily.Default, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp ) */</ID>
+    <ID>Indentation:AnimatedTabContainer.kt$ </ID>
+    <ID>LambdaParameterInRestartableEffect:ForecastScreen.kt$setRefreshAction</ID>
+    <ID>LambdaParameterInRestartableEffect:ForecastTabContent.kt$onProgressChange</ID>
+    <ID>LambdaParameterInRestartableEffect:ForecastTabContent.kt$onRefreshAction</ID>
+    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onPermissionDenied</ID>
+    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onPermissionGranted</ID>
+    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onPermissionsRevoked</ID>
+    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onShowRationale</ID>
+    <ID>LongMethod:MapLibreMap.kt$private fun createTooltipBitmap( context: Context, text: String, ): Bitmap</ID>
+    <ID>MagicNumber:DropdownTextField.kt$0xFF119955</ID>
+    <ID>MagicNumber:ForecastScreen.kt$0xFF66BF63</ID>
+    <ID>MagicNumber:ForecastScreen.kt$0xFFE53935</ID>
+    <ID>MagicNumber:ForecastStatusMessage.kt$0xFF228A43</ID>
+    <ID>MagicNumber:ForecastStatusMessage.kt$0xFF996600</ID>
+    <ID>MagicNumber:LocationRepositoryImpl.kt$LocationRepositoryImpl$10f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$0.5f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$1.5f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$10</ID>
+    <ID>MagicNumber:MapLibreMap.kt$10f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$150</ID>
+    <ID>MagicNumber:MapLibreMap.kt$16</ID>
+    <ID>MagicNumber:MapLibreMap.kt$18.0</ID>
+    <ID>MagicNumber:MapLibreMap.kt$3.5f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$5f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$8f</ID>
+    <ID>ModifierMissing:BottomNavigationBar.kt$BottomNavigationBar</ID>
+    <ID>ModifierMissing:ForecastAppBarActions.kt$ForecastAppBarActions</ID>
+    <ID>ModifierMissing:ForecastItemRow.kt$ForecastItemRow</ID>
+    <ID>ModifierMissing:ForecastScreen.kt$ForecastScreen</ID>
+    <ID>ModifierMissing:ForecastStatusMessage.kt$ForecastStatusMessage</ID>
+    <ID>ModifierMissing:ForecastTabContent.kt$TabListContent</ID>
+    <ID>ModifierMissing:MainContent.kt$MainContent</ID>
+    <ID>ModifierMissing:MainTopAppbar.kt$MainTopAppbar</ID>
+    <ID>ModifierMissing:MapLibreMap.kt$MapLibreMap</ID>
+    <ID>ModifierMissing:MapScreen.kt$MapScreen</ID>
+    <ID>ModifierMissing:RefreshProgressIndicator.kt$RefreshProgressIndicator</ID>
+    <ID>ModifierMissing:TramDirectionHeader.kt$TramDirectionHeader</ID>
+    <ID>ModifierMissing:TravelUpdatesWebViewContent.kt$TravelUpdatesWebViewContent</ID>
+    <ID>NoBlankLineBeforeRbrace:MapScreen.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:MapScreen.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:NetworkModule.kt$NetworkModule$ </ID>
+    <ID>ParameterNaming:AnimatedTabContainer.kt$onTabSelected</ID>
+    <ID>ParameterNaming:ForecastTabContent.kt$onStopSelected</ID>
+    <ID>ParameterNaming:MainNavigationGraph.kt$onRefreshProgressChanged</ID>
+    <ID>ParameterNaming:RequestLocationPermissions.kt$onPermissionDenied</ID>
+    <ID>ParameterNaming:RequestLocationPermissions.kt$onPermissionGranted</ID>
+    <ID>ParameterNaming:RequestLocationPermissions.kt$onPermissionsRevoked</ID>
+    <ID>SpreadOperator:UiText.kt$UiText$(id, *formatArgs)</ID>
+    <ID>SpreadOperator:UiText.kt$UiText$(id, count, *formatArgs)</ID>
+    <ID>ThrowsCount:RequestResult.kt$private suspend inline fun &lt;reified T&gt; HttpResponse.handleResponse(): T</ID>
+    <ID>TooGenericExceptionCaught:ResultOf.kt$e: Exception</ID>
+    <ID>TooManyFunctions:MapLibreMap.kt$com.wedgess.luas.presentation.map.compose.components.MapLibreMap.kt</ID>
+    <ID>ViewModelInjection:ForecastTabContent.kt$stopsViewModel</ID>
+    <ID>Wrapping:MapLibreMap.kt$(</ID>
+  </CurrentIssues>
+</SmellBaseline>

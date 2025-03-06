@@ -1,0 +1,20 @@
+# For more configuration details:
+# https://docs.codecov.io/docs/codecov-yaml
+
+# Check if this file is valid by running in bash:
+# curl -X POST --data-binary @.codecov.yml https://codecov.io/validate
+
+# Coverage configuration
+# ----------------------
+coverage:
+  range: 50..90         # coverage lower than 50 is red, higher than 90 green, between color code
+  round: down           # up, down, or nearest
+  precision: 2          # Number of decimal places, between 0 and 5
+
+  status:
+    project:            # settings affecting project coverage
+      default:
+        target: auto    # auto % coverage target
+        threshold: 5%   # allow for 5% reduction of coverage without failing
+
+    patch: false        # do not run coverage on patch nor changes

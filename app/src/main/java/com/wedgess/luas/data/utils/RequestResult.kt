@@ -1,4 +1,4 @@
-package com.wedgess.luas.data.api
+package com.wedgess.luas.data.utils
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -13,7 +13,6 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerializationException
 import java.io.IOException
 
-// Safe request function that uses Result<T> and catches exceptions, supports error deserialization with ApiError
 internal suspend inline fun <reified T> HttpClient.requestResult(
     block: HttpRequestBuilder.() -> Unit
 ): Result<T> {
@@ -25,7 +24,6 @@ internal suspend inline fun <reified T> HttpClient.requestResult(
     }
 }
 
-// Extracted recoverCatching logic to handle different types of exceptions
 private fun handleRecovery(e: Throwable): Throwable {
     return when (e) {
         is ClientRequestException -> e

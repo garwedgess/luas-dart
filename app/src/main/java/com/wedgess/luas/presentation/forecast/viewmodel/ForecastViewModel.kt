@@ -77,7 +77,6 @@ class ForecastViewModel @AssistedInject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
 
-
     fun onEvent(event: ForecastContract.Event) {
         when (event) {
             is ForecastContract.Event.OnStopSelected -> onStopSelected((event.stopAbrv))
@@ -95,5 +94,4 @@ class ForecastViewModel @AssistedInject constructor(
     private fun onStopSelected(stop: StopEntity) {
         _uiState.update { it.copy(selectedStop = stop) }
     }
-
 }

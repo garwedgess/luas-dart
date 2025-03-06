@@ -1,5 +1,6 @@
 package com.wedgess.luas.di
 
+import android.os.Looper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
@@ -32,5 +33,5 @@ object RepositoryModule {
     fun provideLocationRepository(
         fusedLocationProviderClient: FusedLocationProviderClient
     ): LocationRepository =
-        LocationRepositoryImpl(fusedLocationProviderClient)
+        LocationRepositoryImpl(fusedLocationProviderClient, Looper.getMainLooper())
 }

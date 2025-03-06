@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 
 class LocationRepositoryImpl(
     private val fusedLocationClient: FusedLocationProviderClient,
+    private val looper: Looper,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LocationRepository {
 
@@ -49,7 +50,7 @@ class LocationRepositoryImpl(
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
-            Looper.getMainLooper()
+            looper
         )
 
         awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }

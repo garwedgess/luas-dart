@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
+private const val FULL_PERCENTAGE = 100
+
 class FetchForecastUseCase @Inject constructor(private val luasRepository: LuasRepository) {
 
     private val refreshFlow: RefreshFlow = RefreshFlow()
@@ -23,9 +25,9 @@ class FetchForecastUseCase @Inject constructor(private val luasRepository: LuasR
                         val result = luasRepository.fetchForecast(stopAbv)
                         result.onSuccess { forecast ->
                             emit(RefreshState.Success(data = forecast, progress = 0f))
-                            val interval = REFRESH_INTERVAL / 100
-                            for (i in 1..100) {
-                                val percentageBeforeRefresh = i / 100f
+                            val interval = REFRESH_INTERVAL / FULL_PERCENTAGE
+                            for (i in 1..FULL_PERCENTAGE) {
+                                val percentageBeforeRefresh = i / FULL_PERCENTAGE.toFloat()
                                 emit(
                                     RefreshState.Success(
                                         data = forecast,
@@ -42,7 +44,6 @@ class FetchForecastUseCase @Inject constructor(private val luasRepository: LuasR
                                 )
                             )
                         }
-
                     }
 
                     RefreshMode.MANUAL -> {

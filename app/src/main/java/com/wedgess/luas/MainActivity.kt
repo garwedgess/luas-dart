@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import com.wedgess.luas.presentation.main.compose.MainContent
 import dagger.hilt.android.AndroidEntryPoint
 
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 

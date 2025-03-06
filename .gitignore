@@ -12,4 +12,7 @@
 /captures
 .externalNativeBuild
 .cxx
+.vcs
 local.properties
+/build
+/build-logic/convention/build

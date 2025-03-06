@@ -1,0 +1,13 @@
+<stopInfo created="2025-02-24T13:59:05" stop="St. Stephen's Green" stopAbv="STS">
+    <message>Green Line services operating normally</message>
+    <direction name="Inbound">
+        <tram destination="Broombridge" dueMins="2" />
+        <tram destination="Parnell" dueMins="7" />
+        <tram destination="Broombridge" dueMins="14" />
+    </direction>
+    <direction name="Outbound">
+        <tram destination="Sandyford" dueMins="4" />
+        <tram destination="Brides Glen" dueMins="11" />
+        <tram destination="Sandyford" dueMins="18" />
+    </direction>
+</stopInfo>

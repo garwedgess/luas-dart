@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.navigation;
+package com.wedgess.luas.presentation.navigation
 
 import kotlinx.serialization.Serializable
 

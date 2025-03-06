@@ -24,6 +24,13 @@ play-services-maps = "19.0.0"
 play-services-location = "21.3.0"
 androidxCompose = "1.7.7"
 navigationCompose = "2.8.6"
+jacoco = "0.8.12"
+detekt = "1.23.7"
+detektCompose = "0.4.22"
+robolectric = "4.14"
+coreKtxVersion = "1.6.1"
+coreTesting = "2.2.0"
+turbine = "1.2.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -43,11 +50,19 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-
+androidx-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
 androidx-compose-material-iconsExtended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "androidxCompose" }
 
-
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+
+jacoco = { group = "org.jacoco", name = "org.jacoco.core", version.ref = "jacoco" }
+detekt-gradle = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+detekt-compose = { module = "io.nlopez.compose.rules:detekt", version.ref = "detektCompose" }
+jetbrains-kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+android-tools-build-gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+
 
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktorClient" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktorClient" }
@@ -74,6 +89,11 @@ protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite",
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "play-services-maps" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 
+mockk = { module = "io.mockk:mockk", version = "1.13.13" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.9.0" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+core-test-ktx = { module = "androidx.test:core-ktx", version.ref = "coreKtxVersion" }
+
 [bundles]
 sqldelight = ["sqldelight-android-driver", "sqldelight-coroutines-extensions", "sqldelight-primitive-adapters"]
 ktor = ["ktor-client-core", "ktor-client-android", "ktor-serialization-xml", "kotlinx-serialization-core", "ktor-client-logging", "ktor-client-content-negotiation", "ktor-client-okhttp",]
@@ -87,3 +107,4 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
