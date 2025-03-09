@@ -33,7 +33,7 @@ class MapViewModel @Inject constructor(
             state.copy(
                 currentLocation = currentLocation ?: UserLocation(0.0, 0.0),
                 greenLineLocations = allStops.filter { it.line == LuasLineEntity.GREEN },
-                redLineLocations = allStops.filter { it.line == LuasLineEntity.RED },
+                redLineLocations = allStops.filter { it.line == LuasLineEntity.RED }
             )
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)

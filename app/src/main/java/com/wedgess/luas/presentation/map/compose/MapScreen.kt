@@ -31,6 +31,4 @@ fun MapScreen(uiResult: UiResult<MapContract.UiState>) {
             }
         }
     )
-
-
 }

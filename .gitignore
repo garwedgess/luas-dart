@@ -16,3 +16,5 @@
 local.properties
 /build
 /build-logic/convention/build
+/.idea/.name
+/.idea/vcs.xml

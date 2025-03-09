@@ -20,7 +20,10 @@ internal fun Project.configureSpotless() {
                 editorConfigOverride(
                     mapOf(
                         "android" to "true",
-                    ),
+                        "ij_kotlin_allow_trailing_comma" to "false",
+                        "ij_kotlin_allow_trailing_comma_on_call_site" to "false",
+                        "ktlint_standard_trailing-comma" to "disabled"
+                    )
                 )
             }
         }

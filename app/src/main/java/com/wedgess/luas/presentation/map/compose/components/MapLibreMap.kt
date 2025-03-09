@@ -117,12 +117,14 @@ private fun updateSources(style: Style, line: String, stops: List<StopEntity>) {
         val updatedFeatures = FeatureCollection.fromFeatures(
             listOf(
                 Feature.fromGeometry(
-                    LineString.fromLngLats(stops.map {
-                        Point.fromLngLat(
-                            it.longitude,
-                            it.latitude
-                        )
-                    })
+                    LineString.fromLngLats(
+                        stops.map {
+                            Point.fromLngLat(
+                                it.longitude,
+                                it.latitude
+                            )
+                        }
+                    )
                 )
             )
         )
@@ -352,7 +354,7 @@ private fun MapboxMap.uiSetup() {
 
 private fun createTooltipBitmap(
     context: Context,
-    text: String,
+    text: String
 ): Bitmap {
     val triangleBaseWidthDp = 10.dp // Width of the triangle's base
     val triangleHeightDp = 10.dp // Height of the triangle

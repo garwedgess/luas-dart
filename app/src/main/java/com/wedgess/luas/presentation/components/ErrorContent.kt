@@ -40,7 +40,7 @@ fun ErrorContent(
         Text(
             text = title,
             style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Center
         )
 
         subTitle?.run {

@@ -6,7 +6,7 @@ data class ForcastEntity(
     val stopAbv: String,
     val message: String,
     val inboundTrams: List<TramEntity>,
-    val outboundTrams: List<TramEntity>,
+    val outboundTrams: List<TramEntity>
 ) {
     data class TramEntity(
         val dueMins: Int,

@@ -33,13 +33,11 @@ private const val CACHE_SIZE: Long = 10 * 1024 * 1024
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient = OkHttpClient
         .Builder()
         .build()
-
 
     @Provides
     @Singleton

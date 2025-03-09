@@ -96,9 +96,9 @@ fun <T : TabItem> AnimatedTabContainer(
             beyondViewportPageCount = 0
         ) { page ->
             val pageOffset = (
-                    (pagerState.currentPage - page) + pagerState
-                        .currentPageOffsetFraction
-                    ).absoluteValue
+                (pagerState.currentPage - page) + pagerState
+                    .currentPageOffsetFraction
+                ).absoluteValue
 
             Box(
                 modifier = Modifier
