@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     id("android-jacoco-convention")
+    id("android-spotless-convention")
     id("android-detekt-convention")
 }
 
