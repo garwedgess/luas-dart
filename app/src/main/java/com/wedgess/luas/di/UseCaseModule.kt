@@ -2,10 +2,13 @@ package com.wedgess.luas.di
 
 import com.wedgess.luas.domain.repository.LocationRepository
 import com.wedgess.luas.domain.repository.LuasRepository
+import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.domain.usecase.FetchAllStopsUseCase
 import com.wedgess.luas.domain.usecase.FetchCurrentLocationUseCase
 import com.wedgess.luas.domain.usecase.FetchForecastUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
+import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,4 +35,14 @@ object UseCaseModule {
     @ViewModelScoped
     fun provideFetchCurrentLocationUseCase(repository: LocationRepository) =
         FetchCurrentLocationUseCase(repository)
+
+    @Provides
+    @ViewModelScoped
+    fun provideUpdateSelectedStationUseCase(repository: PreferencesRepository) =
+        UpdateSelectedStationUseCase(repository)
+
+    @Provides
+    @ViewModelScoped
+    fun provideFetchSelectedStationUseCase(repository: PreferencesRepository) =
+        FetchSelectedStationUseCase(repository)
 }

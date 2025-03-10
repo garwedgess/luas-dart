@@ -49,6 +49,7 @@
     <ID>SpreadOperator:UiText.kt$UiText$(id, count, *formatArgs)</ID>
     <ID>ThrowsCount:RequestResult.kt$private suspend inline fun &lt;reified T&gt; HttpResponse.handleResponse(): T</ID>
     <ID>TooGenericExceptionCaught:ResultOf.kt$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:UserPreferencesSerializerTest.kt$UserPreferencesSerializerTest.&lt;no name provided&gt;$throw Exception()</ID>
     <ID>TooManyFunctions:MapLibreMap.kt$com.wedgess.luas.presentation.map.compose.components.MapLibreMap.kt</ID>
     <ID>ViewModelInjection:ForecastTabContent.kt$stopsViewModel</ID>
   </CurrentIssues>

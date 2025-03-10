@@ -20,7 +20,7 @@ private val coverageExclusions = listOf(
     "**/*_Hilt*.class",
     "**/Hilt_*.class",
     "**/data/api/**/fakes/**",
-    "**/data/utils/**",
+    "**/data/utils/extensions/**",
     "**/presentation/components/**",
     "**/TopAppBarState.*",
     "**/ForecastTab**",

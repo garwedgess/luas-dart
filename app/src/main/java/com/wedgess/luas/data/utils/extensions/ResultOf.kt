@@ -1,4 +1,4 @@
-package com.wedgess.luas.data.utils
+package com.wedgess.luas.data.utils.extensions
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow

@@ -1,4 +1,4 @@
-package com.wedgess.luas.data.utils
+package com.wedgess.luas.data.utils.extensions
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

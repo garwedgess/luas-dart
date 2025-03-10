@@ -8,11 +8,15 @@ import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.model.StopEntity
 import com.wedgess.luas.domain.usecase.FetchForecastUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
+import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
 import com.wedgess.luas.presentation.forecast.ForecastContract
 import com.wedgess.luas.presentation.forecast.model.ForecastDialogState
 import com.wedgess.luas.presentation.model.UiResult
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
@@ -24,6 +28,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -43,6 +49,13 @@ class ForecastViewModelTest {
 
     @MockK
     private lateinit var fetchForecastUseCase: FetchForecastUseCase
+
+    @MockK
+    private lateinit var updateSelectedStationUseCase: UpdateSelectedStationUseCase
+
+    @MockK
+    private lateinit var fetchSelectedStationUseCase: FetchSelectedStationUseCase
+
     private lateinit var viewModel: ForecastViewModel
 
     private val mockStops = listOf(
@@ -78,8 +91,8 @@ class ForecastViewModelTest {
     )
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
-    private val forecastFlow =
-        MutableStateFlow<RefreshState<ForcastEntity>>(RefreshState.Success(mockForecast, 0f))
+    private val forecastFlow = MutableStateFlow<RefreshState<ForcastEntity>>(RefreshState.Success(mockForecast, 0f))
+    private val selectedStationFlow = MutableStateFlow("")
 
     @Before
     fun setUp() {
@@ -88,8 +101,16 @@ class ForecastViewModelTest {
 
         every { fetchStopsUseCase(any()) } returns stopsFlow
         every { fetchForecastUseCase(any()) } returns forecastFlow
+        every { fetchSelectedStationUseCase(any()) } returns selectedStationFlow
+        coEvery { updateSelectedStationUseCase(any(), any()) } returns Result.success(Unit)
 
-        viewModel = ForecastViewModel(luasLine, fetchStopsUseCase, fetchForecastUseCase)
+        viewModel = ForecastViewModel(
+            luasLine,
+            fetchStopsUseCase,
+            fetchForecastUseCase,
+            updateSelectedStationUseCase,
+            fetchSelectedStationUseCase
+        )
     }
 
     @After
@@ -148,14 +169,11 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `should update selectedStop when OnStopSelected event is received`() = runTest {
+    fun `should update selected station in repository when OnStopSelected event is received`() = runTest {
         val secondStop = mockStops[1]
         viewModel.onEvent(ForecastContract.Event.OnStopSelected(secondStop))
 
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert((result as UiResult.Success).data.selectedStop == secondStop)
-        }
+        coVerify { updateSelectedStationUseCase(secondStop.abbreviation, secondStop.line) }
     }
 
     @Test
@@ -166,34 +184,67 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `should show travel updates dialog when OnShowTravelUpdatesDialog event is received`() =
-        runTest {
-            viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
-            viewModel.uiResult.test {
-                val result = awaitItem()
-                assert((result as UiResult.Success).data.dialog == ForecastDialogState.TravelUpdatesAlert)
-            }
-        }
-
-    @Test
-    fun `should dismiss travel updates dialog when OnDismissTravelUpdatesDialog event is received`() =
-        runTest {
-            viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
-            viewModel.onEvent(ForecastContract.Event.OnDismissTravelUpdatesDialog)
-            viewModel.uiResult.test {
-                val result = awaitItem()
-                assert((result as UiResult.Success).data.dialog == ForecastDialogState.None)
-            }
-        }
-
-    @Test
-    fun `should use existing selectedStop when available`() = runTest {
-        val secondStop = mockStops[1]
-        viewModel.onEvent(ForecastContract.Event.OnStopSelected(secondStop))
-        stopsFlow.value = Result.success(mockStops)
+    fun `should show travel updates dialog when OnShowTravelUpdatesDialog event is received`() = runTest {
+        viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
         viewModel.uiResult.test {
             val result = awaitItem()
-            assert((result as UiResult.Success).data.selectedStop == secondStop)
+            assert((result as UiResult.Success).data.dialog == ForecastDialogState.TravelUpdatesAlert)
         }
+    }
+
+    @Test
+    fun `should dismiss travel updates dialog when OnDismissTravelUpdatesDialog event is received`() = runTest {
+        viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
+        viewModel.onEvent(ForecastContract.Event.OnDismissTravelUpdatesDialog)
+        viewModel.uiResult.test {
+            val result = awaitItem()
+            assert((result as UiResult.Success).data.dialog == ForecastDialogState.None)
+        }
+    }
+
+    @Test
+    fun `should select first stop when no saved selection exists`() = runTest {
+        selectedStationFlow.value = ""
+        stopsFlow.value = Result.success(mockStops)
+
+        viewModel.uiResult.test {
+            val result = awaitItem()
+            assert((result as UiResult.Success).data.selectedStop == mockStops.first())
+        }
+    }
+
+    @Test
+    fun `should select saved stop when available`() = runTest {
+        selectedStationFlow.value = "HAR"
+        stopsFlow.value = Result.success(mockStops)
+
+        viewModel.uiResult.test {
+            val result = awaitItem()
+            assert((result as UiResult.Success).data.selectedStop == mockStops[1])
+        }
+    }
+
+    @Test
+    fun `should use default stop when saved stop not found in list`() = runTest {
+        selectedStationFlow.value = "INVALID"
+        stopsFlow.value = Result.success(mockStops)
+
+        viewModel.uiResult.test {
+            val result = awaitItem()
+            assertTrue(result is UiResult.Success)
+            assertEquals(
+                StopEntity.initial().copy(id = (result as UiResult.Success).data.selectedStop.id),
+                result.data.selectedStop
+            )
+        }
+    }
+
+    @Test
+    fun `should update selected station in repository when stop changes`() = runTest {
+        val secondStop = mockStops[1]
+
+        viewModel.onEvent(ForecastContract.Event.OnStopSelected(secondStop))
+
+        coVerify { updateSelectedStationUseCase(secondStop.abbreviation, secondStop.line) }
     }
 }

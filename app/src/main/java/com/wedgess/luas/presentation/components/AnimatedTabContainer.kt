@@ -75,7 +75,7 @@ fun <T : TabItem> AnimatedTabContainer(
                         scope.launch {
                             pagerState.animateScrollToPage(
                                 index,
-                                animationSpec = tween(durationMillis = 1000)
+                                animationSpec = tween(durationMillis = 500)
                             )
                         }
                     },

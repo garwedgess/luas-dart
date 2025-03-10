@@ -2,7 +2,7 @@ package com.wedgess.luas.data.api
 
 import com.wedgess.luas.data.model.LuasApiResult
 import com.wedgess.luas.data.model.StopForcastResponseData
-import com.wedgess.luas.data.utils.requestResult
+import com.wedgess.luas.data.utils.extensions.requestResult
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.http.URLProtocol

@@ -6,7 +6,7 @@ import com.wedgess.luas.data.db.dao.StopsDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toEntity
-import com.wedgess.luas.data.utils.resultOf
+import com.wedgess.luas.data.utils.extensions.resultOf
 import com.wedgess.luas.domain.model.ForcastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.StopEntity

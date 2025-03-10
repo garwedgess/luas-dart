@@ -8,7 +8,9 @@ import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.model.StopEntity
 import com.wedgess.luas.domain.usecase.FetchForecastUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
+import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
 import com.wedgess.luas.presentation.forecast.ForecastContract
 import com.wedgess.luas.presentation.forecast.model.ForecastDialogState
 import com.wedgess.luas.presentation.model.UiResult
@@ -24,28 +26,34 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @HiltViewModel(assistedFactory = ForecastTabViewModelFactory::class)
 class ForecastViewModel @AssistedInject constructor(
     @Assisted val luasLine: LuasLineEntity,
     fetchStopsUseCase: FetchStopsUseCase,
-    private val fetchForecastUseCase: FetchForecastUseCase
+    private val fetchForecastUseCase: FetchForecastUseCase,
+    private val updateSelectedStationUseCase: UpdateSelectedStationUseCase,
+    fetchSelectedStationUseCase: FetchSelectedStationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ForecastContract.UiState())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiResult = _uiState
-        .combine(fetchStopsUseCase(luasLine)) { state, stopsResult ->
-            stopsResult.mapCatching { stops ->
-                val selectedStop = if (state.selectedStop.abbreviation.isBlank()) {
-                    stops.firstOrNull() ?: StopEntity.initial()
-                } else {
-                    state.selectedStop
-                }
-                state.copy(stops = stops, selectedStop = selectedStop)
+    val uiResult = combine(
+        _uiState,
+        fetchStopsUseCase(luasLine),
+        fetchSelectedStationUseCase(luasLine)
+    ) { state, stopsResult, currentSelectedStop ->
+        stopsResult.mapCatching { stops ->
+            val selectedStop = if (currentSelectedStop.isBlank()) {
+                stops.firstOrNull() ?: StopEntity.initial()
+            } else {
+                stops.firstOrNull { it.abbreviation == currentSelectedStop } ?: StopEntity.initial()
             }
+            state.copy(stops = stops, selectedStop = selectedStop)
         }
+    }
         .flatMapLatest { stopsResult: Result<ForecastContract.UiState> ->
             stopsResult.fold(
                 onSuccess = { stopsState ->
@@ -92,6 +100,8 @@ class ForecastViewModel @AssistedInject constructor(
     }
 
     private fun onStopSelected(stop: StopEntity) {
-        _uiState.update { it.copy(selectedStop = stop) }
+        viewModelScope.launch {
+            updateSelectedStationUseCase(stop.abbreviation, stop.line)
+        }
     }
 }
