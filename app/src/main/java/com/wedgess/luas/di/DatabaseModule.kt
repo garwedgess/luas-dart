@@ -5,7 +5,7 @@ import app.cash.sqldelight.ColumnAdapter
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.wedgess.luas.Stop
 import com.wedgess.luas.data.LuasDatabase
-import com.wedgess.luas.data.db.dao.StopsDao
+import com.wedgess.luas.data.db.dao.StopDao
 import com.wedgess.luas.data.db.utils.luasLineAdapter
 import com.wedgess.luas.data.db.utils.uuidAdapter
 import dagger.Module
@@ -50,11 +50,11 @@ object DatabaseModule {
                 override fun encode(value: Double): Double {
                     return value
                 }
-            }
-        )
+            },
+        ),
     )
 
     @Singleton
     @Provides
-    fun provideStopsDao(db: LuasDatabase) = StopsDao(db)
+    fun provideStopDao(db: LuasDatabase) = StopDao(db)
 }

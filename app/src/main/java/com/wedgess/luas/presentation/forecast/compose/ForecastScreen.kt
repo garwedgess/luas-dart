@@ -12,9 +12,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.wedgess.luas.presentation.components.AnimatedTabContainer
+import com.wedgess.luas.presentation.components.RequestNotificationPermission
 import com.wedgess.luas.presentation.forecast.compose.components.ForecastTabContent
 import com.wedgess.luas.presentation.forecast.model.ForecastTab
 import com.wedgess.luas.ui.theme.LuasTheme
+import kotlinx.collections.immutable.persistentListOf
+import okhttp3.internal.toImmutableList
 
 @Composable
 fun ForecastScreen(
@@ -30,10 +33,12 @@ fun ForecastScreen(
         currentRefreshAction?.let(setRefreshAction)
     }
 
+    RequestNotificationPermission()
+
     Surface {
         AnimatedTabContainer(
             tabItems = forecastTabs,
-            indicatorColors = listOf(Color(0xFF66BF63), Color(0xFFE53935)),
+            indicatorColors = persistentListOf(Color(0xFF66BF63), Color(0xFFE53935)),
             onTabIndexChange = { index -> currentTab = forecastTabs[index] }
         ) { tab ->
             ForecastTabContent(

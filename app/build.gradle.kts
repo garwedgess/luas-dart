@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.protobuf)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    id("kotlin-parcelize")
     id("android-jacoco-convention")
     id("android-spotless-convention")
     id("android-detekt-convention")
@@ -67,6 +68,7 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.common)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.datastore)
@@ -80,6 +82,8 @@ dependencies {
     implementation(libs.androidx.compose.material.iconsExtended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.maplibre.android.sdk)
+
+    implementation(libs.kotlinx.collections.immutable)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
@@ -96,6 +100,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    lintChecks(libs.compose.lint.checks)
 }
 
 sqldelight {

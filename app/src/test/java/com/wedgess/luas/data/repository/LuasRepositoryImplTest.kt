@@ -3,7 +3,7 @@ package com.wedgess.luas.data.repository
 import com.wedgess.luas.Stop
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
-import com.wedgess.luas.data.db.dao.StopsDao
+import com.wedgess.luas.data.db.dao.StopDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toEntity
@@ -44,7 +44,7 @@ class LuasRepositoryImplTest {
     private lateinit var forecastApi: LuasForecastApiService
 
     @RelaxedMockK
-    private lateinit var stopsDao: StopsDao
+    private lateinit var stopsDao: StopDao
 
     private lateinit var repository: LuasRepositoryImpl
 

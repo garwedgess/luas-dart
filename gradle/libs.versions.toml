@@ -1,6 +1,8 @@
 [versions]
 accompanistPermissions = "0.35.0-alpha"
 agp = "8.7.3"
+composeLintChecks = "1.4.2"
+kotlinxCollectionsImmutable = "0.3.8"
 mapLibre = "10.1.0"
 kotlin = "2.1.0"
 coreKtx = "1.15.0"
@@ -32,9 +34,12 @@ robolectric = "4.14"
 coreKtxVersion = "1.6.1"
 coreTesting = "2.2.0"
 turbine = "1.2.0"
+hiltCommon = "1.2.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
+compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 maplibre-android-sdk = { module = "org.maplibre.gl:android-sdk", version.ref = "mapLibre" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -95,6 +100,7 @@ mockk = { module = "io.mockk:mockk", version = "1.13.13" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.9.0" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 core-test-ktx = { module = "androidx.test:core-ktx", version.ref = "coreKtxVersion" }
+androidx-hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 
 [bundles]
 sqldelight = ["sqldelight-android-driver", "sqldelight-coroutines-extensions", "sqldelight-primitive-adapters"]

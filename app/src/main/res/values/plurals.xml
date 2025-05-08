@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="due_minutes">
+        <item quantity="zero">Due now</item>
+        <item quantity="one">Due in %d minute</item>
+        <item quantity="other">Due in %d minutes</item>
+    </plurals>
+
+    <plurals name="picker_minutes">
+        <item quantity="one">Notify me %d minute before arrival</item>
+        <item quantity="other">Notify me %d minutes before arrival</item>
+    </plurals>
+</resources>

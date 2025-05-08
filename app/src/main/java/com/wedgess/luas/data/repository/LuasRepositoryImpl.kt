@@ -2,7 +2,7 @@ package com.wedgess.luas.data.repository
 
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
-import com.wedgess.luas.data.db.dao.StopsDao
+import com.wedgess.luas.data.db.dao.StopDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toEntity
@@ -11,6 +11,7 @@ import com.wedgess.luas.domain.model.ForcastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.StopEntity
 import com.wedgess.luas.domain.repository.LuasRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -23,8 +24,8 @@ import javax.inject.Inject
 class LuasRepositoryImpl @Inject constructor(
     private val stopsApi: LuasStopApiService,
     private val forecastApi: LuasForecastApiService,
-    private val stopsDao: StopsDao,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val stopsDao: StopDao,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : LuasRepository {
 
     override fun fetchStops(line: LuasLineEntity): Flow<Result<List<StopEntity>>> {
@@ -50,7 +51,13 @@ class LuasRepositoryImpl @Inject constructor(
 
     override suspend fun fetchForecast(stopAbv: String): Result<ForcastEntity> =
         withContext(ioDispatcher) {
-            forecastApi.fetchForecast(stopAbv).mapCatching { it.toEntity() }
+            try {
+                forecastApi.fetchForecast(stopAbv).mapCatching { it.toEntity() }
+                    .onFailure { Timber.e(it, "Call has failed: ${it.message}") }
+            } catch (ce: CancellationException) {
+                Timber.e(ce, "Call has failed: ${ce.message}")
+                Result.failure(ce)
+            }
         }
 
     private suspend fun fetchFromRemoteAndStore() = withContext(ioDispatcher) {
@@ -62,7 +69,7 @@ class LuasRepositoryImpl @Inject constructor(
             },
             onFailure = { error ->
                 Timber.e(error, "Failed to insert remote stops: ${error.message}")
-            }
+            },
         )
     }
 }

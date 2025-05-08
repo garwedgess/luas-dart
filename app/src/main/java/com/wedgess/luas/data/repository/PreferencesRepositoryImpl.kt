@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class PreferencesRepositoryImpl @Inject constructor(
     private val preferences: DataStore<UserPreferences>,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : PreferencesRepository {
 
     override suspend fun updateSelectedRedLineStation(abbreviation: String): Result<Unit> {
@@ -36,11 +36,53 @@ class PreferencesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateLocationPermissionRequested(requested: Boolean): Result<Unit> {
+        return withContext(ioDispatcher) {
+            runWithErrorHandling {
+                preferences.updateData { preferences ->
+                    preferences.toBuilder().setLocationPermissionRequested(requested).build()
+                }
+            }
+        }
+    }
+
+    override suspend fun updateIgnoreLocationPermission(ignore: Boolean): Result<Unit> {
+        return withContext(ioDispatcher) {
+            runWithErrorHandling {
+                preferences.updateData { preferences ->
+                    preferences.toBuilder().setIgnoreLocationPermission(ignore).build()
+                }
+            }
+        }
+    }
+
+    override suspend fun updateNotificationPermissionRequested(requested: Boolean): Result<Unit> {
+        return withContext(ioDispatcher) {
+            runWithErrorHandling {
+                preferences.updateData { preferences ->
+                    preferences.toBuilder().setNotificationPermissionRequested(requested).build()
+                }
+            }
+        }
+    }
+
     override fun fetchSelectedGreenLineStation(): Flow<String> {
         return preferences.data.map { it.selectedGreenLineStation }
     }
 
     override fun fetchSelectedRedLineStation(): Flow<String> {
         return preferences.data.map { it.selectedRedLineStation }
+    }
+
+    override fun ignoreLocationPermission(): Flow<Boolean> {
+        return preferences.data.map { it.ignoreLocationPermission }
+    }
+
+    override fun wasLocationPermissionRequested(): Flow<Boolean> {
+        return preferences.data.map { it.locationPermissionRequested }
+    }
+
+    override fun wasNotificationPermissionRequested(): Flow<Boolean> {
+        return preferences.data.map { it.notificationPermissionRequested }
     }
 }

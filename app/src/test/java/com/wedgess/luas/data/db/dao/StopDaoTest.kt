@@ -23,11 +23,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class StopsDaoTest {
+class StopDaoTest {
 
     private lateinit var driver: SqlDriver
     private lateinit var database: LuasDatabase
-    private lateinit var dao: StopsDao
+    private lateinit var dao: StopDao
     private lateinit var context: Context
 
     @Before
@@ -63,7 +63,7 @@ class StopsDaoTest {
                 }
             )
         )
-        dao = StopsDao(database)
+        dao = StopDao(database)
     }
 
     @After

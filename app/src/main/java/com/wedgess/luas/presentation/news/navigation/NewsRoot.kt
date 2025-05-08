@@ -1,15 +1,15 @@
-package com.wedgess.luas.presentation.alerts.compose.navigation
+package com.wedgess.luas.presentation.news.navigation
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.wedgess.luas.R
-import com.wedgess.luas.presentation.alerts.compose.TravelUpdatesWebViewContent
+import com.wedgess.luas.presentation.news.compose.TravelUpdatesWebViewContent
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.navigation.Screens
 
-fun NavGraphBuilder.alertsRoot(
+fun NavGraphBuilder.newsRoot(
     onUpdateAppbarState: (TopAppBarState) -> Unit
 ) {
     composable<Screens.Alerts> {
@@ -17,7 +17,7 @@ fun NavGraphBuilder.alertsRoot(
 
         LaunchedEffect(Unit) {
             onUpdateAppbarState(
-                TopAppBarState(title = context.getString(R.string.nav_title_alerts))
+                TopAppBarState(title = context.getString(R.string.nav_title_news))
             )
         }
         TravelUpdatesWebViewContent()

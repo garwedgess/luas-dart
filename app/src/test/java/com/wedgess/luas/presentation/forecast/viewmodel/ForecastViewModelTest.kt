@@ -195,7 +195,7 @@ class ForecastViewModelTest {
     @Test
     fun `should dismiss travel updates dialog when OnDismissTravelUpdatesDialog event is received`() = runTest {
         viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
-        viewModel.onEvent(ForecastContract.Event.OnDismissTravelUpdatesDialog)
+        viewModel.onEvent(ForecastContract.Event.OnDismissDialog)
         viewModel.uiResult.test {
             val result = awaitItem()
             assert((result as UiResult.Success).data.dialog == ForecastDialogState.None)

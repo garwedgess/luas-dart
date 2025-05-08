@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.forecast.compose.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 import com.wedgess.luas.ui.theme.LuasTheme
 
+@SuppressLint("ComposeModifierMissing")
 @Composable
 fun TramDirectionHeader(
     title: String,

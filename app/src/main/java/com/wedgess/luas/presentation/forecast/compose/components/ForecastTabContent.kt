@@ -1,5 +1,7 @@
 package com.wedgess.luas.presentation.forecast.compose.components
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,19 +31,20 @@ import com.wedgess.luas.presentation.forecast.ForecastContract
 import com.wedgess.luas.presentation.forecast.viewmodel.ForecastViewModel
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.ui.theme.LuasTheme
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun ForecastTabContent(
     line: LuasLineEntity,
     onRefreshAction: (() -> Unit) -> Unit,
-    onProgressChange: (Float) -> Unit
-) {
-    val stopsViewModel: ForecastViewModel = hiltViewModel(
+    onProgressChange: (Float) -> Unit,
+    stopsViewModel: ForecastViewModel = hiltViewModel(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
             factory.create(line)
-        }
-    )
+        },
+    ),
+) {
     val uiResult by stopsViewModel.uiResult.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -57,34 +60,43 @@ fun ForecastTabContent(
         onEmpty = {
             EmptyContent(it)
         },
-        onSuccess = {
+        onSuccess = { uiState ->
             TabListContent(
-                uiState = it,
-                onStopSelected = {
-                    stopsViewModel.onEvent((ForecastContract.Event.OnStopSelected(it)))
-                },
+                uiState = uiState,
+                onStopSelected = { stop -> stopsViewModel.onEvent((ForecastContract.Event.OnStopSelected(stop))) },
                 onProgressChange = onProgressChange,
-                onShowTravelUpdatesDialog = {
-                    stopsViewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
-                }
+                onShowTravelUpdatesDialog = { stopsViewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog) },
+                onTramClick = { mins, destination ->
+                    stopsViewModel.onEvent(
+                        ForecastContract.Event.OnShowNotificationsDialog(
+                            mins,
+                            destination,
+                        ),
+                    )
+                },
+                onCancelAlarm = {
+                    stopsViewModel.onEvent(ForecastContract.Event.OnStopNotification)
+                },
             )
             ForecastDialogs(
-                dialogsState = it.dialog,
-                onDismissDialog = {
-                    stopsViewModel.onEvent(ForecastContract.Event.OnDismissTravelUpdatesDialog)
-                }
+                dialogsState = uiState.dialog,
+                notificationState = uiState.notificationState,
+                onEvent = { event -> stopsViewModel.onEvent(event) },
             )
-        }
+        },
     )
 }
 
+@SuppressLint("ComposeModifierMissing")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabListContent(
     uiState: ForecastContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelected: (StopEntity) -> Unit,
-    onProgressChange: (Float) -> Unit
+    onTramClick: (Int, String) -> Unit,
+    onProgressChange: (Float) -> Unit,
+    onCancelAlarm: () -> Unit,
 ) {
     LaunchedEffect(uiState.refreshProgress) {
         onProgressChange(uiState.refreshProgress)
@@ -94,47 +106,54 @@ fun TabListContent(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         stickyHeader {
             DropdownTextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = "Stop",
                 valueFormatter = { item -> item.name },
-                options = uiState.stops,
+                options = uiState.stops.toImmutableList(),
                 selectedValue = uiState.selectedStop,
-                onValueChange = onStopSelected
+                onValueChange = onStopSelected,
             )
+        }
+        item {
+            AnimatedVisibility(uiState.alarmIsRunning) {
+                ForecastAlarmRow(uiState.notificationState, onCancelAlarm)
+            }
         }
         item {
             ForecastStatusMessage(
                 message = uiState.forecast.message,
-                showTravelUpdatesDialog = onShowTravelUpdatesDialog
+                showTravelUpdatesDialog = onShowTravelUpdatesDialog,
             )
         }
         item {
             TramDirectionHeader(
                 title = stringResource(R.string.forecast_title_outbound),
-                noTramsDue = uiState.forecast.outboundTrams.isEmpty()
+                noTramsDue = uiState.forecast.outboundTrams.isEmpty(),
             )
         }
         items(uiState.forecast.outboundTrams) { tram ->
             ForecastItemRow(
                 dueInMins = tram.dueMins,
-                destination = tram.destination
+                destination = tram.destination,
+                onRowClick = onTramClick,
             )
         }
 
         item {
             TramDirectionHeader(
                 title = stringResource(R.string.forecast_title_inbound),
-                noTramsDue = uiState.forecast.inboundTrams.isEmpty()
+                noTramsDue = uiState.forecast.inboundTrams.isEmpty(),
             )
         }
         items(uiState.forecast.inboundTrams) { tram ->
             ForecastItemRow(
                 dueInMins = tram.dueMins,
-                destination = tram.destination
+                destination = tram.destination,
+                onRowClick = onTramClick,
             )
         }
     }

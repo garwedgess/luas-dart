@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.alerts.compose
+package com.wedgess.luas.presentation.news.compose
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
@@ -21,7 +21,7 @@ import com.wedgess.luas.presentation.components.LoadingContent
 
 private const val LUAS_TRAVEL_UPDATES_URL = "https://luas.ie/travel-updates/"
 
-@SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
+@SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility", "ComposeModifierMissing")
 @Composable
 fun TravelUpdatesWebViewContent(url: String = LUAS_TRAVEL_UPDATES_URL) {
     var isLoading by remember { mutableStateOf(true) }
@@ -34,7 +34,7 @@ fun TravelUpdatesWebViewContent(url: String = LUAS_TRAVEL_UPDATES_URL) {
                     settings.domStorageEnabled = false
                     isFocusable = false
                     isFocusableInTouchMode = false
-                    setOnTouchListener { _, event -> event.action == MotionEvent.ACTION_MOVE }
+//                    setOnTouchListener { _, event -> event.action == MotionEvent.ACTION_MOVE }
 
                     webViewClient = object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(

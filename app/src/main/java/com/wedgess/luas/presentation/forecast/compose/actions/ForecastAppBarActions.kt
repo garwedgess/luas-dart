@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.forecast.compose.actions
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.wedgess.luas.ui.theme.LuasTheme
 
+@SuppressLint("ComposeModifierMissing")
 @Composable
 fun ForecastAppBarActions(onRefresh: () -> Unit) {
     Row {

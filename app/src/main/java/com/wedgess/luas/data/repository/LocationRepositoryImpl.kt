@@ -22,38 +22,44 @@ import java.util.concurrent.TimeUnit
 class LocationRepositoryImpl(
     private val fusedLocationClient: FusedLocationProviderClient,
     private val looper: Looper,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : LocationRepository {
 
     @SuppressLint("MissingPermission")
     override fun getCurrentLocation(): Flow<UserLocation> = callbackFlow {
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-            TimeUnit.MINUTES.toMillis(1)
-        )
-            .setMinUpdateDistanceMeters(10f)
-            .build()
+        try {
+            trySend(UserLocation(0.0, 0.0))
+            val locationRequest = LocationRequest.Builder(
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                TimeUnit.MINUTES.toMillis(1),
+            )
+                .setMinUpdateDistanceMeters(10f)
+                .build()
 
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult) {
-                result.lastLocation?.run {
-                    trySend(
-                        UserLocation(
-                            this.latitude,
-                            this.longitude
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    result.lastLocation?.run {
+                        trySend(
+                            UserLocation(
+                                this.latitude,
+                                this.longitude,
+                            ),
                         )
-                    )
+                    }
                 }
             }
+
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                looper,
+            )
+
+            awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
+        } catch (e: Exception) {
+            Timber.d(e, "Location permission not granted yet")
+            trySend(UserLocation(0.0, 0.0))
         }
-
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            looper
-        )
-
-        awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
     }.catch { t ->
         Timber.e(t, "Failed to get current location")
         emit(UserLocation(0.0, 0.0))

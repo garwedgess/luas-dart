@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
-class StopsDao @Inject constructor(
+class StopDao @Inject constructor(
     db: LuasDatabase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {

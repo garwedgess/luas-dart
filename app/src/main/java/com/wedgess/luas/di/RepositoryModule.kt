@@ -5,7 +5,7 @@ import androidx.datastore.core.DataStore
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
-import com.wedgess.luas.data.db.dao.StopsDao
+import com.wedgess.luas.data.db.dao.StopDao
 import com.wedgess.luas.data.model.UserPreferences
 import com.wedgess.luas.data.repository.LocationRepositoryImpl
 import com.wedgess.luas.data.repository.LuasRepositoryImpl
@@ -28,21 +28,21 @@ object RepositoryModule {
     fun provideLuasRepository(
         stopsApiService: LuasStopApiService,
         forecastApiService: LuasForecastApiService,
-        stopsDao: StopsDao
+        stopsDao: StopDao,
     ): LuasRepository =
         LuasRepositoryImpl(stopsApiService, forecastApiService, stopsDao)
 
     @Provides
     @Singleton
     fun provideLocationRepository(
-        fusedLocationProviderClient: FusedLocationProviderClient
+        fusedLocationProviderClient: FusedLocationProviderClient,
     ): LocationRepository =
         LocationRepositoryImpl(fusedLocationProviderClient, Looper.getMainLooper())
 
     @Provides
     @Singleton
     fun providePreferencesRepository(
-        dataStore: DataStore<UserPreferences>
+        dataStore: DataStore<UserPreferences>,
     ): PreferencesRepository =
         PreferencesRepositoryImpl(dataStore)
 }

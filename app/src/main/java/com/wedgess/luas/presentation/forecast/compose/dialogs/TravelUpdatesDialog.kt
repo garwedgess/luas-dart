@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.forecast.compose.dialogs
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.wedgess.luas.presentation.alerts.compose.TravelUpdatesWebViewContent
+import com.wedgess.luas.presentation.news.compose.TravelUpdatesWebViewContent
 
+@SuppressLint("ComposeModifierMissing")
 @Composable
 fun TravelUpdatesDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {

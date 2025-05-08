@@ -7,4 +7,8 @@ option java_multiple_files = true;
 message UserPreferences {
     string selectedGreenLineStation = 1;
     string selectedRedLineStation = 2;
+    bool locationPermissionRequested = 3;
+    bool locationPermissionRationaleShown = 4;
+    bool ignoreLocationPermission = 5;
+    bool notificationPermissionRequested = 6;
 }

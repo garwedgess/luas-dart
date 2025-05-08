@@ -8,5 +8,6 @@
     <string name="label_due_in_mins_placeholder">Due in %1$s minutes to</string>
     <string name="nav_title_forecast">Forecast</string>
     <string name="nav_title_map">Map</string>
-    <string name="nav_title_alerts">Alerts</string>
+    <string name="nav_title_news">News</string>
+    <string name="action_dismiss">Dismiss</string>
 </resources>

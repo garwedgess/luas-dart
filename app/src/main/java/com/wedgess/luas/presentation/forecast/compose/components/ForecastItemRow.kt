@@ -1,11 +1,15 @@
 package com.wedgess.luas.presentation.forecast.compose.components
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,28 +20,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 
+@SuppressLint("ComposeModifierMissing")
 @Composable
-fun ForecastItemRow(dueInMins: Int, destination: String) {
+fun ForecastItemRow(
+    dueInMins: Int,
+    destination: String,
+    onRowClick: (Int, String) -> Unit,
+) {
     val animatedValue by animateIntAsState(
         targetValue = dueInMins,
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-        label = "Animated Number"
+        label = "Animated Number",
     )
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onRowClick(dueInMins, destination) }
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = if (animatedValue == 0) {
-                stringResource(R.string.label_due_now_to)
-            } else {
-                stringResource(R.string.label_due_in_mins_placeholder, animatedValue)
-            },
-            style = MaterialTheme.typography.bodyLarge
-        )
+        AnimatedVisibility(visible = animatedValue != -1) {
+            Text(
+                text = if (animatedValue == 0) {
+                    stringResource(R.string.label_due_now_to)
+                } else {
+                    stringResource(R.string.label_due_in_mins_placeholder, animatedValue)
+                },
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
         Text(
             text = destination,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
         )
     }
 }

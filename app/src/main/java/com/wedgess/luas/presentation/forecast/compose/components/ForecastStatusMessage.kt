@@ -1,8 +1,9 @@
 package com.wedgess.luas.presentation.forecast.compose.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,10 +25,11 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.ui.theme.LuasTheme
 
+@SuppressLint("ComposeModifierMissing")
 @Composable
 fun ForecastStatusMessage(
     message: String,
-    showTravelUpdatesDialog: () -> Unit
+    showTravelUpdatesDialog: () -> Unit,
 ) {
     val normalOperation = message.contains("operating normally")
     val color = if (normalOperation) {
@@ -35,30 +37,37 @@ fun ForecastStatusMessage(
     } else {
         Color(0xFF996600)
     }
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = color),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center,
     ) {
-        AnimatedVisibility(visible = message.isNotBlank()) {
-            Text(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                text = message,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-        }
-        AnimatedVisibility(visible = !normalOperation && message.isNotBlank()) {
-            IconButton(onClick = showTravelUpdatesDialog) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "Travel Updates",
-                    tint = Color.White
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AnimatedVisibility(
+                visible = message.isNotBlank(),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    text = message,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
                 )
+            }
+            AnimatedVisibility(visible = !normalOperation && message.isNotBlank()) {
+                IconButton(onClick = showTravelUpdatesDialog) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Travel Updates",
+                        tint = Color.White,
+                    )
+                }
             }
         }
     }
@@ -67,7 +76,7 @@ fun ForecastStatusMessage(
 @Preview
 @Composable
 private fun ForecastStatusMessagePreview(
-    @PreviewParameter(ForecastStatusMessagePreviewProvider::class) message: String
+    @PreviewParameter(ForecastStatusMessagePreviewProvider::class) message: String,
 ) {
     LuasTheme {
         Surface {
@@ -80,7 +89,7 @@ private class ForecastStatusMessagePreviewProvider : PreviewParameterProvider<St
     override val values: Sequence<String>
         get() = sequenceOf(
             "Services operating normally",
-            "Services operating with delays",
-            ""
+            "Services operating with delays see more infowmation on our website",
+            "",
         )
 }

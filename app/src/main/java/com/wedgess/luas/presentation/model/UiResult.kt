@@ -23,3 +23,5 @@ inline fun <T> UiResult<T>.Compose(
         is UiResult.Success -> onSuccess(this.data)
     }
 }
+
+inline fun <reified T> UiResult<T>.currentState(): T? = (this as? UiResult.Success)?.data

@@ -28,7 +28,7 @@ sealed class BottomNavItem<T>(
 
     data object Alerts : BottomNavItem<Screens.Alerts>(
         route = Screens.Alerts,
-        UiText.StringResource(R.string.nav_title_alerts),
+        UiText.StringResource(R.string.nav_title_news),
         Icons.Outlined.Info
     )
 

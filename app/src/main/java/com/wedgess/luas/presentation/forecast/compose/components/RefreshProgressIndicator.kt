@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.forecast.compose.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 
+@SuppressLint("ComposeModifierMissing")
 @Composable
 fun RefreshProgressIndicator(refreshProgress: Float) {
     val animatedRefreshProgress by animateFloatAsState(

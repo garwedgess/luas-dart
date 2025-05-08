@@ -16,7 +16,7 @@ import com.wedgess.luas.presentation.navigation.Screens
 
 fun NavGraphBuilder.forecastRoot(
     onUpdateAppbarState: (TopAppBarState) -> Unit,
-    onRefreshProgressChanged: (Float) -> Unit
+    onRefreshProgressChanged: (Float) -> Unit,
 ) {
     composable<Screens.Forecast> {
         val context = LocalContext.current

@@ -4,6 +4,7 @@ import com.wedgess.luas.R
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.presentation.model.TabItem
 import com.wedgess.luas.presentation.model.UiText
+import kotlinx.collections.immutable.persistentListOf
 
 sealed class ForecastTab(override val title: UiText, val line: LuasLineEntity) :
     TabItem(title = title, icon = null) {
@@ -19,6 +20,6 @@ sealed class ForecastTab(override val title: UiText, val line: LuasLineEntity) :
     )
 
     companion object {
-        fun all() = listOf(GreenLine, RedLine)
+        fun all() = persistentListOf(GreenLine, RedLine)
     }
 }
