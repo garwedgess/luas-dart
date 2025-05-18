@@ -24,6 +24,7 @@ private val coverageExclusions = listOf(
     "**/presentation/components/**",
     "**/TopAppBarState.*",
     "**/ForecastTab**",
+    "**/*Receiver**",
     "**/presentation/**/compose/**",
     "**/presentation/navigation/**",
     "**/presentation/model/**",

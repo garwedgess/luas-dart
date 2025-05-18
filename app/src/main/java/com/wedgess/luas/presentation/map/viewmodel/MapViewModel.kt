@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -108,7 +109,17 @@ class MapViewModel @Inject constructor(
             val wasLocationPermissionRequested = wasLocationPermissionRequestedUseCase()
             val ignoreLocationPermission = isLocationPermissionIgnoredUseCase()
             val permission = permissionState.toPermission(wasLocationPermissionRequested)
-            if (permission == Permission.Granted) fetchCurrentLocationUseCase.refresh()
+            if (permission == Permission.Granted) {
+                if (ignoreLocationPermission) {
+                    updateIgnoreLocationPermissionUseCase(false)
+                }
+                fetchCurrentLocationUseCase.refresh()
+            }
+            Timber.d(
+                "Location, wasLocationPermissionRequested: " +
+                "$wasLocationPermissionRequested, ignoreLocationPermission: " +
+                "$ignoreLocationPermission, permission: $permission"
+            )
             _uiState.update {
                 it.copy(
                     locationPermission = permission,
@@ -116,7 +127,7 @@ class MapViewModel @Inject constructor(
                         Permission.ShowRationale -> MapDialogState.LocationPermissionRationale
                         Permission.PermanentlyDenied -> {
                             if (ignoreLocationPermission) {
-                                it.dialogState
+                               MapDialogState.None
                             } else {
                                 MapDialogState.LocationPermissionPermanentlyDenied
                             }

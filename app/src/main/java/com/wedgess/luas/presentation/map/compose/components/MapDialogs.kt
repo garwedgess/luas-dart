@@ -13,6 +13,7 @@ fun MapDialogs(
     onEvent: (MapContract.Event) -> Unit,
 ) {
     when (dialogState) {
+        MapDialogState.None -> Unit
         MapDialogState.LocationPermissionRationale -> AlertDialog(
             onDismissRequest = { onEvent(MapContract.Event.OnDismissDialogClick) },
             title = { Text("Location Permission") },
@@ -28,8 +29,6 @@ fun MapDialogs(
                 }
             },
         )
-
-        MapDialogState.None -> Unit
 
         MapDialogState.LocationPermissionPermanentlyDenied -> AlertDialog(
             onDismissRequest = { onEvent(MapContract.Event.OnDismissDialogClick) },

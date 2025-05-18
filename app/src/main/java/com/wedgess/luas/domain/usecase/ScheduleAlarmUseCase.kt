@@ -1,6 +1,5 @@
 package com.wedgess.luas.domain.usecase
 
-import com.wedgess.luas.data.model.NotificationData
 import com.wedgess.luas.domain.model.NotificationEntity
 import com.wedgess.luas.domain.repository.AlarmRepository
 import javax.inject.Inject

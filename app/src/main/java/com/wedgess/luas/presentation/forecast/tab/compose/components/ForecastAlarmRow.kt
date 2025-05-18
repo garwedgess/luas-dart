@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.compose.components
+package com.wedgess.luas.presentation.forecast.tab.compose.components
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.wedgess.luas.presentation.forecast.model.NotificationState
+import com.wedgess.luas.presentation.forecast.tab.model.NotificationState
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @SuppressLint("ComposeModifierMissing")

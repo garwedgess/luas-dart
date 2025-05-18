@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.wedgess.luas.presentation.components.MainTopAppbar
-import com.wedgess.luas.presentation.forecast.compose.components.RefreshProgressIndicator
+import com.wedgess.luas.presentation.forecast.tab.compose.components.RefreshProgressIndicator
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.navigation.BottomNavigationBar
 import com.wedgess.luas.presentation.navigation.MainNavigationGraph

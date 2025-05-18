@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.compose.components
+package com.wedgess.luas.presentation.forecast.tab.compose.components
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState

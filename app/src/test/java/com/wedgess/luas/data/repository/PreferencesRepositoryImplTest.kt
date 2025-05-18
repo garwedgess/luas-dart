@@ -36,7 +36,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("RED_STATION")
                 .setSelectedGreenLineStation("GREEN_STATION")
-                .build()
+                .build(),
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -55,7 +55,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("RED_STATION")
                 .setSelectedGreenLineStation("GREEN_STATION")
-                .build()
+                .build(),
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -74,7 +74,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("OLD_RED_STATION")
                 .setSelectedGreenLineStation("GREEN_STATION")
-                .build()
+                .build(),
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -116,7 +116,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("RED_STATION")
                 .setSelectedGreenLineStation("OLD_GREEN_STATION")
-                .build()
+                .build(),
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -149,5 +149,241 @@ class PreferencesRepositoryImplTest {
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
         coVerify { preferences.updateData(any()) }
+    }
+
+    @Test
+    fun `updateLocationPermissionRequested - updates the requested state successfully`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setLocationPermissionRequested(false)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        val updateDataLambdaSlot = slot<suspend (UserPreferences) -> UserPreferences>()
+        coEvery { preferences.updateData(capture(updateDataLambdaSlot)) } coAnswers {
+            val lambda = updateDataLambdaSlot.captured
+            userPreferencesFlow.value = lambda(userPreferencesFlow.value)
+            userPreferencesFlow.value
+        }
+
+        // When
+        val result = repository.updateLocationPermissionRequested(true)
+
+        // Then
+        assertTrue(result.isSuccess)
+        coVerify { preferences.updateData(any()) }
+        assertTrue(userPreferencesFlow.value.locationPermissionRequested)
+    }
+
+    @Test
+    fun `updateLocationPermissionRequested - handles failure`() = runTest {
+        // Given
+        val exception = RuntimeException("Update error")
+        coEvery { preferences.updateData(any()) } throws exception
+
+        // When
+        val result = repository.updateLocationPermissionRequested(true)
+
+        // Then
+        assertTrue(result.isFailure)
+        assertEquals(exception, result.exceptionOrNull())
+        coVerify { preferences.updateData(any()) }
+    }
+
+    @Test
+    fun `updateIgnoreLocationPermission - updates the ignore state successfully`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setIgnoreLocationPermission(false)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        val updateDataLambdaSlot = slot<suspend (UserPreferences) -> UserPreferences>()
+        coEvery { preferences.updateData(capture(updateDataLambdaSlot)) } coAnswers {
+            val lambda = updateDataLambdaSlot.captured
+            userPreferencesFlow.value = lambda(userPreferencesFlow.value)
+            userPreferencesFlow.value
+        }
+
+        // When
+        val result = repository.updateIgnoreLocationPermission(true)
+
+        // Then
+        assertTrue(result.isSuccess)
+        coVerify { preferences.updateData(any()) }
+        assertTrue(userPreferencesFlow.value.ignoreLocationPermission)
+    }
+
+    @Test
+    fun `updateIgnoreLocationPermission - handles failure`() = runTest {
+        // Given
+        val exception = RuntimeException("Update error")
+        coEvery { preferences.updateData(any()) } throws exception
+
+        // When
+        val result = repository.updateIgnoreLocationPermission(true)
+
+        // Then
+        assertTrue(result.isFailure)
+        assertEquals(exception, result.exceptionOrNull())
+        coVerify { preferences.updateData(any()) }
+    }
+
+    @Test
+    fun `updateNotificationPermissionRequested - updates the requested state successfully`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setNotificationPermissionRequested(false)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        val updateDataLambdaSlot = slot<suspend (UserPreferences) -> UserPreferences>()
+        coEvery { preferences.updateData(capture(updateDataLambdaSlot)) } coAnswers {
+            val lambda = updateDataLambdaSlot.captured
+            userPreferencesFlow.value = lambda(userPreferencesFlow.value)
+            userPreferencesFlow.value
+        }
+
+        // When
+        val result = repository.updateNotificationPermissionRequested(true)
+
+        // Then
+        assertTrue(result.isSuccess)
+        coVerify { preferences.updateData(any()) }
+        assertTrue(userPreferencesFlow.value.notificationPermissionRequested)
+    }
+
+    @Test
+    fun `updateNotificationPermissionRequested - handles failure`() = runTest {
+        // Given
+        val exception = RuntimeException("Update error")
+        coEvery { preferences.updateData(any()) } throws exception
+
+        // When
+        val result = repository.updateNotificationPermissionRequested(true)
+
+        // Then
+        assertTrue(result.isFailure)
+        assertEquals(exception, result.exceptionOrNull())
+        coVerify { preferences.updateData(any()) }
+    }
+
+    @Test
+    fun `updateIgnoreNotificationPermission - updates the ignore state successfully`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setIgnoreNotificationPermission(false)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        val updateDataLambdaSlot = slot<suspend (UserPreferences) -> UserPreferences>()
+        coEvery { preferences.updateData(capture(updateDataLambdaSlot)) } coAnswers {
+            val lambda = updateDataLambdaSlot.captured
+            userPreferencesFlow.value = lambda(userPreferencesFlow.value)
+            userPreferencesFlow.value
+        }
+
+        // When
+        val result = repository.updateIgnoreNotificationPermission(true)
+
+        // Then
+        assertTrue(result.isSuccess)
+        coVerify { preferences.updateData(any()) }
+        assertTrue(userPreferencesFlow.value.ignoreNotificationPermission)
+    }
+
+    @Test
+    fun `updateIgnoreNotificationPermission - handles failure`() = runTest {
+        // Given
+        val exception = RuntimeException("Update error")
+        coEvery { preferences.updateData(any()) } throws exception
+
+        // When
+        val result = repository.updateIgnoreNotificationPermission(true)
+
+        // Then
+        assertTrue(result.isFailure)
+        assertEquals(exception, result.exceptionOrNull())
+        coVerify { preferences.updateData(any()) }
+    }
+
+    @Test
+    fun `ignoreLocationPermission - returns the correct state`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setIgnoreLocationPermission(true)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        // When/Then
+        repository.ignoreLocationPermission().test {
+            val ignored = awaitItem()
+            assertTrue(ignored)
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `ignoreNotificationPermission - returns the correct state`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setIgnoreNotificationPermission(true)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        // When/Then
+        repository.ignoreNotificationPermission().test {
+            val ignored = awaitItem()
+            assertTrue(ignored)
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `wasLocationPermissionRequested - returns the correct state`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setLocationPermissionRequested(true)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        // When/Then
+        repository.wasLocationPermissionRequested().test {
+            val requested = awaitItem()
+            assertTrue(requested)
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `wasNotificationPermissionRequested - returns the correct state`() = runTest {
+        // Given
+        val userPreferencesFlow = MutableStateFlow(
+            UserPreferences.newBuilder()
+                .setNotificationPermissionRequested(true)
+                .build(),
+        )
+        coEvery { preferences.data } returns userPreferencesFlow
+
+        // When/Then
+        repository.wasNotificationPermissionRequested().test {
+            val requested = awaitItem()
+            assertTrue(requested)
+            cancelAndConsumeRemainingEvents()
+        }
     }
 }

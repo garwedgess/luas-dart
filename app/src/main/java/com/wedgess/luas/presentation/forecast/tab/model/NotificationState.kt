@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.model
+package com.wedgess.luas.presentation.forecast.tab.model
 
 data class NotificationState(
     val dueInMins: Int = 0,

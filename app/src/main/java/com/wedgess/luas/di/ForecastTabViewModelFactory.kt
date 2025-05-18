@@ -1,10 +1,10 @@
 package com.wedgess.luas.di
 
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.presentation.forecast.viewmodel.ForecastViewModel
+import com.wedgess.luas.presentation.forecast.tab.viewmodel.ForecastTabViewModel
 import dagger.assisted.AssistedFactory
 
 @AssistedFactory
 interface ForecastTabViewModelFactory {
-    fun create(luasLine: LuasLineEntity): ForecastViewModel
+    fun create(luasLine: LuasLineEntity): ForecastTabViewModel
 }

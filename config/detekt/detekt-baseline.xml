@@ -2,31 +2,82 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
+    <ID>ArgumentListWrapping:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$(AlarmReceiver.EXTRA_ALARM_ID, intentSlot.captured.extras?.keySet()?.find { it == AlarmReceiver.EXTRA_ALARM_ID })</ID>
+    <ID>ArgumentListWrapping:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$(AlarmReceiver.EXTRA_NOTIFICATION_DATA, intentSlot.captured.extras?.keySet()?.find { it == AlarmReceiver.EXTRA_NOTIFICATION_DATA })</ID>
+    <ID>ArgumentListWrapping:ForecastDialogs.kt$("In order to show the notifications, the app requires to have permission to set exact alarms. You need to manually enable the permission, do you want to be taken to the permission screen now?")</ID>
+    <ID>ArgumentListWrapping:ForecastDialogs.kt$("Notification permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant notification permission now?")</ID>
+    <ID>ArgumentListWrapping:ForecastDialogs.kt$("Notification permission is required if you want to set notifications for Luas arrivals. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings")</ID>
+    <ID>ArgumentListWrapping:ForecastTabContent.kt$((ForecastTabContract.Event.OnStopSelected(stop)))</ID>
+    <ID>ArgumentListWrapping:ForecastTabContent.kt$(ForecastTabContract.Event.OnShowTravelUpdatesDialog)</ID>
+    <ID>ArgumentListWrapping:ForecastTabContent.kt$(stop)</ID>
+    <ID>ArgumentListWrapping:ForecastViewModel.kt$ForecastViewModel$("Notification, wasNotificationPermissionRequested: $wasNotificationPermissionRequested, ignoreNotificationPermission: $ignoreNotificationPermission, permission: $permission")</ID>
+    <ID>ArgumentListWrapping:ListPicker.kt$(y = itemHeight * (coercedOutOfBoundsPageCount + 1) - dividerThickness / 2)</ID>
+    <ID>ArgumentListWrapping:MapDialogs.kt$("Location permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant location permission now?")</ID>
+    <ID>ArgumentListWrapping:MapDialogs.kt$("Location permission is only required if you wish to show your current location on the map. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings")</ID>
+    <ID>CyclomaticComplexMethod:ListPicker.kt$@Composable fun &lt;E&gt; ListPicker( initialValue: E, values: ImmutableList&lt;E&gt;, onValueChange: (E) -&gt; Unit, onIsErrorChange: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, wrapSelectorWheel: Boolean = false, format: E.() -&gt; String = { toString() }, parse: (String.() -&gt; E?)? = null, enableEdition: Boolean = parse != null, outOfBoundsPageCount: Int = 1, textStyle: TextStyle = LocalTextStyle.current, verticalPadding: Dp = 16.dp, dividerColor: Color = MaterialTheme.colorScheme.outline, dividerThickness: Dp = 1.dp, keyboardType: KeyboardType = KeyboardType.Text, )</ID>
+    <ID>EmptyElseBlock:ForecastTabViewModel.kt$ForecastTabViewModel${ }</ID>
+    <ID>ExplicitItLambdaParameter:ListPicker.kt${ it: Int -&gt; it + (listSize * (iteration / 2)) }</ID>
+    <ID>Filename:ForecastTabViewModelTest.kt$com.wedgess.luas.presentation.forecast.tab.viewmodel.ForecastTabViewModelTest.kt</ID>
+    <ID>ImportOrdering:MainNavigationGraph.kt$import androidx.compose.runtime.Composable import androidx.compose.ui.Modifier import androidx.navigation.NavHostController import androidx.navigation.compose.NavHost import com.wedgess.luas.presentation.news.navigation.newsRoot import com.wedgess.luas.presentation.forecast.compose.navigation.forecastRoot import com.wedgess.luas.presentation.main.model.TopAppBarState import com.wedgess.luas.presentation.map.compose.navigation.mapRoot</ID>
+    <ID>ImportOrdering:NewsRoot.kt$import androidx.compose.runtime.LaunchedEffect import androidx.compose.ui.platform.LocalContext import androidx.navigation.NavGraphBuilder import androidx.navigation.compose.composable import com.wedgess.luas.R import com.wedgess.luas.presentation.news.compose.TravelUpdatesWebViewContent import com.wedgess.luas.presentation.main.model.TopAppBarState import com.wedgess.luas.presentation.navigation.Screens</ID>
+    <ID>Indentation:MapViewModel.kt$MapViewModel$ </ID>
+    <ID>LambdaParameterInRestartableEffect:CollectSideEffect.kt$onSideEffect</ID>
     <ID>LambdaParameterInRestartableEffect:ForecastScreen.kt$setRefreshAction</ID>
     <ID>LambdaParameterInRestartableEffect:ForecastTabContent.kt$onProgressChange</ID>
     <ID>LambdaParameterInRestartableEffect:ForecastTabContent.kt$onRefreshAction</ID>
-    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onPermissionDenied</ID>
-    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onPermissionGranted</ID>
-    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onPermissionsRevoked</ID>
-    <ID>LambdaParameterInRestartableEffect:RequestLocationPermissions.kt$onShowRationale</ID>
-    <ID>LongMethod:MapLibreMap.kt$private fun createTooltipBitmap( context: Context, text: String ): Bitmap</ID>
+    <ID>LambdaParameterInRestartableEffect:ListPicker.kt$onValueChange</ID>
+    <ID>LongMethod:MapLibreMap.kt$private fun createTooltipBitmap( context: Context, text: String, ): Bitmap</ID>
+    <ID>LongParameterList:ForecastTabContent.kt$( uiState: ForecastTabContract.UiState, onShowTravelUpdatesDialog: () -&gt; Unit, onStopSelected: (StopEntity) -&gt; Unit, onTramClick: (Int, String) -&gt; Unit, onProgressChange: (Float) -&gt; Unit, onCancelAlarm: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:ForecastTabViewModel.kt$ForecastTabViewModel$( @Assisted val luasLine: LuasLineEntity, fetchStopsUseCase: FetchStopsUseCase, private val fetchForecastUseCase: FetchForecastUseCase, private val updateSelectedStationUseCase: UpdateSelectedStationUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val cancelAlarmUseCase: CancelAlarmUseCase, private val scheduleAlarmUseCase: ScheduleAlarmUseCase, isAlarmRunningUseCase: FetchIsAlarmRunningUseCase, fetchSelectedStationUseCase: FetchSelectedStationUseCase, )</ID>
+    <ID>MagicNumber:AlarmRepositoryImpl.kt$AlarmRepositoryImpl$1000</ID>
     <ID>MagicNumber:DropdownTextField.kt$0xFF119955</ID>
     <ID>MagicNumber:ForecastScreen.kt$0xFF66BF63</ID>
     <ID>MagicNumber:ForecastScreen.kt$0xFFE53935</ID>
     <ID>MagicNumber:ForecastStatusMessage.kt$0xFF228A43</ID>
     <ID>MagicNumber:ForecastStatusMessage.kt$0xFF996600</ID>
+    <ID>MagicNumber:ForecastTabViewModel.kt$ForecastTabViewModel$60_000</ID>
+    <ID>MagicNumber:ListPicker.kt$0.5F</ID>
+    <ID>MagicNumber:ListPicker.kt$3</ID>
     <ID>MagicNumber:LocationRepositoryImpl.kt$LocationRepositoryImpl$10f</ID>
     <ID>MagicNumber:MapLibreMap.kt$0.5f</ID>
     <ID>MagicNumber:MapLibreMap.kt$1.5f</ID>
     <ID>MagicNumber:MapLibreMap.kt$10</ID>
     <ID>MagicNumber:MapLibreMap.kt$10f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$12.0</ID>
     <ID>MagicNumber:MapLibreMap.kt$150</ID>
     <ID>MagicNumber:MapLibreMap.kt$16</ID>
-    <ID>MagicNumber:MapLibreMap.kt$18.0</ID>
+    <ID>MagicNumber:MapLibreMap.kt$16.0</ID>
     <ID>MagicNumber:MapLibreMap.kt$3.5f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$53.3498</ID>
     <ID>MagicNumber:MapLibreMap.kt$5f</ID>
+    <ID>MagicNumber:MapLibreMap.kt$6.2603</ID>
     <ID>MagicNumber:MapLibreMap.kt$8f</ID>
+    <ID>MagicNumber:NotificationStateExt.kt$1000</ID>
+    <ID>MagicNumber:NotificationStateExt.kt$60</ID>
+    <ID>MatchingDeclarationName:ForecastTabViewModelTest.kt$ForecastTabViewModelAdditionalTests</ID>
+    <ID>MaxLineLength:ForecastAlarmRow.kt$text = "Notifying for ${notificationState.station} to ${notificationState.destination} in ${notificationState.dueInMins}"</ID>
+    <ID>MaxLineLength:ForecastDialogs.kt$text = { Text("In order to show the notifications, the app requires to have permission to set exact alarms. You need to manually enable the permission, do you want to be taken to the permission screen now?") }</ID>
+    <ID>MaxLineLength:ForecastDialogs.kt$text = { Text("Notification permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant notification permission now?") }</ID>
+    <ID>MaxLineLength:ForecastDialogs.kt$text = { Text("Notification permission is required if you want to set notifications for Luas arrivals. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings") }</ID>
+    <ID>MaxLineLength:ForecastTabContent.kt$onShowTravelUpdatesDialog = { forecastTabViewModel.onEvent(ForecastTabContract.Event.OnShowTravelUpdatesDialog) }</ID>
+    <ID>MaxLineLength:ForecastTabContent.kt$onStopSelected = { stop -&gt; forecastTabViewModel.onEvent((ForecastTabContract.Event.OnStopSelected(stop))) }</ID>
+    <ID>MaxLineLength:ForecastViewModel.kt$ForecastViewModel$ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick</ID>
+    <ID>MaxLineLength:ForecastViewModel.kt$ForecastViewModel$Timber.d("Notification, wasNotificationPermissionRequested: $wasNotificationPermissionRequested, ignoreNotificationPermission: $ignoreNotificationPermission, permission: $permission")</ID>
+    <ID>MaxLineLength:ListPicker.kt$*</ID>
+    <ID>MaxLineLength:ListPicker.kt$enableEdition &amp;&amp; (index == lazyListState.firstVisibleItemIndex + coercedOutOfBoundsPageCount)</ID>
+    <ID>MaxLineLength:ListPicker.kt$modifier = Modifier.offset(y = itemHeight * (coercedOutOfBoundsPageCount + 1) - dividerThickness / 2)</ID>
+    <ID>MaxLineLength:ListPicker.kt$text = if (wrapSelectorWheel) values[(index - coercedOutOfBoundsPageCount + listSize) % listSize].format() else ""</ID>
+    <ID>MaxLineLength:ListPicker.kt$text = if (wrapSelectorWheel) values[(index - coercedOutOfBoundsPageCount) % listSize].format() else ""</ID>
+    <ID>MaxLineLength:MapDialogs.kt$text = { Text("Location permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant location permission now?") }</ID>
+    <ID>MaxLineLength:MapDialogs.kt$text = { Text("Location permission is only required if you wish to show your current location on the map. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings") }</ID>
+    <ID>MaximumLineLength:ForecastAlarmRow.kt$ </ID>
+    <ID>MaximumLineLength:ForecastDialogs.kt$ </ID>
+    <ID>MaximumLineLength:ForecastTabContent.kt$ </ID>
+    <ID>MaximumLineLength:ForecastViewModel.kt$ForecastViewModel$ </ID>
+    <ID>MaximumLineLength:ListPicker.kt$ </ID>
+    <ID>MaximumLineLength:MapDialogs.kt$ </ID>
     <ID>ModifierMissing:BottomNavigationBar.kt$BottomNavigationBar</ID>
+    <ID>ModifierMissing:ForecastAlarmRow.kt$ForecastAlarmRow</ID>
     <ID>ModifierMissing:ForecastAppBarActions.kt$ForecastAppBarActions</ID>
     <ID>ModifierMissing:ForecastItemRow.kt$ForecastItemRow</ID>
     <ID>ModifierMissing:ForecastScreen.kt$ForecastScreen</ID>
@@ -35,22 +86,52 @@
     <ID>ModifierMissing:MainContent.kt$MainContent</ID>
     <ID>ModifierMissing:MainTopAppbar.kt$MainTopAppbar</ID>
     <ID>ModifierMissing:MapLibreMap.kt$MapLibreMap</ID>
-    <ID>ModifierMissing:MapScreen.kt$MapScreen</ID>
     <ID>ModifierMissing:RefreshProgressIndicator.kt$RefreshProgressIndicator</ID>
+    <ID>ModifierMissing:RequestNotificationPermission.kt$RequestNotificationPermission</ID>
     <ID>ModifierMissing:TramDirectionHeader.kt$TramDirectionHeader</ID>
     <ID>ModifierMissing:TravelUpdatesWebViewContent.kt$TravelUpdatesWebViewContent</ID>
+    <ID>MultiLineIfElse:ListPicker.kt$1</ID>
+    <ID>MultiLineIfElse:ListPicker.kt$remember(key1 = coercedOutOfBoundsPageCount, key2 = listSize) { (Int.MAX_VALUE - 2 * coercedOutOfBoundsPageCount) / listSize }</ID>
+    <ID>NoBlankLineBeforeRbrace:AlarmRepositoryImpl.kt$AlarmRepositoryImpl$ </ID>
+    <ID>NoBlankLineBeforeRbrace:ForecastTabViewModel.kt$ForecastTabViewModel$ </ID>
+    <ID>NoBlankLineBeforeRbrace:MapDialogs.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:AlarmManagerDataSource.kt$AlarmManagerDataSource$ </ID>
+    <ID>NoConsecutiveBlankLines:AlarmReceiver.kt$AlarmReceiver$ </ID>
+    <ID>NoConsecutiveBlankLines:MapViewModelTest.kt$MapViewModelTest$ </ID>
+    <ID>NoEmptyFirstLineInMethodBlock:ForecastTabViewModel.kt$ForecastTabViewModel$ </ID>
+    <ID>NoMultipleSpaces:MapLibreMap.kt$ </ID>
+    <ID>NoUnusedImports:ForecastScreen.kt$com.wedgess.luas.presentation.forecast.compose.ForecastScreen.kt</ID>
+    <ID>NoUnusedImports:IsLocationPermissionIgnoredUseCase.kt$com.wedgess.luas.domain.usecase.IsLocationPermissionIgnoredUseCase.kt</ID>
+    <ID>NoUnusedImports:TravelUpdatesWebViewContent.kt$com.wedgess.luas.presentation.news.compose.TravelUpdatesWebViewContent.kt</ID>
     <ID>ParameterNaming:AnimatedTabContainer.kt$onTabSelected</ID>
     <ID>ParameterNaming:ForecastTabContent.kt$onStopSelected</ID>
     <ID>ParameterNaming:MainNavigationGraph.kt$onRefreshProgressChanged</ID>
-    <ID>ParameterNaming:RequestLocationPermissions.kt$onPermissionDenied</ID>
-    <ID>ParameterNaming:RequestLocationPermissions.kt$onPermissionGranted</ID>
-    <ID>ParameterNaming:RequestLocationPermissions.kt$onPermissionsRevoked</ID>
+    <ID>ReturnCount:AlarmReceiver.kt$AlarmReceiver$override fun onReceive(context: Context, intent: Intent)</ID>
+    <ID>SpacingAroundCurly:MapDialogs.kt$}</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$@RelaxedMockK private lateinit var alarmManager: AlarmManager</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$@RelaxedMockK private lateinit var pendingIntent: PendingIntent</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$@RelaxedMockK private lateinit var powerManager: PowerManager</ID>
     <ID>SpreadOperator:UiText.kt$UiText$(id, *formatArgs)</ID>
     <ID>SpreadOperator:UiText.kt$UiText$(id, count, *formatArgs)</ID>
     <ID>ThrowsCount:RequestResult.kt$private suspend inline fun &lt;reified T&gt; HttpResponse.handleResponse(): T</ID>
+    <ID>TooGenericExceptionCaught:LocationRepositoryImpl.kt$LocationRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MapLibreMap.kt$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ResultOf.kt$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:LocationRepositoryImplTest.kt$LocationRepositoryImplTest$throw RuntimeException("Test exception in request")</ID>
     <ID>TooGenericExceptionThrown:UserPreferencesSerializerTest.kt$UserPreferencesSerializerTest.&lt;no name provided&gt;$throw Exception()</ID>
     <ID>TooManyFunctions:MapLibreMap.kt$com.wedgess.luas.presentation.map.compose.components.MapLibreMap.kt</ID>
-    <ID>ViewModelInjection:ForecastTabContent.kt$stopsViewModel</ID>
+    <ID>TooManyFunctions:PreferencesRepository.kt$PreferencesRepository</ID>
+    <ID>TooManyFunctions:PreferencesRepositoryImpl.kt$PreferencesRepositoryImpl : PreferencesRepository</ID>
+    <ID>UnusedParameter:AlarmReceiver.kt$AlarmReceiver$context: Context</ID>
+    <ID>Wrapping:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$it == AlarmReceiver.EXTRA_ALARM_ID</ID>
+    <ID>Wrapping:AlarmManagerDataSourceTest.kt$AlarmManagerDataSourceTest$it == AlarmReceiver.EXTRA_NOTIFICATION_DATA</ID>
+    <ID>Wrapping:ForecastDialogs.kt$Text("In order to show the notifications, the app requires to have permission to set exact alarms. You need to manually enable the permission, do you want to be taken to the permission screen now?")</ID>
+    <ID>Wrapping:ForecastDialogs.kt$Text("Notification permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant notification permission now?")</ID>
+    <ID>Wrapping:ForecastDialogs.kt$Text("Notification permission is required if you want to set notifications for Luas arrivals. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings")</ID>
+    <ID>Wrapping:MapDialogs.kt$Text("Location permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant location permission now?")</ID>
+    <ID>Wrapping:MapDialogs.kt$Text("Location permission is only required if you wish to show your current location on the map. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings")</ID>
+    <ID>Wrapping:RequestPermission.kt$(</ID>
+    <ID>Wrapping:ScheduleAlarmUseCaseTest.kt$ScheduleAlarmUseCaseTest$alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity)</ID>
+    <ID>Wrapping:WasNotificationPermissionRequestedUseCaseTest.kt$WasNotificationPermissionRequestedUseCaseTest$preferencesRepository.wasNotificationPermissionRequested()</ID>
   </CurrentIssues>
 </SmellBaseline>

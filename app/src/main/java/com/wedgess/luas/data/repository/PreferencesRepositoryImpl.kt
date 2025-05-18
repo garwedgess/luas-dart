@@ -66,6 +66,16 @@ class PreferencesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateIgnoreNotificationPermission(ignore: Boolean): Result<Unit> {
+        return withContext(ioDispatcher) {
+            runWithErrorHandling {
+                preferences.updateData { preferences ->
+                    preferences.toBuilder().setIgnoreNotificationPermission(ignore).build()
+                }
+            }
+        }
+    }
+
     override fun fetchSelectedGreenLineStation(): Flow<String> {
         return preferences.data.map { it.selectedGreenLineStation }
     }
@@ -76,6 +86,10 @@ class PreferencesRepositoryImpl @Inject constructor(
 
     override fun ignoreLocationPermission(): Flow<Boolean> {
         return preferences.data.map { it.ignoreLocationPermission }
+    }
+
+    override fun ignoreNotificationPermission(): Flow<Boolean> {
+        return preferences.data.map { it.ignoreNotificationPermission }
     }
 
     override fun wasLocationPermissionRequested(): Flow<Boolean> {

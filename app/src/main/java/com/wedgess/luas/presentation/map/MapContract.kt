@@ -14,7 +14,7 @@ interface MapContract {
         val greenLineLocations: List<StopEntity>,
         val redLineLocations: List<StopEntity>,
         val locationPermission: Permission,
-        val dialogState: MapDialogState
+        val dialogState: MapDialogState,
     ) {
         companion object {
             fun initial() = UiState(
@@ -22,21 +22,22 @@ interface MapContract {
                 greenLineLocations = emptyList(),
                 redLineLocations = emptyList(),
                 locationPermission = Permission.Unknown,
-                dialogState = MapDialogState.None
+                dialogState = MapDialogState.None,
             )
         }
     }
 
-    sealed class Event {
-        data object OnLocationPermanentlyDeniedDialog : Event()
-        data object OnAcceptPermissionClick : Event()
-        data object OnDismissPermissionClick : Event()
-        data object OnLocationWasRequested : Event()
-        data object OnDismissDialogClick : Event()
-        data object OnIgnoreLocationPermissionClick : Event()
-        data object OnOpenAppSettingsPermissionClick : Event()
+    sealed interface Event {
+        data object OnLocationPermanentlyDeniedDialog : Event
+        data object OnAcceptPermissionClick : Event
+        data object OnDismissPermissionClick : Event
+        data object OnLocationWasRequested : Event
+        data object OnDismissDialogClick : Event
+        data object OnIgnoreLocationPermissionClick : Event
+        data object OnOpenAppSettingsPermissionClick : Event
+
         @OptIn(ExperimentalPermissionsApi::class)
-        data class OnPermissionStateChanged(val state: MultiplePermissionsState) : Event()
+        data class OnPermissionStateChanged(val state: MultiplePermissionsState) : Event
     }
 
     sealed interface Effect {

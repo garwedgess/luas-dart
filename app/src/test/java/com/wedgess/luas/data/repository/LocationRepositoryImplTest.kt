@@ -19,6 +19,7 @@ import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -53,20 +54,21 @@ class LocationRepositoryImplTest {
     }
 
     @Test
-    fun `should emit location updates when available`() = runTest {
+    fun `should emit default location first and then location updates when available`() = runTest {
         // Given
         val expectedLocations = listOf(
+            UserLocation(0.0, 0.0), // Default location emitted immediately
             UserLocation(53.349805, -6.26031),
             UserLocation(53.350000, -6.261000)
         )
-        val mockLocations = expectedLocations.map {
+        val mockLocations = expectedLocations.drop(1).map { // Skip the default location
             createMockLocation(it.latitude, it.longitude)
         }
 
         // When
         val results = mutableListOf<UserLocation>()
         val job = launch {
-            locationRepository.getCurrentLocation().take(2).collect { results.add(it) }
+            locationRepository.getCurrentLocation().take(3).collect { results.add(it) }
         }
 
         // Then
@@ -102,14 +104,14 @@ class LocationRepositoryImplTest {
     }
 
     @Test
-    fun `should handle null location and emit valid location when available`() = runTest {
+    fun `should emit default location initially and handle null location`() = runTest {
         // Given
         val expectedLocation = UserLocation(53.1234, -6.5678)
 
         // When
         val results = mutableListOf<UserLocation>()
         val job = launch {
-            locationRepository.getCurrentLocation().take(1).collect { results.add(it) }
+            locationRepository.getCurrentLocation().take(2).toList(results)
         }
 
         // Then
@@ -123,7 +125,8 @@ class LocationRepositoryImplTest {
         )
 
         advanceUntilIdle()
-        assertEquals(listOf(expectedLocation), results)
+        // Should have the default location first, then the valid location (null locations don't emit anything)
+        assertEquals(listOf(UserLocation(0.0, 0.0), expectedLocation), results)
         job.cancel()
     }
 
@@ -143,6 +146,51 @@ class LocationRepositoryImplTest {
 
         // Then
         assertEquals(UserLocation(0.0, 0.0), userLocation)
+    }
+
+    @Test
+    fun `should remove location updates when flow is closed`() = runTest {
+        // When
+        val job = launch {
+            locationRepository.getCurrentLocation().collect {}
+        }
+
+        // Then
+        advanceUntilIdle()
+        verifyLocationUpdatesRequested()
+
+        job.cancel()
+        advanceUntilIdle()
+
+        verify {
+            fusedLocationClient.removeLocationUpdates(any<LocationCallback>())
+        }
+    }
+
+    @Test
+    fun `should emit default location when catch block is triggered`() = runTest {
+        // Given
+        every {
+            fusedLocationClient.requestLocationUpdates(
+                any<LocationRequest>(),
+                any<LocationCallback>(),
+                any<Looper>()
+            )
+        } answers {
+            secondArg<LocationCallback>().let { locationCallbackSlot.captured = it }
+            throw RuntimeException("Test exception in request") // Throw after capturing callback
+        }
+
+        // When
+        val results = mutableListOf<UserLocation>()
+        val job = launch {
+            locationRepository.getCurrentLocation().take(1).toList(results)
+        }
+
+        // Then
+        advanceUntilIdle()
+        assertEquals(listOf(UserLocation(0.0, 0.0)), results)
+        job.cancel()
     }
 
     // Helper methods

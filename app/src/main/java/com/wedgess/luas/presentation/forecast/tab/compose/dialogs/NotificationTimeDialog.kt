@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.compose.dialogs
+package com.wedgess.luas.presentation.forecast.tab.compose.dialogs
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement

@@ -10,13 +10,12 @@ import com.wedgess.luas.presentation.model.Permission
 @OptIn(ExperimentalPermissionsApi::class)
 fun MultiplePermissionsState.toPermission(wasPreviouslyRequested: Boolean) = when {
     this.allPermissionsGranted -> Permission.Granted
-    this.permissions.any { !it.status.isGranted && it.status.shouldShowRationale } -> Permission.ShowRationale
     this.permissions.any {
         !it.status.isGranted &&
             !it.status.shouldShowRationale &&
             wasPreviouslyRequested
     } -> Permission.PermanentlyDenied
-
+    this.permissions.any { !it.status.isGranted && it.status.shouldShowRationale } -> Permission.ShowRationale
     this.permissions.all { !it.status.isGranted } -> Permission.Denied
     else -> Permission.Unknown
 }

@@ -4,9 +4,9 @@ import com.wedgess.luas.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-class WasNotificationPermissionRequestedUseCase @Inject constructor(
+class IsNotificationPermissionIgnoredUseCase @Inject constructor(
     private val preferencesRepository: PreferencesRepository
 ) {
 
-    suspend operator fun invoke(): Boolean = preferencesRepository.wasNotificationPermissionRequested().first()
+    suspend operator fun invoke(): Boolean = preferencesRepository.ignoreNotificationPermission().first()
 }

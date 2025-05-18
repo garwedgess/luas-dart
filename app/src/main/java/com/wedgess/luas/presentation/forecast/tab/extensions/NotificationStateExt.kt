@@ -1,7 +1,7 @@
-package com.wedgess.luas.presentation.forecast.extensions
+package com.wedgess.luas.presentation.forecast.tab.extensions
 
 import com.wedgess.luas.domain.model.NotificationEntity
-import com.wedgess.luas.presentation.forecast.model.NotificationState
+import com.wedgess.luas.presentation.forecast.tab.model.NotificationState
 
 fun NotificationState.toEntity() = NotificationEntity(
     dueInMins = dueInMins,

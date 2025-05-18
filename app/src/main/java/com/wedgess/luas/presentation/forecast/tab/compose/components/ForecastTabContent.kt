@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.compose.components
+package com.wedgess.luas.presentation.forecast.tab.compose.components
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
@@ -27,8 +27,8 @@ import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
-import com.wedgess.luas.presentation.forecast.ForecastContract
-import com.wedgess.luas.presentation.forecast.viewmodel.ForecastViewModel
+import com.wedgess.luas.presentation.forecast.tab.ForecastTabContract
+import com.wedgess.luas.presentation.forecast.tab.viewmodel.ForecastTabViewModel
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.ui.theme.LuasTheme
 import kotlinx.collections.immutable.toImmutableList
@@ -38,17 +38,17 @@ fun ForecastTabContent(
     line: LuasLineEntity,
     onRefreshAction: (() -> Unit) -> Unit,
     onProgressChange: (Float) -> Unit,
-    stopsViewModel: ForecastViewModel = hiltViewModel(
+    forecastTabViewModel: ForecastTabViewModel = hiltViewModel(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
             factory.create(line)
         },
     ),
 ) {
-    val uiResult by stopsViewModel.uiResult.collectAsStateWithLifecycle()
+    val uiResult by forecastTabViewModel.uiResult.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        onRefreshAction { stopsViewModel.onEvent(ForecastContract.Event.OnRefresh) }
+        onRefreshAction { forecastTabViewModel.onEvent(ForecastTabContract.Event.OnRefresh) }
     }
     uiResult.Compose(
         onLoading = {
@@ -63,25 +63,25 @@ fun ForecastTabContent(
         onSuccess = { uiState ->
             TabListContent(
                 uiState = uiState,
-                onStopSelected = { stop -> stopsViewModel.onEvent((ForecastContract.Event.OnStopSelected(stop))) },
+                onStopSelected = { stop -> forecastTabViewModel.onEvent((ForecastTabContract.Event.OnStopSelected(stop))) },
                 onProgressChange = onProgressChange,
-                onShowTravelUpdatesDialog = { stopsViewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog) },
+                onShowTravelUpdatesDialog = { forecastTabViewModel.onEvent(ForecastTabContract.Event.OnShowTravelUpdatesDialog) },
                 onTramClick = { mins, destination ->
-                    stopsViewModel.onEvent(
-                        ForecastContract.Event.OnShowNotificationsDialog(
+                    forecastTabViewModel.onEvent(
+                        ForecastTabContract.Event.OnShowNotificationsDialog(
                             mins,
                             destination,
                         ),
                     )
                 },
                 onCancelAlarm = {
-                    stopsViewModel.onEvent(ForecastContract.Event.OnStopNotification)
+                    forecastTabViewModel.onEvent(ForecastTabContract.Event.OnStopNotification)
                 },
             )
-            ForecastDialogs(
+            ForecastTabDialogs(
                 dialogsState = uiState.dialog,
                 notificationState = uiState.notificationState,
-                onEvent = { event -> stopsViewModel.onEvent(event) },
+                onEvent = forecastTabViewModel::onEvent,
             )
         },
     )
@@ -91,7 +91,7 @@ fun ForecastTabContent(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabListContent(
-    uiState: ForecastContract.UiState,
+    uiState: ForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelected: (StopEntity) -> Unit,
     onTramClick: (Int, String) -> Unit,

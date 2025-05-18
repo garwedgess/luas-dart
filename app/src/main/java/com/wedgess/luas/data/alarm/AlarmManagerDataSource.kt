@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
+import androidx.annotation.VisibleForTesting
 import com.wedgess.luas.data.model.NotificationData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,6 +125,7 @@ class AlarmManagerDataSource @Inject constructor(
     }
 
     companion object {
-        private const val ALARM_REQUEST_CODE = 121
+        @VisibleForTesting
+        const val ALARM_REQUEST_CODE = 121
     }
 }

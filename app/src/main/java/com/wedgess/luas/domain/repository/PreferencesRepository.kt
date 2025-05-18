@@ -9,9 +9,11 @@ interface PreferencesRepository {
     suspend fun updateLocationPermissionRequested(requested: Boolean): Result<Unit>
     suspend fun updateIgnoreLocationPermission(ignore: Boolean): Result<Unit>
     suspend fun updateNotificationPermissionRequested(requested: Boolean): Result<Unit>
+    suspend fun updateIgnoreNotificationPermission(ignore: Boolean): Result<Unit>
     fun fetchSelectedGreenLineStation(): Flow<String>
     fun fetchSelectedRedLineStation(): Flow<String>
     fun ignoreLocationPermission(): Flow<Boolean>
+    fun ignoreNotificationPermission(): Flow<Boolean>
     fun wasLocationPermissionRequested(): Flow<Boolean>
     fun wasNotificationPermissionRequested(): Flow<Boolean>
 }

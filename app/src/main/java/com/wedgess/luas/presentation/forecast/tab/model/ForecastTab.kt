@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.model
+package com.wedgess.luas.presentation.forecast.tab.model
 
 import com.wedgess.luas.R
 import com.wedgess.luas.domain.model.LuasLineEntity

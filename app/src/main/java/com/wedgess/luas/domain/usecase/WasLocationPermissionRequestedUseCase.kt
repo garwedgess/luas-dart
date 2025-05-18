@@ -4,7 +4,9 @@ import com.wedgess.luas.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-class WasLocationPermissionRequestedUseCase @Inject constructor(private val preferencesRepository: PreferencesRepository) {
+class WasLocationPermissionRequestedUseCase @Inject constructor(
+    private val preferencesRepository: PreferencesRepository
+) {
 
     suspend operator fun invoke(): Boolean = preferencesRepository.wasLocationPermissionRequested().first()
 }

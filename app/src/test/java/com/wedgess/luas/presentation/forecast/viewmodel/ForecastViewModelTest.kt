@@ -2,27 +2,29 @@ package com.wedgess.luas.presentation.forecast.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
-import com.wedgess.luas.domain.model.ForcastEntity
-import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.RefreshMode
-import com.wedgess.luas.domain.model.RefreshState
-import com.wedgess.luas.domain.model.StopEntity
-import com.wedgess.luas.domain.usecase.FetchForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
-import com.wedgess.luas.domain.usecase.FetchStopsUseCase
-import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.isGranted
+import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
+import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
+import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
+import com.wedgess.luas.domain.usecase.UpdateIgnoreNotificationPermissionUseCase
+import com.wedgess.luas.domain.usecase.UpdateNotificationPermissionRequestedUseCase
+import com.wedgess.luas.domain.usecase.WasNotificationPermissionRequestedUseCase
 import com.wedgess.luas.presentation.forecast.ForecastContract
 import com.wedgess.luas.presentation.forecast.model.ForecastDialogState
-import com.wedgess.luas.presentation.model.UiResult
+import com.wedgess.luas.presentation.model.Permission
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -33,8 +35,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.util.UUID
 
+@OptIn(ExperimentalPermissionsApi::class)
 @ExperimentalCoroutinesApi
 class ForecastViewModelTest {
 
@@ -42,74 +44,47 @@ class ForecastViewModelTest {
     val instantExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
-    private val luasLine = LuasLineEntity.GREEN
 
     @MockK
-    private lateinit var fetchStopsUseCase: FetchStopsUseCase
+    private lateinit var isNotificationPermissionIgnoredUseCase: IsNotificationPermissionIgnoredUseCase
 
     @MockK
-    private lateinit var fetchForecastUseCase: FetchForecastUseCase
+    private lateinit var wasNotificationPermissionRequestedUseCase: WasNotificationPermissionRequestedUseCase
 
     @MockK
-    private lateinit var updateSelectedStationUseCase: UpdateSelectedStationUseCase
+    private lateinit var updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase
 
     @MockK
-    private lateinit var fetchSelectedStationUseCase: FetchSelectedStationUseCase
+    private lateinit var updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase
+
+    @MockK
+    private lateinit var canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase
+
+    @MockK
+    private lateinit var requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase
 
     private lateinit var viewModel: ForecastViewModel
-
-    private val mockStops = listOf(
-        StopEntity(
-            id = UUID.randomUUID(),
-            abbreviation = "STA",
-            name = "St. Stephens Green",
-            latitude = 53.33963,
-            longitude = -6.26070,
-            line = LuasLineEntity.GREEN,
-            isParkAndRide = false,
-            isCycleAndRide = false
-        ),
-        StopEntity(
-            id = UUID.randomUUID(),
-            abbreviation = "HAR",
-            name = "Harcourt",
-            latitude = 53.33334,
-            longitude = -6.26302,
-            line = LuasLineEntity.GREEN,
-            isParkAndRide = false,
-            isCycleAndRide = false
-        )
-    )
-
-    private val mockForecast = ForcastEntity(
-        message = "Trams operating normally",
-        stop = "St. Stephens Green",
-        createdAt = "2025-03-02T21:48:50",
-        inboundTrams = emptyList(),
-        outboundTrams = emptyList(),
-        stopAbv = "STS"
-    )
-
-    private val stopsFlow = MutableStateFlow(Result.success(mockStops))
-    private val forecastFlow = MutableStateFlow<RefreshState<ForcastEntity>>(RefreshState.Success(mockForecast, 0f))
-    private val selectedStationFlow = MutableStateFlow("")
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
 
-        every { fetchStopsUseCase(any()) } returns stopsFlow
-        every { fetchForecastUseCase(any()) } returns forecastFlow
-        every { fetchSelectedStationUseCase(any()) } returns selectedStationFlow
-        coEvery { updateSelectedStationUseCase(any(), any()) } returns Result.success(Unit)
+        // Default behavior for use cases
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns false
+        coEvery { updateNotificationPermissionRequestedUseCase(any()) } returns Result.success(Unit)
+        coEvery { updateIgnoreNotificationPermissionUseCase(any()) } returns Result.success(Unit)
+        coEvery { canScheduleExactAlarmsUseCase() } returns true
+        coEvery { requestExactAlarmPermissionUseCase() } returns Unit
 
         viewModel = ForecastViewModel(
-            luasLine,
-            fetchStopsUseCase,
-            fetchForecastUseCase,
-            updateSelectedStationUseCase,
-            fetchSelectedStationUseCase
+            isNotificationPermissionIgnoredUseCase,
+            wasNotificationPermissionRequestedUseCase,
+            updateNotificationPermissionRequestedUseCase,
+            updateIgnoreNotificationPermissionUseCase,
+            canScheduleExactAlarmsUseCase,
+            requestExactAlarmPermissionUseCase
         )
     }
 
@@ -119,132 +94,248 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `initial state should be Loading`() = runTest {
-        assert(viewModel.uiResult.value is UiResult.Loading)
+    fun `initial state should have default values`() = runTest {
+        val initialState = viewModel.uiState.value
+        assertEquals(ForecastContract.UiState(), initialState)
+        assertEquals(ForecastDialogState.None, initialState.dialog)
+        assertEquals(Permission.Unknown, initialState.notificationPermission)
     }
 
     @Test
-    fun `should emit Success with stops and forecast when data is available`() = runTest {
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert(result is UiResult.Success)
+    fun `OnAcceptPermissionClick should clear dialog and emit ShowSystemNotificationPermissionDialog effect`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnAcceptPermissionClick)
+
+        // Assert
+        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
+
+        val effect = viewModel.sideEffect.first()
+        assertTrue(effect is ForecastContract.Effect.ShowSystemNotificationPermissionDialog)
+    }
+
+    @Test
+    fun `OnDismissPermissionClick should clear dialog and set permission to Denied`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnDismissPermissionClick)
+
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.Denied, state.notificationPermission)
+            assertEquals(ForecastDialogState.None, state.dialog)
         }
     }
 
     @Test
-    fun `should emit Error when stops fetch fails`() = runTest {
-        stopsFlow.value = Result.failure(Exception("Failed to fetch stops"))
+    fun `OnNotificationPermanentlyDeniedDialog should show permanently denied dialog`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnNotificationPermanentlyDeniedDialog)
 
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert(result is UiResult.Error)
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(ForecastDialogState.NotificationPermissionPermanentlyDenied, state.dialog)
         }
     }
 
     @Test
-    fun `should emit Empty when stops list is empty`() = runTest {
-        stopsFlow.value = Result.success(emptyList())
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert(result is UiResult.Empty)
+    fun `OnDismissDialogClick should clear dialog state`() = runTest {
+        // Setup - first set a dialog state
+        viewModel.onEvent(ForecastContract.Event.OnNotificationPermanentlyDeniedDialog)
+
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnDismissDialogClick)
+
+        // Assert
+        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
+    }
+
+    @Test
+    fun `OnIgnoreNotificationPermissionClick sets ignore flag and clears dialog`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnIgnoreNotificationPermissionClick)
+
+        // Assert
+        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
+        coVerify { updateIgnoreNotificationPermissionUseCase(true) }
+    }
+
+    @Test
+    fun `OnOpenAppSettingsPermissionClick should clear dialog and emit OpenAppPermissionScreen effect`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnOpenAppSettingsPermissionClick)
+
+        // Assert
+        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
+
+        val effect = viewModel.sideEffect.first()
+        assertTrue(effect is ForecastContract.Effect.OpenAppPermissionScreen)
+    }
+
+    @Test
+    fun `OnNotificationWasRequested persists requested flag`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnNotificationWasRequested)
+
+        // Assert
+        coVerify { updateNotificationPermissionRequestedUseCase(true) }
+    }
+
+    @Test
+    fun `OnOpenScheduleExactAlarmPermissionClick requests exact alarm permission and clears dialog`() = runTest {
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick)
+
+        // Assert
+        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
+        verify { requestExactAlarmPermissionUseCase() }
+    }
+
+    @Test
+    fun `handlePermissionChange sets permission to ShowRationale and shows rationale dialog`() = runTest {
+        // Setup
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+
+        // Mock properties to ensure toPermission returns ShowRationale
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Denied>().apply {
+            every { this@apply.shouldShowRationale } returns true
+            every { this@apply.isGranted } returns false
+        }
+
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.ShowRationale, state.notificationPermission)
+            assertEquals(ForecastDialogState.NotificationPermissionRationale, state.dialog)
         }
     }
 
     @Test
-    fun `should emit Error when forecast fetch fails`() = runTest {
-        forecastFlow.value = RefreshState.Error(Exception("Network error"))
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert(result is UiResult.Error)
+    fun `handlePermissionChange sets permission to PermanentlyDenied and shows dialog when not ignored`() = runTest {
+        // Setup
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+
+        // Mock properties to ensure toPermission returns PermanentlyDenied
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Denied>().apply {
+            every { this@apply.shouldShowRationale } returns false
+            every { this@apply.isGranted } returns false
+        }
+
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.PermanentlyDenied, state.notificationPermission)
+            assertEquals(ForecastDialogState.NotificationPermissionPermanentlyDenied, state.dialog)
         }
     }
 
     @Test
-    fun `should update refreshProgress when forecast is refreshing`() = runTest {
-        forecastFlow.value = RefreshState.Success(mockForecast, 50f)
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert((result as UiResult.Success).data.refreshProgress == 50f)
+    fun `handlePermissionChange sets permission to PermanentlyDenied but does not show dialog when ignored`() = runTest {
+        // Setup
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+
+        // Mock properties to ensure toPermission returns PermanentlyDenied
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Denied>().apply {
+            every { this@apply.shouldShowRationale } returns false
+            every { this@apply.isGranted } returns false
+        }
+
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns true
+
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.PermanentlyDenied, state.notificationPermission)
+            assertEquals(ForecastDialogState.None, state.dialog)
         }
     }
 
     @Test
-    fun `should update selected station in repository when OnStopSelected event is received`() = runTest {
-        val secondStop = mockStops[1]
-        viewModel.onEvent(ForecastContract.Event.OnStopSelected(secondStop))
+    fun `handlePermissionChange sets permission to Granted and shows ScheduleExactAlarms dialog when needed`() = runTest {
+        // Setup
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
 
-        coVerify { updateSelectedStationUseCase(secondStop.abbreviation, secondStop.line) }
-    }
+        // Mock properties to ensure toPermission returns Granted
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
+            every { this@apply.isGranted } returns true
+        }
 
-    @Test
-    fun `should trigger manual refresh when OnRefresh event is received`() = runTest {
-        every { fetchForecastUseCase.refresh(any()) } returns Unit
-        viewModel.onEvent(ForecastContract.Event.OnRefresh)
-        verify { fetchForecastUseCase.refresh(RefreshMode.MANUAL) }
-    }
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+        coEvery { canScheduleExactAlarmsUseCase() } returns false
 
-    @Test
-    fun `should show travel updates dialog when OnShowTravelUpdatesDialog event is received`() = runTest {
-        viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert((result as UiResult.Success).data.dialog == ForecastDialogState.TravelUpdatesAlert)
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.Granted, state.notificationPermission)
+            assertEquals(ForecastDialogState.ScheduleExactAlarms, state.dialog)
         }
     }
 
     @Test
-    fun `should dismiss travel updates dialog when OnDismissTravelUpdatesDialog event is received`() = runTest {
-        viewModel.onEvent(ForecastContract.Event.OnShowTravelUpdatesDialog)
-        viewModel.onEvent(ForecastContract.Event.OnDismissDialog)
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert((result as UiResult.Success).data.dialog == ForecastDialogState.None)
+    fun `handlePermissionChange sets permission to Granted and maintains dialog when exact alarms allowed`() = runTest {
+        // Setup - First set a different dialog state
+        viewModel.onEvent(ForecastContract.Event.OnNotificationPermanentlyDeniedDialog)
+
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+
+        // Mock properties to ensure toPermission returns Granted
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
+            every { this@apply.isGranted } returns true
+        }
+
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+        coEvery { canScheduleExactAlarmsUseCase() } returns true
+
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+        // Assert
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.Granted, state.notificationPermission)
+            assertEquals(ForecastDialogState.NotificationPermissionPermanentlyDenied, state.dialog)
         }
     }
 
     @Test
-    fun `should select first stop when no saved selection exists`() = runTest {
-        selectedStationFlow.value = ""
-        stopsFlow.value = Result.success(mockStops)
+    fun `when ignoreNotificationPermission is true and permission is granted, it should set ignore to false`() = runTest {
+        // Setup
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
 
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert((result as UiResult.Success).data.selectedStop == mockStops.first())
+        // Mock properties to ensure toPermission returns Granted
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
+            every { this@apply.isGranted } returns true
         }
-    }
 
-    @Test
-    fun `should select saved stop when available`() = runTest {
-        selectedStationFlow.value = "HAR"
-        stopsFlow.value = Result.success(mockStops)
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns true
+        coEvery { canScheduleExactAlarmsUseCase() } returns true
 
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assert((result as UiResult.Success).data.selectedStop == mockStops[1])
-        }
-    }
+        // Act
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
 
-    @Test
-    fun `should use default stop when saved stop not found in list`() = runTest {
-        selectedStationFlow.value = "INVALID"
-        stopsFlow.value = Result.success(mockStops)
-
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(
-                StopEntity.initial().copy(id = (result as UiResult.Success).data.selectedStop.id),
-                result.data.selectedStop
-            )
-        }
-    }
-
-    @Test
-    fun `should update selected station in repository when stop changes`() = runTest {
-        val secondStop = mockStops[1]
-
-        viewModel.onEvent(ForecastContract.Event.OnStopSelected(secondStop))
-
-        coVerify { updateSelectedStationUseCase(secondStop.abbreviation, secondStop.line) }
+        // Assert
+        coVerify { updateIgnoreNotificationPermissionUseCase(false) }
     }
 }
