@@ -11,12 +11,12 @@ import com.wedgess.luas.presentation.forecast.tab.model.NotificationState
 fun ForecastTabDialogs(
     dialogsState: ForecastTabDialogState,
     notificationState: NotificationState,
-    onEvent: (ForecastTabContract.Event) -> Unit,
+    onEvent: (ForecastTabContract.Event) -> Unit
 ) {
     when (dialogsState) {
         is ForecastTabDialogState.None -> Unit
         is ForecastTabDialogState.TravelUpdatesAlert -> TravelUpdatesDialog(
-            onDismiss = { onEvent(ForecastTabContract.Event.OnDismissDialog) },
+            onDismiss = { onEvent(ForecastTabContract.Event.OnDismissDialog) }
         )
 
         is ForecastTabDialogState.Notification -> NotificationTimeDialog(
@@ -25,10 +25,10 @@ fun ForecastTabDialogs(
             onMinutesChange = { onEvent(ForecastTabContract.Event.OnNotificationMinutesChanged(it)) },
             onConfirm = { minutesBefore ->
                 onEvent(
-                    ForecastTabContract.Event.OnStartNotification(minutes = minutesBefore),
+                    ForecastTabContract.Event.OnStartNotification(minutes = minutesBefore)
                 )
             },
-            onDismiss = { onEvent(ForecastTabContract.Event.OnDismissDialog) },
+            onDismiss = { onEvent(ForecastTabContract.Event.OnDismissDialog) }
         )
     }
 }

@@ -1,6 +1,5 @@
 package com.wedgess.luas.presentation.forecast.compose
 
-import android.annotation.SuppressLint
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,20 +9,19 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.wedgess.luas.presentation.components.AnimatedTabContainer
-import com.wedgess.luas.presentation.components.RequestNotificationPermission
 import com.wedgess.luas.presentation.forecast.tab.compose.components.ForecastTabContent
 import com.wedgess.luas.presentation.forecast.tab.model.ForecastTab
 import com.wedgess.luas.ui.theme.LuasTheme
 import kotlinx.collections.immutable.persistentListOf
-import okhttp3.internal.toImmutableList
 
-@SuppressLint("ComposeModifierMissing")
 @Composable
 fun ForecastScreen(
     setRefreshAction: (() -> Unit) -> Unit,
+    modifier: Modifier = Modifier,
     onProgressChange: (Float) -> Unit
 ) {
     val forecastTabs = remember { ForecastTab.all() }
@@ -37,6 +35,7 @@ fun ForecastScreen(
 
     Surface {
         AnimatedTabContainer(
+            modifier = modifier,
             tabItems = forecastTabs,
             indicatorColors = persistentListOf(Color(0xFF66BF63), Color(0xFFE53935)),
             onTabIndexChange = { index -> currentTab = forecastTabs[index] }

@@ -14,7 +14,7 @@ fun StopForcastResponseData.toEntity() = ForcastEntity(
         .filterNot { tram -> tram.destination == "No trams forecast" },
     outboundTrams = this.direction.filter { it.name == DirectionKeyData.OUTBOUND }
         .flatMap { data -> data.tram.map { tram -> tram.toEntity() } }
-        .filterNot { tram -> tram.destination == "No trams forecast" },
+        .filterNot { tram -> tram.destination == "No trams forecast" }
 )
 
 fun StopForcastResponseData.DirectionData.TramData.toEntity() = ForcastEntity.TramEntity(
@@ -23,5 +23,5 @@ fun StopForcastResponseData.DirectionData.TramData.toEntity() = ForcastEntity.Tr
     } else {
         this.dueMins.toIntOrNull() ?: 0
     },
-    destination = this.destination,
+    destination = this.destination
 )

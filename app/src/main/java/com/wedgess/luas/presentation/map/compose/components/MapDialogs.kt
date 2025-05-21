@@ -4,47 +4,48 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.wedgess.luas.R
 import com.wedgess.luas.presentation.map.MapContract
 import com.wedgess.luas.presentation.map.model.MapDialogState
 
 @Composable
 fun MapDialogs(
     dialogState: MapDialogState,
-    onEvent: (MapContract.Event) -> Unit,
+    onEvent: (MapContract.Event) -> Unit
 ) {
     when (dialogState) {
         MapDialogState.None -> Unit
         MapDialogState.LocationPermissionRationale -> AlertDialog(
             onDismissRequest = { onEvent(MapContract.Event.OnDismissDialogClick) },
-            title = { Text("Location Permission") },
-            text = { Text("Location permission is only required if you wish to show your current location on the map. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings") },
+            title = { Text(stringResource(R.string.location_permission_dialog_title)) },
+            text = { Text(stringResource(R.string.location_permission_rationale_msg)) },
             confirmButton = {
                 TextButton(onClick = { onEvent(MapContract.Event.OnAcceptPermissionClick) }) {
-                    Text("Allow")
+                    Text(stringResource(R.string.btn_allow))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { onEvent(MapContract.Event.OnDismissDialogClick) }) {
-                    Text("Deny")
+                    Text(stringResource(R.string.btn_deny))
                 }
-            },
+            }
         )
 
         MapDialogState.LocationPermissionPermanentlyDenied -> AlertDialog(
             onDismissRequest = { onEvent(MapContract.Event.OnDismissDialogClick) },
-            title = { Text("Location Permission") },
-            text = { Text("Location permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant location permission now?") },
+            title = { Text(stringResource(R.string.location_permission_dialog_title)) },
+            text = { Text(stringResource(R.string.location_permission_permanently_denied_msg)) },
             confirmButton = {
-                TextButton(onClick = { onEvent(MapContract.Event.OnOpenAppSettingsPermissionClick)}) {
-                    Text("Yes")
+                TextButton(onClick = { onEvent(MapContract.Event.OnOpenAppSettingsPermissionClick) }) {
+                    Text(stringResource(R.string.btn_yes))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { onEvent(MapContract.Event.OnIgnoreLocationPermissionClick) }) {
-                    Text("No")
+                    Text(stringResource(R.string.btn_no))
                 }
-            },
+            }
         )
     }
-
 }

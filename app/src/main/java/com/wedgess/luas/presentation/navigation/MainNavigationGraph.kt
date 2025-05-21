@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import com.wedgess.luas.presentation.news.navigation.newsRoot
 import com.wedgess.luas.presentation.forecast.compose.navigation.forecastRoot
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.map.compose.navigation.mapRoot
+import com.wedgess.luas.presentation.news.navigation.newsRoot
 
 @Composable
 fun MainNavigationGraph(

@@ -13,6 +13,7 @@ import com.wedgess.luas.domain.usecase.FetchForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
 import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
+import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
 import com.wedgess.luas.presentation.forecast.tab.ForecastTabContract
@@ -42,7 +43,7 @@ import org.junit.Test
 import java.util.UUID
 
 @ExperimentalCoroutinesApi
-class ForecastTabViewModelAdditionalTests {
+class ForecastTabViewModelTest {
 
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()
@@ -74,6 +75,9 @@ class ForecastTabViewModelAdditionalTests {
     @MockK
     private lateinit var isAlarmRunningUseCase: FetchIsAlarmRunningUseCase
 
+    @MockK
+    private lateinit var requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase
+
     private lateinit var viewModel: ForecastTabViewModel
 
     private val mockStops = listOf(
@@ -85,7 +89,7 @@ class ForecastTabViewModelAdditionalTests {
             longitude = -6.26070,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
+            isCycleAndRide = false
         ),
         StopEntity(
             id = UUID.randomUUID(),
@@ -95,8 +99,8 @@ class ForecastTabViewModelAdditionalTests {
             longitude = -6.26302,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
-        ),
+            isCycleAndRide = false
+        )
     )
 
     private val mockForecast = ForcastEntity(
@@ -105,7 +109,7 @@ class ForecastTabViewModelAdditionalTests {
         createdAt = "2025-03-02T21:48:50",
         inboundTrams = emptyList(),
         outboundTrams = emptyList(),
-        stopAbv = "STS",
+        stopAbv = "STS"
     )
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
@@ -123,7 +127,7 @@ class ForecastTabViewModelAdditionalTests {
         every { fetchSelectedStationUseCase(any()) } returns selectedStationFlow
         every { isAlarmRunningUseCase() } returns isAlarmRunningFlow
         coEvery { updateSelectedStationUseCase(any(), any()) } returns Result.success(Unit)
-        every { canScheduleExactAlarmsUseCase() } returns true
+        every { canScheduleExactAlarmsUseCase() } returns false
         every { cancelAlarmUseCase() } returns Unit
         coEvery { scheduleAlarmUseCase(any(), any()) } returns Result.success(0L)
 
@@ -137,6 +141,7 @@ class ForecastTabViewModelAdditionalTests {
             scheduleAlarmUseCase = scheduleAlarmUseCase,
             isAlarmRunningUseCase = isAlarmRunningUseCase,
             fetchSelectedStationUseCase = fetchSelectedStationUseCase,
+            requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase
         )
     }
 
@@ -283,13 +288,14 @@ class ForecastTabViewModelAdditionalTests {
         // Given
         val dueInMins = 2
         val destination = "Broombridge"
+        every { canScheduleExactAlarmsUseCase() } returns true
 
         // First setup notification state
         viewModel.onEvent(
             ForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         // When
@@ -325,6 +331,30 @@ class ForecastTabViewModelAdditionalTests {
     }
 
     @Test
+    fun `Notification dialog is not displayed when exact alarm permission is disabled`() = runTest {
+        // Given
+        val dueInMins = 2
+        val destination = "Broombridge"
+        every { canScheduleExactAlarmsUseCase() } returns false
+        every { requestExactAlarmPermissionUseCase() } returns Unit
+
+        // First setup notification state
+        viewModel.onEvent(
+            ForecastTabContract.Event.OnShowNotificationsDialog(
+                dueInMins = dueInMins,
+                destination = destination
+            )
+        )
+
+        viewModel.uiResult.test {
+            val result = awaitItem()
+            assertTrue(result is UiResult.Success)
+            assertEquals(ForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
+        }
+        verify { requestExactAlarmPermissionUseCase() }
+    }
+
+    @Test
     fun `should handle non-existent stop when OnStopSelected is called`() = runTest {
         // Given a stop that's not in the list
         val nonExistentStop = StopEntity(
@@ -335,7 +365,7 @@ class ForecastTabViewModelAdditionalTests {
             longitude = 0.0,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
+            isCycleAndRide = false
         )
 
         // When
@@ -350,13 +380,14 @@ class ForecastTabViewModelAdditionalTests {
         // Given
         val dueInMins = 10
         val destination = "Broombridge"
+        every { canScheduleExactAlarmsUseCase() } returns true
 
         // Setup notification and start timer
         viewModel.onEvent(
             ForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
         viewModel.onEvent(ForecastTabContract.Event.OnStartNotification(minutes = 5))
 
@@ -398,8 +429,8 @@ class ForecastTabViewModelAdditionalTests {
         viewModel.onEvent(
             ForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         // Then
@@ -413,8 +444,8 @@ class ForecastTabViewModelAdditionalTests {
         viewModel.onEvent(
             ForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = -5,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         // Then

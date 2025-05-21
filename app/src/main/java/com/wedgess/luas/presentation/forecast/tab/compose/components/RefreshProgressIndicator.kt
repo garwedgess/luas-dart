@@ -1,6 +1,5 @@
 package com.wedgess.luas.presentation.forecast.tab.compose.components
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,16 +11,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 
-@SuppressLint("ComposeModifierMissing")
 @Composable
-fun RefreshProgressIndicator(refreshProgress: Float) {
+fun RefreshProgressIndicator(
+    refreshProgress: Float,
+    modifier: Modifier = Modifier
+) {
     val animatedRefreshProgress by animateFloatAsState(
         targetValue = refreshProgress,
         animationSpec = tween(durationMillis = 400),
         label = "progress"
     )
     LinearProgressIndicator(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         progress = { animatedRefreshProgress },
         trackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),

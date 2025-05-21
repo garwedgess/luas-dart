@@ -30,41 +30,51 @@ class AlarmReceiver : BroadcastReceiver() {
         if (intent.action == ACTION_DISMISS) {
             val notificationManager = ContextCompat.getSystemService(
                 context,
-                NotificationManager::class.java,
-            ) ?: return
-            notificationManager.cancel(NOTIFICATION_ID)
-            alarmRepository.cancelAlarm()
+                NotificationManager::class.java
+            )
+            notificationManager?.cancel(NOTIFICATION_ID)?.run {
+                alarmRepository.cancelAlarm()
+            }
             return
         }
 
         val alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
-        val notificationData = intent.getParcelableExtra<NotificationData>(EXTRA_NOTIFICATION_DATA) ?: return
+        val notificationData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA, NotificationData::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA)
+        }
+
+        if (notificationData == null) {
+            return
+        }
 
         Timber.d("Trigger, alarm is triggered, alarmId: $alarmId, notificationData: $notificationData")
 
         if (alarmId != -1) {
             val notificationManager = ContextCompat.getSystemService(
                 context,
-                NotificationManager::class.java,
+                NotificationManager::class.java
             ) ?: return
-            createNotificationChannelIfNeeded(context, notificationManager)
+            createNotificationChannelIfNeeded(notificationManager)
             val notification = buildNotification(
                 context,
                 notificationData.notificationTitle,
                 notificationData.notifyBeforeMins,
-                alarmId,
+                alarmId
             )
             notificationManager.notify(NOTIFICATION_ID, notification)
             alarmRepository.cancelAlarm()
         }
     }
 
-    private fun createNotificationChannelIfNeeded(context: Context, notificationManager: NotificationManager) {
+    private fun createNotificationChannelIfNeeded(notificationManager: NotificationManager) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Luas Notifications",
-                NotificationManager.IMPORTANCE_HIGH,
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Shows notifications for tram departure"
                 enableVibration(true)
@@ -77,7 +87,7 @@ class AlarmReceiver : BroadcastReceiver() {
         context: Context,
         title: String,
         minutesRemaining: Int,
-        alarmId: Int,
+        alarmId: Int
     ) = NotificationCompat.Builder(context, CHANNEL_ID).apply {
         val dismissIntent = createDismissIntent(context, alarmId)
         setContentTitle(title)
@@ -93,7 +103,7 @@ class AlarmReceiver : BroadcastReceiver() {
         addAction(
             R.drawable.ic_close,
             context.getString(R.string.action_dismiss),
-            dismissIntent,
+            dismissIntent
         )
             .setDeleteIntent(dismissIntent)
     }.build()
@@ -106,7 +116,7 @@ class AlarmReceiver : BroadcastReceiver() {
             context,
             0,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
@@ -119,10 +129,9 @@ class AlarmReceiver : BroadcastReceiver() {
             context,
             1,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
-
 
     companion object {
         const val EXTRA_ALARM_ID = "EXTRA_ALARM_ID"

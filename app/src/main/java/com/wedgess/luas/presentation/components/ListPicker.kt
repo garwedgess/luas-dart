@@ -78,7 +78,8 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 /**
- * A composable function that allows users to select an item from a list using a scrollable list with a text field for editing.
+ * A composable function that allows users to select an item from a list using a scrollable list with a text field
+ * for editing.
  *
  * @param initialValue The initial value to be selected in the list.
  * @param values The list of items.
@@ -114,29 +115,31 @@ fun <E> ListPicker(
     verticalPadding: Dp = 16.dp,
     dividerColor: Color = MaterialTheme.colorScheme.outline,
     dividerThickness: Dp = 1.dp,
-    keyboardType: KeyboardType = KeyboardType.Text,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val haptic = LocalHapticFeedback.current
     val listSize = values.size
     val coercedOutOfBoundsPageCount = outOfBoundsPageCount.coerceIn(0..listSize / 2)
     val visibleItemsCount = 1 + coercedOutOfBoundsPageCount * 2
     val iteration =
-        if (wrapSelectorWheel)
+        if (wrapSelectorWheel) {
             remember(key1 = coercedOutOfBoundsPageCount, key2 = listSize) {
                 (Int.MAX_VALUE - 2 * coercedOutOfBoundsPageCount) / listSize
             }
-        else 1
+        } else {
+            1
+        }
     val intervals =
         remember(key1 = coercedOutOfBoundsPageCount, key2 = iteration, key3 = listSize) {
             listOf(
                 0,
                 coercedOutOfBoundsPageCount,
                 coercedOutOfBoundsPageCount + iteration * listSize,
-                coercedOutOfBoundsPageCount + iteration * listSize + coercedOutOfBoundsPageCount,
+                coercedOutOfBoundsPageCount + iteration * listSize + coercedOutOfBoundsPageCount
             )
         }
-    val scrollOfItemIndex = { it: Int ->
-        it + (listSize * (iteration / 2))
+    val scrollOfItemIndex = { index: Int ->
+        index + (listSize * (iteration / 2))
     }
     val scrollOfItem = { item: E ->
         values.indexOf(item)
@@ -147,10 +150,10 @@ fun <E> ListPicker(
         initialFirstVisibleItemIndex = remember(
             key1 = initialValue,
             key2 = listSize,
-            key3 = iteration,
+            key3 = iteration
         ) {
             scrollOfItem(initialValue) ?: 0
-        },
+        }
     )
     LaunchedEffect(key1 = values) {
         snapshotFlow { lazyListState.firstVisibleItemIndex }.collectLatest {
@@ -171,12 +174,12 @@ fun <E> ListPicker(
 
     Box(
         modifier = modifier,
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.Center
     ) {
         ComposeScope {
             AnimatedContent(
                 targetState = edit,
-                label = "AnimatedContent",
+                label = "AnimatedContent"
             ) { showTextField ->
                 if (showTextField) {
                     var isError by rememberSaveable { mutableStateOf(false) }
@@ -188,9 +191,9 @@ fun <E> ListPicker(
                             initialSelectedItem.format().run {
                                 TextFieldValue(
                                     text = this,
-                                    selection = TextRange(this.length),
+                                    selection = TextRange(this.length)
                                 )
-                            },
+                            }
                         )
                     }
                     val focusRequester = remember { FocusRequester() }
@@ -225,7 +228,7 @@ fun <E> ListPicker(
                             textStyle = textStyle.copy(textAlign = TextAlign.Center),
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 keyboardType = keyboardType,
-                                imeAction = if (!isError) ImeAction.Done else ImeAction.Default,
+                                imeAction = if (!isError) ImeAction.Done else ImeAction.Default
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = {
@@ -239,7 +242,7 @@ fun <E> ListPicker(
                                         }
                                         edit = false
                                     }
-                                },
+                                }
                             ),
                             maxLines = 1,
                             singleLine = true,
@@ -251,8 +254,8 @@ fun <E> ListPicker(
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
                                 errorIndicatorColor = Color.Transparent,
-                                errorTextColor = MaterialTheme.colorScheme.error,
-                            ),
+                                errorTextColor = MaterialTheme.colorScheme.error
+                            )
                         )
                     }
                 } else {
@@ -269,28 +272,33 @@ fun <E> ListPicker(
                                     Brush.verticalGradient(
                                         0F to Color.Transparent,
                                         0.5F to Color.Black,
-                                        1F to Color.Transparent,
+                                        1F to Color.Transparent
                                     )
-                                },
-                            ),
+                                }
+                            )
                     ) {
                         items(
                             count = intervals.last(),
-                            key = { it },
+                            key = { it }
                         ) { index ->
                             val enabled by remember(index, enableEdition) {
                                 derivedStateOf {
-                                    enableEdition && (index == lazyListState.firstVisibleItemIndex + coercedOutOfBoundsPageCount)
+                                    enableEdition &&
+                                        (index == lazyListState.firstVisibleItemIndex + coercedOutOfBoundsPageCount)
                                 }
                             }
                             val textModifier = Modifier.padding(vertical = verticalPadding)
                             when (index) {
                                 in intervals[0]..<intervals[1] -> Text(
-                                    text = if (wrapSelectorWheel) values[(index - coercedOutOfBoundsPageCount + listSize) % listSize].format() else "",
+                                    text = if (wrapSelectorWheel) {
+                                        values[(index - coercedOutOfBoundsPageCount + listSize) % listSize].format()
+                                    } else {
+                                        ""
+                                    },
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     style = textStyle,
-                                    modifier = textModifier,
+                                    modifier = textModifier
                                 )
 
                                 in intervals[1]..<intervals[2] -> {
@@ -305,18 +313,22 @@ fun <E> ListPicker(
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                     edit = true
                                                 },
-                                                enabled = enabled,
-                                            ),
-                                        ),
+                                                enabled = enabled
+                                            )
+                                        )
                                     )
                                 }
 
                                 in intervals[2]..<intervals[3] -> Text(
-                                    text = if (wrapSelectorWheel) values[(index - coercedOutOfBoundsPageCount) % listSize].format() else "",
+                                    text = if (wrapSelectorWheel) {
+                                        values[(index - coercedOutOfBoundsPageCount) % listSize].format()
+                                    } else {
+                                        ""
+                                    },
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     style = textStyle,
-                                    modifier = textModifier,
+                                    modifier = textModifier
                                 )
                             }
                         }
@@ -325,13 +337,15 @@ fun <E> ListPicker(
                     HorizontalDivider(
                         modifier = Modifier.offset(y = itemHeight * coercedOutOfBoundsPageCount - dividerThickness / 2),
                         thickness = dividerThickness,
-                        color = dividerColor,
+                        color = dividerColor
                     )
 
                     HorizontalDivider(
-                        modifier = Modifier.offset(y = itemHeight * (coercedOutOfBoundsPageCount + 1) - dividerThickness / 2),
+                        modifier = Modifier.offset(
+                            y = itemHeight * (coercedOutOfBoundsPageCount + 1) - dividerThickness / 2
+                        ),
                         thickness = dividerThickness,
-                        color = dividerColor,
+                        color = dividerColor
                     )
                 }
             }
@@ -361,14 +375,14 @@ private fun PreviewListPicker1() {
                     format(
                         DateTimeFormatter
                             .ofLocalizedDate(FormatStyle.MEDIUM)
-                            .withLocale(Locale.getDefault()),
+                            .withLocale(Locale.getDefault())
                     )
                 },
                 onValueChange = { value = it },
                 onIsErrorChange = {},
                 textStyle = MaterialTheme.typography.labelLarge,
                 verticalPadding = 8.dp,
-                keyboardType = KeyboardType.Number,
+                keyboardType = KeyboardType.Number
             )
         }
     }
@@ -390,7 +404,7 @@ private fun PreviewListPicker2() {
                 outOfBoundsPageCount = 2,
                 textStyle = MaterialTheme.typography.labelLarge,
                 verticalPadding = 8.dp,
-                keyboardType = KeyboardType.Number,
+                keyboardType = KeyboardType.Number
             )
         }
     }
@@ -411,7 +425,7 @@ private fun PreviewListPicker3() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
@@ -433,7 +447,7 @@ private fun PreviewListPicker3() {
                     outOfBoundsPageCount = 2,
                     textStyle = MaterialTheme.typography.labelLarge,
                     verticalPadding = 8.dp,
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = KeyboardType.Number
                 )
             }
         }
@@ -456,7 +470,7 @@ private fun PreviewListPicker4() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
@@ -468,7 +482,7 @@ private fun PreviewListPicker4() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     ListPicker(
                         modifier = Modifier.weight(0.2f),
@@ -486,7 +500,7 @@ private fun PreviewListPicker4() {
                         wrapSelectorWheel = true,
                         textStyle = MaterialTheme.typography.bodyMedium,
                         verticalPadding = 8.dp,
-                        onIsErrorChange = {},
+                        onIsErrorChange = {}
                     )
                     Text(text = "CM")
                     ListPicker(
@@ -505,7 +519,7 @@ private fun PreviewListPicker4() {
                         wrapSelectorWheel = true,
                         textStyle = MaterialTheme.typography.bodyMedium,
                         verticalPadding = 8.dp,
-                        onIsErrorChange = {},
+                        onIsErrorChange = {}
                     )
                     Text(text = "MM")
                 }
@@ -531,7 +545,8 @@ fun Modifier.fadingEdge(brush: Brush) = this
     }
 
 enum class Keyboard {
-    Closed, Opened
+    Closed,
+    Opened
 }
 
 @Composable

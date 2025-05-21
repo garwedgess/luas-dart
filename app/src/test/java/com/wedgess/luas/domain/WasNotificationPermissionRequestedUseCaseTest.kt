@@ -70,7 +70,7 @@ class WasNotificationPermissionRequestedUseCaseTest {
     @Test
     fun `invoke should call repository wasNotificationPermissionRequested exactly once`() = runTest {
         // Given
-        coEvery { preferencesRepository.wasNotificationPermissionRequested() } returns flowOf(false) // Value doesn't matter for this verification
+        coEvery { preferencesRepository.wasNotificationPermissionRequested() } returns flowOf(false)
 
         // When
         wasNotificationPermissionRequestedUseCase()

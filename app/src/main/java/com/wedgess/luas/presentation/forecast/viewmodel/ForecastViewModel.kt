@@ -32,7 +32,7 @@ class ForecastViewModel @Inject constructor(
     private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase,
     private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase,
     private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase,
-    private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
+    private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase
 ) : ViewModel(),
     SideEffectViewModel<ForecastContract.Effect> by SideEffectViewModelImpl() {
 
@@ -86,10 +86,14 @@ class ForecastViewModel @Inject constructor(
                 updateNotificationPermissionRequestedUseCase(true)
             }
 
-            ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick -> requestExactAlarmPermissionUseCase().also {
-                _uiState.update {
-                    it.copy(dialog = ForecastDialogState.None)
-                }
+            ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick -> openExactAlarmPermission()
+        }
+    }
+
+    private fun openExactAlarmPermission() {
+        requestExactAlarmPermissionUseCase().also {
+            _uiState.update {
+                it.copy(dialog = ForecastDialogState.None)
             }
         }
     }
@@ -103,7 +107,11 @@ class ForecastViewModel @Inject constructor(
             if (permission == Permission.Granted && ignoreNotificationPermission) {
                 updateIgnoreNotificationPermissionUseCase(false)
             }
-            Timber.d("Notification, wasNotificationPermissionRequested: $wasNotificationPermissionRequested, ignoreNotificationPermission: $ignoreNotificationPermission, permission: $permission")
+            Timber.d(
+                "Notification, wasNotificationPermissionRequested: $wasNotificationPermissionRequested, " +
+                    "ignoreNotificationPermission: $ignoreNotificationPermission, " +
+                    "permission: $permission"
+            )
             _uiState.update {
                 it.copy(
                     notificationPermission = permission,
@@ -126,7 +134,7 @@ class ForecastViewModel @Inject constructor(
                         }
 
                         else -> it.dialog
-                    },
+                    }
                 )
             }
         }

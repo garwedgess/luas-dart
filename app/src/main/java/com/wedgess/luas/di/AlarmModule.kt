@@ -22,7 +22,7 @@ object AlarmModule {
     @Provides
     @Singleton
     fun provideAlarmRepository(
-        alarmManagerDataSource: AlarmManagerDataSource,
+        alarmManagerDataSource: AlarmManagerDataSource
     ): AlarmRepository {
         return AlarmRepositoryImpl(alarmManagerDataSource)
     }
@@ -30,7 +30,7 @@ object AlarmModule {
     @Provides
     @Singleton
     fun provideAlarmManagerDataSource(
-        @ApplicationContext context: Context,
+        @ApplicationContext context: Context
     ): AlarmManagerDataSource {
         return AlarmManagerDataSource(context)
     }

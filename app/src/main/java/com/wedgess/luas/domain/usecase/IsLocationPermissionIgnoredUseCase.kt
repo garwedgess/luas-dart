@@ -1,7 +1,6 @@
 package com.wedgess.luas.domain.usecase
 
 import com.wedgess.luas.domain.repository.PreferencesRepository
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 

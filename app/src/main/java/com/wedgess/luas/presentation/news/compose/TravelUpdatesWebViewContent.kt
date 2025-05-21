@@ -1,7 +1,6 @@
 package com.wedgess.luas.presentation.news.compose
 
 import android.annotation.SuppressLint
-import android.view.MotionEvent
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -23,10 +22,13 @@ private const val LUAS_TRAVEL_UPDATES_URL = "https://luas.ie/travel-updates/"
 
 @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility", "ComposeModifierMissing")
 @Composable
-fun TravelUpdatesWebViewContent(url: String = LUAS_TRAVEL_UPDATES_URL) {
+fun TravelUpdatesWebViewContent(
+    modifier: Modifier = Modifier,
+    url: String = LUAS_TRAVEL_UPDATES_URL
+) {
     var isLoading by remember { mutableStateOf(true) }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = modifier.fillMaxSize()) {
         AndroidView(
             factory = { ctx ->
                 WebView(ctx).apply {

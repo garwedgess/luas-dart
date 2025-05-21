@@ -5,9 +5,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.wedgess.luas.R
-import com.wedgess.luas.presentation.news.compose.TravelUpdatesWebViewContent
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.navigation.Screens
+import com.wedgess.luas.presentation.news.compose.TravelUpdatesWebViewContent
 
 fun NavGraphBuilder.newsRoot(
     onUpdateAppbarState: (TopAppBarState) -> Unit

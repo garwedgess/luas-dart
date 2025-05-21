@@ -102,7 +102,8 @@ class ScheduleAlarmUseCaseTest {
         // Given
         val secondsFromNow = 120L
         val expectedAlarmId = 67890L
-        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) } returns Result.success(expectedAlarmId)
+        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) } returns
+            Result.success(expectedAlarmId)
 
         // When
         scheduleAlarmUseCase(secondsFromNow, mockNotificationEntity)

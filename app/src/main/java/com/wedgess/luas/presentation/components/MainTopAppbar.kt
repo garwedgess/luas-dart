@@ -5,13 +5,15 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 
 @SuppressLint("ComposeModifierMissing")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTopAppbar(topAppBarState: TopAppBarState) {
+fun MainTopAppbar(topAppBarState: TopAppBarState, modifier: Modifier = Modifier) {
     CenterAlignedTopAppBar(
+        modifier = modifier,
         title = {
             Text(topAppBarState.title)
         },

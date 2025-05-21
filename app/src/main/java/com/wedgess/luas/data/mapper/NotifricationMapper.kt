@@ -7,5 +7,5 @@ fun NotificationEntity.toData() = NotificationData(
     dueInMins = this.dueInMins,
     notifyBeforeMins = this.notifyMinutesBefore,
     destinationName = this.destination,
-    stopName = this.station,
+    stopName = this.station
 )

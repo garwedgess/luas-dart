@@ -1,6 +1,5 @@
 package com.wedgess.luas.presentation.forecast.tab.compose.components
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,15 +19,15 @@ import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 import com.wedgess.luas.ui.theme.LuasTheme
 
-@SuppressLint("ComposeModifierMissing")
 @Composable
 fun TramDirectionHeader(
     title: String,
-    noTramsDue: Boolean
+    noTramsDue: Boolean,
+    modifier: Modifier = Modifier
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .padding(8.dp),

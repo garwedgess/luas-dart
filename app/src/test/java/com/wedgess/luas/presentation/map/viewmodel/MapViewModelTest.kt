@@ -69,7 +69,6 @@ class MapViewModelTest {
     @MockK
     lateinit var updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase
 
-
     private lateinit var viewModel: MapViewModel
 
     private val mockGreenLineStops = listOf(
@@ -81,7 +80,7 @@ class MapViewModelTest {
             longitude = -6.26070,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
+            isCycleAndRide = false
         ),
         StopEntity(
             id = UUID.randomUUID(),
@@ -91,8 +90,8 @@ class MapViewModelTest {
             longitude = -6.26302,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
-        ),
+            isCycleAndRide = false
+        )
     )
 
     private val mockRedLineStops = listOf(
@@ -104,7 +103,7 @@ class MapViewModelTest {
             longitude = -6.25786,
             line = LuasLineEntity.RED,
             isParkAndRide = false,
-            isCycleAndRide = false,
+            isCycleAndRide = false
         ),
         StopEntity(
             id = UUID.randomUUID(),
@@ -114,8 +113,8 @@ class MapViewModelTest {
             longitude = -6.26690,
             line = LuasLineEntity.RED,
             isParkAndRide = false,
-            isCycleAndRide = false,
-        ),
+            isCycleAndRide = false
+        )
     )
 
     private val mockUserLocation = UserLocation(53.33963, -6.26070)
@@ -142,7 +141,7 @@ class MapViewModelTest {
             isLocationPermissionIgnoredUseCase,
             wasLocationPermissionRequestedUseCase,
             updateLocationPermissionRequestedUseCase,
-            updateIgnoreLocationPermissionUseCase,
+            updateIgnoreLocationPermissionUseCase
         )
     }
 
@@ -242,8 +241,8 @@ class MapViewModelTest {
                 longitude = -6.27,
                 line = LuasLineEntity.GREEN,
                 isParkAndRide = true,
-                isCycleAndRide = true,
-            ),
+                isCycleAndRide = true
+            )
         )
 
         stopsFlow.value = Result.success(newStops)
@@ -322,7 +321,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns true
                         every { this@status.isGranted } returns false
                     }
-                },
+                }
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 
@@ -356,7 +355,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns false
                         every { this@status.isGranted } returns false
                     }
-                },
+                }
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 
@@ -390,7 +389,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns false
                         every { this@status.isGranted } returns false
                     }
-                },
+                }
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 

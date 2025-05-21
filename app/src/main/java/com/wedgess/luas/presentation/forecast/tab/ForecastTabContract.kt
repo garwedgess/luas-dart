@@ -16,7 +16,7 @@ interface ForecastTabContract {
         val line: LuasLineEntity = LuasLineEntity.RED,
         val dialog: ForecastTabDialogState = ForecastTabDialogState.None,
         val notificationState: NotificationState = NotificationState(),
-        val alarmIsRunning: Boolean = false,
+        val alarmIsRunning: Boolean = false
     )
 
     sealed interface Event {

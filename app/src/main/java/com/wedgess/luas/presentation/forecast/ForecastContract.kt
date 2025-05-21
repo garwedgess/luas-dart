@@ -10,7 +10,7 @@ interface ForecastContract {
 
     data class UiState(
         val dialog: ForecastDialogState = ForecastDialogState.None,
-        val notificationPermission: Permission = Permission.Unknown,
+        val notificationPermission: Permission = Permission.Unknown
     )
 
     sealed interface Event {

@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.util.TypedValue
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -57,11 +58,16 @@ import com.wedgess.luas.domain.model.StopEntity
 import com.wedgess.luas.presentation.map.MapContract
 import timber.log.Timber
 
-@SuppressLint("MissingPermission", "ComposeModifierMissing")
+private const val DEFAULT_LOCATION_ZOOM = 12.0
+private const val DUBLIN_LATITUDE = 53.3498
+private const val DUBLIN_LONGITUDE = -6.2603
+
+@SuppressLint("MissingPermission")
 @Composable
 fun MapLibreMap(
     uiState: MapContract.UiState,
     locationPermissionGranted: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
@@ -84,13 +90,13 @@ fun MapLibreMap(
                     map.style?.let { style ->
                         map.locationComponentSetup(style, context)
                     }
-                },
+                }
             )
         }
     }
 
     AndroidView(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .zIndex(0f),
         factory = {
@@ -103,14 +109,14 @@ fun MapLibreMap(
                             "red",
                             uiState.redLineLocations,
                             "#E53935",
-                            context,
+                            context
                         )
                         style.addLinesMarkersAndLabels(
                             map,
                             "green",
                             uiState.greenLineLocations,
                             "#66BF63",
-                            context,
+                            context
                         )
                         map.uiSetup()
                     }
@@ -124,7 +130,7 @@ fun MapLibreMap(
                     updateSources(style, "green", uiState.greenLineLocations)
                 }
             }
-        },
+        }
     )
 }
 
@@ -138,12 +144,12 @@ private fun updateSources(style: Style, line: String, stops: List<StopEntity>) {
                         stops.map {
                             Point.fromLngLat(
                                 it.longitude,
-                                it.latitude,
+                                it.latitude
                             )
-                        },
-                    ),
-                ),
-            ),
+                        }
+                    )
+                )
+            )
         )
         lineSource.setGeoJson(updatedFeatures)
     }
@@ -155,12 +161,12 @@ private fun updateSources(style: Style, line: String, stops: List<StopEntity>) {
                     Feature.fromGeometry(
                         Point.fromLngLat(
                             it.longitude,
-                            it.latitude,
-                        ),
+                            it.latitude
+                        )
                     ).apply {
                         addStringProperty("name", it.name)
                     }
-                },
+                }
             )
         markerSource.setGeoJson(updatedMarkerFeatures)
     }
@@ -172,10 +178,10 @@ private fun MapView.setupMap(uiState: MapContract.UiState, optionalExtra: ((Mapb
             .target(
                 com.mapbox.mapboxsdk.geometry.LatLng(
                     uiState.currentLocation.latitude,
-                    uiState.currentLocation.longitude,
-                ),
+                    uiState.currentLocation.longitude
+                )
             )
-            .zoom(16.0)
+            .zoom(DEFAULT_LOCATION_ZOOM)
             .build()
 
         map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
@@ -188,11 +194,11 @@ private fun MapView.setupMapWithDefaultLocation() {
         val cameraPosition = CameraPosition.Builder()
             .target(
                 com.mapbox.mapboxsdk.geometry.LatLng(
-                    53.3498, // Dublin latitude
-                    -6.2603,  // Dublin longitude
-                ),
+                    DUBLIN_LATITUDE,
+                    DUBLIN_LONGITUDE
+                )
             )
-            .zoom(12.0) // Zoom out a bit to show more of the city
+            .zoom(DEFAULT_LOCATION_ZOOM) // Zoom out a bit to show more of the city
             .build()
 
         map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
@@ -207,7 +213,7 @@ private fun MapboxMap.setupStyle(onSetup: (Style) -> Unit) {
     this.setStyle(
         Style.Builder()
             .withSource(rasterSource)
-            .withLayer(rasterLayer),
+            .withLayer(rasterLayer)
     ) { style ->
         onSetup(style)
     }
@@ -218,7 +224,7 @@ private fun Style.addLinesMarkersAndLabels(
     line: String,
     stops: List<StopEntity>,
     color: String,
-    context: Context,
+    context: Context
 ) {
     addLine(line, stops, color)
     addMarker(line, stops, color)
@@ -229,7 +235,7 @@ private fun Style.addLineLayer(line: String, color: String) {
     val redLineLayer = LineLayer("$line-line-layer", "$line-line-source")
         .withProperties(
             lineColor(color),
-            lineWidth(5f),
+            lineWidth(5f)
         )
     addLayer(redLineLayer)
 }
@@ -241,11 +247,11 @@ private fun Style.addLineSource(line: String, stops: List<StopEntity>) {
             listOf(
                 Feature.fromGeometry(
                     LineString.fromLngLats(
-                        stops.map { Point.fromLngLat(it.longitude, it.latitude) },
-                    ),
-                ),
-            ),
-        ),
+                        stops.map { Point.fromLngLat(it.longitude, it.latitude) }
+                    )
+                )
+            )
+        )
     )
     addSource(lineSource)
 }
@@ -268,13 +274,13 @@ private fun Style.addMarkersSource(line: String, stops: List<StopEntity>) {
                 Feature.fromGeometry(
                     Point.fromLngLat(
                         it.longitude,
-                        it.latitude,
-                    ),
+                        it.latitude
+                    )
                 ).apply {
                     addStringProperty("name", it.name)
                 }
-            },
-        ),
+            }
+        )
     )
     addSource(markersSource)
 }
@@ -286,7 +292,7 @@ private fun Style.addMarkerLayer(line: String, color: String) {
             circleColor(color),
             circleStrokeWidth(2f),
             circleStrokeColor("#ffffff"),
-            circleOpacity(1f),
+            circleOpacity(1f)
         )
     addLayer(circleLayer)
 }
@@ -298,9 +304,9 @@ private fun Style.addLabelSource(line: String, stop: StopEntity) {
             listOf(
                 Feature.fromGeometry(Point.fromLngLat(stop.longitude, stop.latitude)).apply {
                     addStringProperty("name", stop.name)
-                },
-            ),
-        ),
+                }
+            )
+        )
     )
     addSource(labelSource)
 }
@@ -309,7 +315,7 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
     // Use a SymbolLayer to render the markers
     val labelLayer = SymbolLayer(
         "$line-icon-layer-$stopName",
-        "$line-markers-source-$stopName",
+        "$line-markers-source-$stopName"
     ).apply {
         withProperties(
             iconImage("$line-marker-icon-$stopName"),
@@ -318,11 +324,11 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
                     Expression.exponential(1f),
                     Expression.zoom(),
                     Expression.stop(10, 0.5f),
-                    Expression.stop(16, 1.5f),
-                ),
+                    Expression.stop(16, 1.5f)
+                )
             ),
             iconAllowOverlap(true),
-            PropertyFactory.iconOffset(arrayOf(0f, -3.5f)),
+            PropertyFactory.iconOffset(arrayOf(0f, -3.5f))
         )
     }
     addLayerAbove(labelLayer, "$line-circle-layer")
@@ -332,7 +338,7 @@ private fun Style.addLabels(
     map: MapboxMap,
     line: String,
     stops: List<StopEntity>,
-    context: Context,
+    context: Context
 ) {
     stops.forEach { location ->
         val customMarkerBitmap = createTooltipBitmap(context, location.name)
@@ -355,11 +361,11 @@ private fun MapboxMap.addCameraListener(style: Style, line: String, stopName: St
             if (zoomLevel >= (zoomThreshold - 2)) "visible" else "none"
 
         style.getLayer("$line-icon-layer-$stopName")?.setProperties(
-            PropertyFactory.visibility(labelVisibility),
+            PropertyFactory.visibility(labelVisibility)
         )
 
         style.getLayer("$line-circle-layer")?.setProperties(
-            PropertyFactory.visibility(markerVisibility),
+            PropertyFactory.visibility(markerVisibility)
         )
     }
 }
@@ -392,7 +398,7 @@ private fun MapboxMap.uiSetup() {
 
 private fun createTooltipBitmap(
     context: Context,
-    text: String,
+    text: String
 ): Bitmap {
     val triangleBaseWidthDp = 10.dp // Width of the triangle's base
     val triangleHeightDp = 10.dp // Height of the triangle
@@ -400,7 +406,7 @@ private fun createTooltipBitmap(
     val textStyle = TextStyle(
         color = androidx.compose.ui.graphics.Color.White,
         fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Bold
     )
 
     val triangleBaseWidth =
@@ -420,7 +426,7 @@ private fun createTooltipBitmap(
 
     val textPaint = Paint().apply {
         color = android.graphics.Color.WHITE
-        textSize = textStyle.fontSize.value * context.resources.displayMetrics.scaledDensity
+        textSize = getScaledFontSizeInPixelsFromRawSp(context, textStyle.fontSize.value)
         typeface = Typeface.DEFAULT_BOLD
         isAntiAlias = true
     }
@@ -436,7 +442,7 @@ private fun createTooltipBitmap(
     val bitmap = Bitmap.createBitmap(
         bitmapWidth,
         bitmapHeight + tooltipOffset.toInt(),
-        Bitmap.Config.ARGB_8888,
+        Bitmap.Config.ARGB_8888
     )
     val canvas = Canvas(bitmap)
 
@@ -463,8 +469,16 @@ private fun createTooltipBitmap(
         text,
         rectangleX + rectanglePadding,
         tooltipOffset + rectanglePadding + textBounds.height(),
-        textPaint,
+        textPaint
     )
 
     return bitmap
+}
+
+private fun getScaledFontSizeInPixelsFromRawSp(context: Context, rawSpValue: Float): Float {
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_SP,
+        rawSpValue,
+        context.resources.displayMetrics
+    )
 }

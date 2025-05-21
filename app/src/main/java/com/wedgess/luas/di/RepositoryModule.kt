@@ -28,21 +28,21 @@ object RepositoryModule {
     fun provideLuasRepository(
         stopsApiService: LuasStopApiService,
         forecastApiService: LuasForecastApiService,
-        stopsDao: StopDao,
+        stopsDao: StopDao
     ): LuasRepository =
         LuasRepositoryImpl(stopsApiService, forecastApiService, stopsDao)
 
     @Provides
     @Singleton
     fun provideLocationRepository(
-        fusedLocationProviderClient: FusedLocationProviderClient,
+        fusedLocationProviderClient: FusedLocationProviderClient
     ): LocationRepository =
         LocationRepositoryImpl(fusedLocationProviderClient, Looper.getMainLooper())
 
     @Provides
     @Singleton
     fun providePreferencesRepository(
-        dataStore: DataStore<UserPreferences>,
+        dataStore: DataStore<UserPreferences>
     ): PreferencesRepository =
         PreferencesRepositoryImpl(dataStore)
 }

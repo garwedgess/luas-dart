@@ -37,10 +37,13 @@ class AlarmManagerDataSourceTest {
 
     @RelaxedMockK
     private lateinit var context: Context
+
     @RelaxedMockK
     private lateinit var alarmManager: AlarmManager
+
     @RelaxedMockK
     private lateinit var powerManager: PowerManager
+
     @RelaxedMockK
     private lateinit var pendingIntent: PendingIntent
 
@@ -103,8 +106,14 @@ class AlarmManagerDataSourceTest {
             )
         }
 
-        assertEquals(AlarmReceiver.EXTRA_ALARM_ID, intentSlot.captured.extras?.keySet()?.find { it == AlarmReceiver.EXTRA_ALARM_ID })
-        assertEquals(AlarmReceiver.EXTRA_NOTIFICATION_DATA, intentSlot.captured.extras?.keySet()?.find { it == AlarmReceiver.EXTRA_NOTIFICATION_DATA })
+        assertEquals(
+            AlarmReceiver.EXTRA_ALARM_ID,
+            intentSlot.captured.extras?.keySet()?.find { it == AlarmReceiver.EXTRA_ALARM_ID }
+        )
+        assertEquals(
+            AlarmReceiver.EXTRA_NOTIFICATION_DATA,
+            intentSlot.captured.extras?.keySet()?.find { it == AlarmReceiver.EXTRA_NOTIFICATION_DATA }
+        )
     }
 
     @Test

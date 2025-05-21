@@ -22,14 +22,13 @@ import javax.inject.Singleton
 
 @Singleton
 class AlarmManagerDataSource @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @ApplicationContext private val context: Context
 ) {
     private val alarmManager: AlarmManager by lazy {
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     }
     private val _alarmStateFlow = MutableStateFlow(isAlarmSet())
     val alarmStateFlow: StateFlow<Boolean> = _alarmStateFlow.asStateFlow()
-
 
     @SuppressLint("NewApi")
     fun scheduleAlarm(triggerTimeMillis: Long, notificationData: NotificationData) {
@@ -42,7 +41,7 @@ class AlarmManagerDataSource @Inject constructor(
             context,
             ALARM_REQUEST_CODE,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         Timber.d("Setting alarm for triggerTimeMillis: ${(triggerTimeMillis - SystemClock.elapsedRealtime())}")
 
@@ -50,13 +49,13 @@ class AlarmManagerDataSource @Inject constructor(
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 triggerTimeMillis,
-                pendingIntent,
+                pendingIntent
             )
         } else {
             alarmManager.setExact(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 triggerTimeMillis,
-                pendingIntent,
+                pendingIntent
             )
         }
         updateAlarmState()
@@ -68,7 +67,7 @@ class AlarmManagerDataSource @Inject constructor(
             context,
             ALARM_REQUEST_CODE,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         alarmManager.cancel(pendingIntent)
@@ -85,7 +84,7 @@ class AlarmManagerDataSource @Inject constructor(
             context,
             ALARM_REQUEST_CODE,
             intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
 
         return pendingIntent != null

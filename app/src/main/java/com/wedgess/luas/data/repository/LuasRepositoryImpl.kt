@@ -25,7 +25,7 @@ class LuasRepositoryImpl @Inject constructor(
     private val stopsApi: LuasStopApiService,
     private val forecastApi: LuasForecastApiService,
     private val stopsDao: StopDao,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LuasRepository {
 
     override fun fetchStops(line: LuasLineEntity): Flow<Result<List<StopEntity>>> {
@@ -69,7 +69,7 @@ class LuasRepositoryImpl @Inject constructor(
             },
             onFailure = { error ->
                 Timber.e(error, "Failed to insert remote stops: ${error.message}")
-            },
+            }
         )
     }
 }

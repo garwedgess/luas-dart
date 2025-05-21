@@ -1,6 +1,5 @@
 package com.wedgess.luas.presentation.forecast.tab.compose.components
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -25,11 +24,11 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.ui.theme.LuasTheme
 
-@SuppressLint("ComposeModifierMissing")
 @Composable
 fun ForecastStatusMessage(
     message: String,
-    showTravelUpdatesDialog: () -> Unit,
+    modifier: Modifier = Modifier,
+    showTravelUpdatesDialog: () -> Unit
 ) {
     val normalOperation = message.contains("operating normally")
     val color = if (normalOperation) {
@@ -38,18 +37,18 @@ fun ForecastStatusMessage(
         Color(0xFF996600)
     }
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(color = color),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             AnimatedVisibility(
                 visible = message.isNotBlank(),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     modifier = Modifier
@@ -57,7 +56,7 @@ fun ForecastStatusMessage(
                     text = message,
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Center
                 )
             }
             AnimatedVisibility(visible = !normalOperation && message.isNotBlank()) {
@@ -65,7 +64,7 @@ fun ForecastStatusMessage(
                     Icon(
                         imageVector = Icons.Outlined.Info,
                         contentDescription = "Travel Updates",
-                        tint = Color.White,
+                        tint = Color.White
                     )
                 }
             }
@@ -76,7 +75,7 @@ fun ForecastStatusMessage(
 @Preview
 @Composable
 private fun ForecastStatusMessagePreview(
-    @PreviewParameter(ForecastStatusMessagePreviewProvider::class) message: String,
+    @PreviewParameter(ForecastStatusMessagePreviewProvider::class) message: String
 ) {
     LuasTheme {
         Surface {
@@ -90,6 +89,6 @@ private class ForecastStatusMessagePreviewProvider : PreviewParameterProvider<St
         get() = sequenceOf(
             "Services operating normally",
             "Services operating with delays see more infowmation on our website",
-            "",
+            ""
         )
 }

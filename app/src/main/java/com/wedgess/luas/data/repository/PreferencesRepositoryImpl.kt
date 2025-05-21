@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class PreferencesRepositoryImpl @Inject constructor(
     private val preferences: DataStore<UserPreferences>,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : PreferencesRepository {
 
     override suspend fun updateSelectedRedLineStation(abbreviation: String): Result<Unit> {

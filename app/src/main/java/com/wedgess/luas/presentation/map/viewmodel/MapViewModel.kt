@@ -36,7 +36,7 @@ class MapViewModel @Inject constructor(
     private val isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase,
     private val wasLocationPermissionRequestedUseCase: WasLocationPermissionRequestedUseCase,
     private val updateLocationPermissionRequestedUseCase: UpdateLocationPermissionRequestedUseCase,
-    private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase,
+    private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase
 ) : ViewModel(), SideEffectViewModel<MapContract.Effect> by SideEffectViewModelImpl() {
 
     private val _uiState = MutableStateFlow(MapContract.UiState.initial())
@@ -44,15 +44,15 @@ class MapViewModel @Inject constructor(
     val uiResult = combine(
         _uiState,
         fetchCurrentLocationUseCase(),
-        fetchAllStopsUseCase(),
+        fetchAllStopsUseCase()
     ) { state, currentLocation, allStopsResult ->
         val allStops = allStopsResult.getOrDefault(emptyList())
         UiResult.Success(
             state.copy(
                 currentLocation = currentLocation ?: UserLocation(0.0, 0.0),
                 greenLineLocations = allStops.filter { it.line == LuasLineEntity.GREEN },
-                redLineLocations = allStops.filter { it.line == LuasLineEntity.RED },
-            ),
+                redLineLocations = allStops.filter { it.line == LuasLineEntity.RED }
+            )
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
 
@@ -93,7 +93,7 @@ class MapViewModel @Inject constructor(
                 it.copy(dialogState = MapDialogState.None)
             }.also {
                 viewModelScope.emitSideEffect(
-                    MapContract.Effect.OpenAppPermissionScreen,
+                    MapContract.Effect.OpenAppPermissionScreen
                 )
             }
 
@@ -117,8 +117,8 @@ class MapViewModel @Inject constructor(
             }
             Timber.d(
                 "Location, wasLocationPermissionRequested: " +
-                "$wasLocationPermissionRequested, ignoreLocationPermission: " +
-                "$ignoreLocationPermission, permission: $permission"
+                    "$wasLocationPermissionRequested, ignoreLocationPermission: " +
+                    "$ignoreLocationPermission, permission: $permission"
             )
             _uiState.update {
                 it.copy(
@@ -127,14 +127,14 @@ class MapViewModel @Inject constructor(
                         Permission.ShowRationale -> MapDialogState.LocationPermissionRationale
                         Permission.PermanentlyDenied -> {
                             if (ignoreLocationPermission) {
-                               MapDialogState.None
+                                MapDialogState.None
                             } else {
                                 MapDialogState.LocationPermissionPermanentlyDenied
                             }
                         }
 
                         else -> it.dialogState
-                    },
+                    }
                 )
             }
         }

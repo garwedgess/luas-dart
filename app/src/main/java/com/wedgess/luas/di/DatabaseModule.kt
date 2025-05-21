@@ -50,8 +50,8 @@ object DatabaseModule {
                 override fun encode(value: Double): Double {
                     return value
                 }
-            },
-        ),
+            }
+        )
     )
 
     @Singleton

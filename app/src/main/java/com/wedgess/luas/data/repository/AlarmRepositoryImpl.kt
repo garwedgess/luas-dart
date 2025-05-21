@@ -10,24 +10,26 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val ALARM_SAFETY_NET = 30_000
 
 class AlarmRepositoryImpl @Inject constructor(
     private val alarmManagerDataSource: AlarmManagerDataSource,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AlarmRepository {
 
     override suspend fun scheduleAlarm(secondsFromNow: Long, notificationEntity: NotificationEntity): Result<Long> =
         withContext(dispatcher) {
             resultOf {
-                val triggerTimeMillis = (SystemClock.elapsedRealtime() + secondsFromNow * 1000).run {
+                val triggerMillis = SystemClock.elapsedRealtime() + secondsFromNow * TimeUnit.SECONDS.toMillis(1)
+                val triggerTimeMillis = triggerMillis.run {
                     this - ALARM_SAFETY_NET
                 }
                 alarmManagerDataSource.scheduleAlarm(
                     triggerTimeMillis = triggerTimeMillis,
-                    notificationData = notificationEntity.toData(),
+                    notificationData = notificationEntity.toData()
                 )
                 triggerTimeMillis
             }
@@ -44,5 +46,4 @@ class AlarmRepositoryImpl @Inject constructor(
     override fun isBatteryOptimizationIgnored(): Boolean = alarmManagerDataSource.isBatteryOptimizationIgnored()
 
     override fun openBatteryOptimizationSettings() = alarmManagerDataSource.openBatteryOptimizationSettings()
-
 }

@@ -42,8 +42,8 @@ fun ForecastTabContent(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
             factory.create(line)
-        },
-    ),
+        }
+    )
 ) {
     val uiResult by forecastTabViewModel.uiResult.collectAsStateWithLifecycle()
 
@@ -63,27 +63,33 @@ fun ForecastTabContent(
         onSuccess = { uiState ->
             TabListContent(
                 uiState = uiState,
-                onStopSelected = { stop -> forecastTabViewModel.onEvent((ForecastTabContract.Event.OnStopSelected(stop))) },
+                onStopSelect = { stop ->
+                    forecastTabViewModel.onEvent(
+                        ForecastTabContract.Event.OnStopSelected(stop)
+                    )
+                },
                 onProgressChange = onProgressChange,
-                onShowTravelUpdatesDialog = { forecastTabViewModel.onEvent(ForecastTabContract.Event.OnShowTravelUpdatesDialog) },
+                onShowTravelUpdatesDialog = {
+                    forecastTabViewModel.onEvent(ForecastTabContract.Event.OnShowTravelUpdatesDialog)
+                },
                 onTramClick = { mins, destination ->
                     forecastTabViewModel.onEvent(
                         ForecastTabContract.Event.OnShowNotificationsDialog(
                             mins,
-                            destination,
-                        ),
+                            destination
+                        )
                     )
                 },
                 onCancelAlarm = {
                     forecastTabViewModel.onEvent(ForecastTabContract.Event.OnStopNotification)
-                },
+                }
             )
             ForecastTabDialogs(
                 dialogsState = uiState.dialog,
                 notificationState = uiState.notificationState,
-                onEvent = forecastTabViewModel::onEvent,
+                onEvent = forecastTabViewModel::onEvent
             )
-        },
+        }
     )
 }
 
@@ -93,10 +99,10 @@ fun ForecastTabContent(
 fun TabListContent(
     uiState: ForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
-    onStopSelected: (StopEntity) -> Unit,
+    onStopSelect: (StopEntity) -> Unit,
     onTramClick: (Int, String) -> Unit,
     onProgressChange: (Float) -> Unit,
-    onCancelAlarm: () -> Unit,
+    onCancelAlarm: () -> Unit
 ) {
     LaunchedEffect(uiState.refreshProgress) {
         onProgressChange(uiState.refreshProgress)
@@ -106,7 +112,7 @@ fun TabListContent(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         stickyHeader {
             DropdownTextField(
@@ -115,45 +121,48 @@ fun TabListContent(
                 valueFormatter = { item -> item.name },
                 options = uiState.stops.toImmutableList(),
                 selectedValue = uiState.selectedStop,
-                onValueChange = onStopSelected,
+                onValueChange = onStopSelect
             )
         }
         item {
             AnimatedVisibility(uiState.alarmIsRunning) {
-                ForecastAlarmRow(uiState.notificationState, onCancelAlarm)
+                ForecastAlarmRow(
+                    notificationState = uiState.notificationState,
+                    onCancelAlarm = onCancelAlarm
+                )
             }
         }
         item {
             ForecastStatusMessage(
                 message = uiState.forecast.message,
-                showTravelUpdatesDialog = onShowTravelUpdatesDialog,
+                showTravelUpdatesDialog = onShowTravelUpdatesDialog
             )
         }
         item {
             TramDirectionHeader(
                 title = stringResource(R.string.forecast_title_outbound),
-                noTramsDue = uiState.forecast.outboundTrams.isEmpty(),
+                noTramsDue = uiState.forecast.outboundTrams.isEmpty()
             )
         }
         items(uiState.forecast.outboundTrams) { tram ->
             ForecastItemRow(
                 dueInMins = tram.dueMins,
                 destination = tram.destination,
-                onRowClick = onTramClick,
+                onRowClick = onTramClick
             )
         }
 
         item {
             TramDirectionHeader(
                 title = stringResource(R.string.forecast_title_inbound),
-                noTramsDue = uiState.forecast.inboundTrams.isEmpty(),
+                noTramsDue = uiState.forecast.inboundTrams.isEmpty()
             )
         }
         items(uiState.forecast.inboundTrams) { tram ->
             ForecastItemRow(
                 dueInMins = tram.dueMins,
                 destination = tram.destination,
-                onRowClick = onTramClick,
+                onRowClick = onTramClick
             )
         }
     }

@@ -30,14 +30,14 @@ fun NavGraphBuilder.mapRoot(onUpdateAppbarState: (TopAppBarState) -> Unit) {
         val permissionsState = rememberMultiplePermissionsState(
             listOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-            ),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
         )
         val context = LocalContext.current
 
         LaunchedEffect(Unit) {
             onUpdateAppbarState(
-                TopAppBarState(title = context.getString(R.string.nav_title_map)),
+                TopAppBarState(title = context.getString(R.string.nav_title_map))
             )
         }
 

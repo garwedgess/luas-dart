@@ -21,8 +21,8 @@ fun MapScreen(uiResult: UiResult<MapContract.UiState>, onEvent: (MapContract.Eve
             MapLibreMap(uiState = uiState, locationPermissionGranted = uiState.locationPermission == Permission.Granted)
             MapDialogs(
                 dialogState = uiState.dialogState,
-                onEvent = onEvent,
+                onEvent = onEvent
             )
-        },
+        }
     )
 }

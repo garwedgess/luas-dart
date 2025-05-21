@@ -102,16 +102,17 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `OnAcceptPermissionClick should clear dialog and emit ShowSystemNotificationPermissionDialog effect`() = runTest {
-        // Act
-        viewModel.onEvent(ForecastContract.Event.OnAcceptPermissionClick)
+    fun `OnAcceptPermissionClick should clear dialog and emit ShowSystemNotificationPermissionDialog effect`() =
+        runTest {
+            // Act
+            viewModel.onEvent(ForecastContract.Event.OnAcceptPermissionClick)
 
-        // Assert
-        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
+            // Assert
+            assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
 
-        val effect = viewModel.sideEffect.first()
-        assertTrue(effect is ForecastContract.Effect.ShowSystemNotificationPermissionDialog)
-    }
+            val effect = viewModel.sideEffect.first()
+            assertTrue(effect is ForecastContract.Effect.ShowSystemNotificationPermissionDialog)
+        }
 
     @Test
     fun `OnDismissPermissionClick should clear dialog and set permission to Denied`() = runTest {
@@ -242,54 +243,56 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `handlePermissionChange sets permission to PermanentlyDenied but does not show dialog when ignored`() = runTest {
-        // Setup
-        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+    fun `handlePermissionChange sets permission to PermanentlyDenied but does not show dialog when ignored`() =
+        runTest {
+            // Setup
+            val mockPermissionState = mockk<PermissionState>(relaxed = true)
 
-        // Mock properties to ensure toPermission returns PermanentlyDenied
-        every { mockPermissionState.status } returns mockk<PermissionStatus.Denied>().apply {
-            every { this@apply.shouldShowRationale } returns false
-            every { this@apply.isGranted } returns false
+            // Mock properties to ensure toPermission returns PermanentlyDenied
+            every { mockPermissionState.status } returns mockk<PermissionStatus.Denied>().apply {
+                every { this@apply.shouldShowRationale } returns false
+                every { this@apply.isGranted } returns false
+            }
+
+            coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+            coEvery { isNotificationPermissionIgnoredUseCase() } returns true
+
+            // Act
+            viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+            // Assert
+            viewModel.uiState.test {
+                val state = awaitItem()
+                assertEquals(Permission.PermanentlyDenied, state.notificationPermission)
+                assertEquals(ForecastDialogState.None, state.dialog)
+            }
         }
-
-        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
-        coEvery { isNotificationPermissionIgnoredUseCase() } returns true
-
-        // Act
-        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
-
-        // Assert
-        viewModel.uiState.test {
-            val state = awaitItem()
-            assertEquals(Permission.PermanentlyDenied, state.notificationPermission)
-            assertEquals(ForecastDialogState.None, state.dialog)
-        }
-    }
 
     @Test
-    fun `handlePermissionChange sets permission to Granted and shows ScheduleExactAlarms dialog when needed`() = runTest {
-        // Setup
-        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+    fun `handlePermissionChange sets permission to Granted and shows ScheduleExactAlarms dialog when needed`() =
+        runTest {
+            // Setup
+            val mockPermissionState = mockk<PermissionState>(relaxed = true)
 
-        // Mock properties to ensure toPermission returns Granted
-        every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
-            every { this@apply.isGranted } returns true
+            // Mock properties to ensure toPermission returns Granted
+            every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
+                every { this@apply.isGranted } returns true
+            }
+
+            coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+            coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+            coEvery { canScheduleExactAlarmsUseCase() } returns false
+
+            // Act
+            viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+            // Assert
+            viewModel.uiState.test {
+                val state = awaitItem()
+                assertEquals(Permission.Granted, state.notificationPermission)
+                assertEquals(ForecastDialogState.ScheduleExactAlarms, state.dialog)
+            }
         }
-
-        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
-        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
-        coEvery { canScheduleExactAlarmsUseCase() } returns false
-
-        // Act
-        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
-
-        // Assert
-        viewModel.uiState.test {
-            val state = awaitItem()
-            assertEquals(Permission.Granted, state.notificationPermission)
-            assertEquals(ForecastDialogState.ScheduleExactAlarms, state.dialog)
-        }
-    }
 
     @Test
     fun `handlePermissionChange sets permission to Granted and maintains dialog when exact alarms allowed`() = runTest {
@@ -319,23 +322,24 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `when ignoreNotificationPermission is true and permission is granted, it should set ignore to false`() = runTest {
-        // Setup
-        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+    fun `when ignoreNotificationPermission is true and permission is granted, it should set ignore to false`() =
+        runTest {
+            // Setup
+            val mockPermissionState = mockk<PermissionState>(relaxed = true)
 
-        // Mock properties to ensure toPermission returns Granted
-        every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
-            every { this@apply.isGranted } returns true
+            // Mock properties to ensure toPermission returns Granted
+            every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
+                every { this@apply.isGranted } returns true
+            }
+
+            coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+            coEvery { isNotificationPermissionIgnoredUseCase() } returns true
+            coEvery { canScheduleExactAlarmsUseCase() } returns true
+
+            // Act
+            viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+            // Assert
+            coVerify { updateIgnoreNotificationPermissionUseCase(false) }
         }
-
-        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
-        coEvery { isNotificationPermissionIgnoredUseCase() } returns true
-        coEvery { canScheduleExactAlarmsUseCase() } returns true
-
-        // Act
-        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
-
-        // Assert
-        coVerify { updateIgnoreNotificationPermissionUseCase(false) }
-    }
 }

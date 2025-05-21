@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class FetchCurrentLocationUseCase @Inject constructor(
-    private val locationRepository: LocationRepository,
+    private val locationRepository: LocationRepository
 ) {
     private val refreshFlow = RefreshFlow()
 

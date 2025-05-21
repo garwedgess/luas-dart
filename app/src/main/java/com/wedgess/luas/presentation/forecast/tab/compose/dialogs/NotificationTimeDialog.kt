@@ -29,39 +29,39 @@ fun NotificationTimeDialog(
     dueInMinutes: Int,
     onMinutesChange: (Int) -> Unit,
     onConfirm: (Int) -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.medium,
-            tonalElevation = 6.dp,
+            tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(22.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     pluralStringResource(
                         R.plurals.picker_minutes,
                         currentMinutes,
-                        currentMinutes,
-                    ),
+                        currentMinutes
+                    )
                 )
                 ListPicker(
                     initialValue = currentMinutes,
                     values = (1..dueInMinutes).map { it }.toImmutableList(),
                     onValueChange = onMinutesChange,
                     onIsErrorChange = {},
-                    enableEdition = true,
+                    enableEdition = true
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                 ) {
                     TextButton(onClick = onDismiss) {
                         Text("Cancel")
@@ -84,7 +84,7 @@ private fun NotificationTimeDialogPreview() {
             dueInMinutes = 10,
             onDismiss = {},
             onMinutesChange = {},
-            onConfirm = {},
+            onConfirm = {}
         )
     }
 }

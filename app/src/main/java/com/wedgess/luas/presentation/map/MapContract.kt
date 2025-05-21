@@ -14,7 +14,7 @@ interface MapContract {
         val greenLineLocations: List<StopEntity>,
         val redLineLocations: List<StopEntity>,
         val locationPermission: Permission,
-        val dialogState: MapDialogState,
+        val dialogState: MapDialogState
     ) {
         companion object {
             fun initial() = UiState(
@@ -22,7 +22,7 @@ interface MapContract {
                 greenLineLocations = emptyList(),
                 redLineLocations = emptyList(),
                 locationPermission = Permission.Unknown,
-                dialogState = MapDialogState.None,
+                dialogState = MapDialogState.None
             )
         }
     }

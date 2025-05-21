@@ -41,7 +41,7 @@ class AlarmRepositoryImplTest {
 
         alarmRepository = AlarmRepositoryImpl(
             alarmManagerDataSource = alarmManagerDataSource,
-            dispatcher = testDispatcher,
+            dispatcher = testDispatcher
         )
     }
 

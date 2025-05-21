@@ -13,6 +13,7 @@ import com.wedgess.luas.domain.usecase.FetchForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
 import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
 import com.wedgess.luas.domain.usecase.FetchStopsUseCase
+import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
 import com.wedgess.luas.presentation.forecast.tab.ForecastTabContract
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 @HiltViewModel(assistedFactory = ForecastTabViewModelFactory::class)
 class ForecastTabViewModel @AssistedInject constructor(
@@ -50,8 +52,9 @@ class ForecastTabViewModel @AssistedInject constructor(
     private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase,
     private val cancelAlarmUseCase: CancelAlarmUseCase,
     private val scheduleAlarmUseCase: ScheduleAlarmUseCase,
+    private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
     isAlarmRunningUseCase: FetchIsAlarmRunningUseCase,
-    fetchSelectedStationUseCase: FetchSelectedStationUseCase,
+    fetchSelectedStationUseCase: FetchSelectedStationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ForecastTabContract.UiState())
@@ -61,7 +64,7 @@ class ForecastTabViewModel @AssistedInject constructor(
     private val stopsAndStationFlow = combine(
         fetchStopsUseCase(luasLine),
         fetchSelectedStationUseCase(luasLine),
-        isAlarmRunningUseCase(),
+        isAlarmRunningUseCase()
     ) { stopsResult, currentSelectedStop, alarmIsRunning ->
         stopsResult.mapCatching { stops ->
             val selectedStop = if (currentSelectedStop.isBlank()) {
@@ -82,7 +85,7 @@ class ForecastTabViewModel @AssistedInject constructor(
                         it.copy(
                             stops = stops,
                             selectedStop = selectedStop,
-                            alarmIsRunning = alarmIsRunning,
+                            alarmIsRunning = alarmIsRunning
                         )
                     }
 
@@ -94,14 +97,14 @@ class ForecastTabViewModel @AssistedInject constructor(
                                 when (forecastRefreshResult) {
                                     is RefreshState.Error -> UiResult.Error(
                                         forecastRefreshResult.exception.message
-                                            ?: "Failed to fetch forecast",
+                                            ?: "Failed to fetch forecast"
                                     )
 
                                     is RefreshState.Success -> {
                                         val updatedState = _uiState.updateAndGet { currentState ->
                                             currentState.copy(
                                                 refreshProgress = forecastRefreshResult.progress,
-                                                forecast = forecastRefreshResult.data,
+                                                forecast = forecastRefreshResult.data
                                             )
                                         }
 
@@ -113,7 +116,7 @@ class ForecastTabViewModel @AssistedInject constructor(
                 },
                 onFailure = { throwable ->
                     flowOf(UiResult.Error(throwable.message ?: "Failed to fetch stops"))
-                },
+                }
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
@@ -145,7 +148,7 @@ class ForecastTabViewModel @AssistedInject constructor(
             is ForecastTabContract.Event.OnShowNotificationsDialog -> if (event.dueInMins > 0) {
                 showNotificationDialog(
                     event.dueInMins,
-                    event.destination,
+                    event.destination
                 ).also {
                     eventTriggerTime = System.currentTimeMillis()
                 }
@@ -161,7 +164,7 @@ class ForecastTabViewModel @AssistedInject constructor(
                 _uiState.update {
                     it.copy(notificationState = it.notificationState.copy(dueInMins = minutesRemaining))
                 }
-                delay(60_000)
+                delay(TimeUnit.MINUTES.toMillis(1))
                 minutesRemaining--
             }
             cancel()
@@ -175,16 +178,16 @@ class ForecastTabViewModel @AssistedInject constructor(
                     dueInMins = dueInMins,
                     destination = destination,
                     station = it.selectedStop.name,
-                    notifyMinutesBefore = dueInMins,
+                    notifyMinutesBefore = dueInMins
                 )
                 Timber.d("Notification State: $notificationState, ${_uiState.value}")
                 it.copy(
                     notificationState = notificationState,
-                    dialog = ForecastTabDialogState.Notification,
+                    dialog = ForecastTabDialogState.Notification
                 )
             }
         } else {
-
+            requestExactAlarmPermissionUseCase()
         }
     }
 
@@ -194,7 +197,7 @@ class ForecastTabViewModel @AssistedInject constructor(
         viewModelScope.launch {
             scheduleAlarmUseCase(
                 secondsFromNow = notificationState.triggerTimeSeconds(eventTriggerTime),
-                notificationEntity = notificationState.toEntity(),
+                notificationEntity = notificationState.toEntity()
             ).also {
                 eventTriggerTime = 0
                 startTimer(notificationState.dueInMins)

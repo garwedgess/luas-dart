@@ -24,7 +24,7 @@ import com.wedgess.luas.presentation.navigation.MainNavigationGraph
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
-fun MainContent() {
+fun MainContent(modifier: Modifier = Modifier) {
     val navHostController = rememberNavController()
     val backStackEntry = navHostController.currentBackStackEntryAsState()
 
@@ -35,7 +35,7 @@ fun MainContent() {
 
     LuasTheme {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             topBar = {
                 Column(Modifier.wrapContentHeight()) {
                     MainTopAppbar(topAppBarState = topAppBarState)

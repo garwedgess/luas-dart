@@ -34,7 +34,7 @@ import com.wedgess.luas.presentation.navigation.Screens
 @OptIn(ExperimentalPermissionsApi::class)
 fun NavGraphBuilder.forecastRoot(
     onUpdateAppbarState: (TopAppBarState) -> Unit,
-    onRefreshProgressChanged: (Float) -> Unit,
+    onRefreshProgressChanged: (Float) -> Unit
 ) {
     composable<Screens.Forecast> {
         val viewModel: ForecastViewModel = hiltViewModel()
@@ -48,8 +48,8 @@ fun NavGraphBuilder.forecastRoot(
                 TopAppBarState(
                     title = context.getString(R.string.nav_title_forecast),
                     actions = { ForecastAppBarActions(onRefresh = refreshAction) },
-                    hasProgress = true,
-                ),
+                    hasProgress = true
+                )
             )
         }
         LaunchedEffect(permissionState.status) {
@@ -75,7 +75,7 @@ fun NavGraphBuilder.forecastRoot(
         }
         ForecastScreen(
             setRefreshAction = { refreshAction = it },
-            onProgressChange = onRefreshProgressChanged,
+            onProgressChange = onRefreshProgressChanged
         )
         ForecastDialogs(uiState.dialog, viewModel::onEvent)
     }

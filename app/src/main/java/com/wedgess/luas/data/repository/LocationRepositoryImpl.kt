@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class LocationRepositoryImpl(
     private val fusedLocationClient: FusedLocationProviderClient,
     private val looper: Looper,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LocationRepository {
 
     @SuppressLint("MissingPermission")
@@ -31,7 +31,7 @@ class LocationRepositoryImpl(
             trySend(UserLocation(0.0, 0.0))
             val locationRequest = LocationRequest.Builder(
                 Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                TimeUnit.MINUTES.toMillis(1),
+                TimeUnit.MINUTES.toMillis(1)
             )
                 .setMinUpdateDistanceMeters(10f)
                 .build()
@@ -42,8 +42,8 @@ class LocationRepositoryImpl(
                         trySend(
                             UserLocation(
                                 this.latitude,
-                                this.longitude,
-                            ),
+                                this.longitude
+                            )
                         )
                     }
                 }
@@ -52,7 +52,7 @@ class LocationRepositoryImpl(
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
-                looper,
+                looper
             )
 
             awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }

@@ -2,17 +2,18 @@ package com.wedgess.luas.presentation.forecast.tab.extensions
 
 import com.wedgess.luas.domain.model.NotificationEntity
 import com.wedgess.luas.presentation.forecast.tab.model.NotificationState
+import java.util.concurrent.TimeUnit
 
 fun NotificationState.toEntity() = NotificationEntity(
     dueInMins = dueInMins,
     station = station,
     notifyMinutesBefore = notifyMinutesBefore,
-    destination = destination,
+    destination = destination
 )
 
 fun NotificationState.triggerTimeSeconds(elapsedTimeSinceAction: Long): Long {
-    return ((dueInMins - notifyMinutesBefore) * 60).run {
+    return TimeUnit.MINUTES.toSeconds((dueInMins - notifyMinutesBefore).toLong()).run {
         val elapsedTimeMillis = System.currentTimeMillis() - elapsedTimeSinceAction
-        this - (elapsedTimeMillis / 1000)
+        this - (elapsedTimeMillis / TimeUnit.SECONDS.toMillis(1))
     }
 }

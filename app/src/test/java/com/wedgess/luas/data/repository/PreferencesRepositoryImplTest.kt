@@ -36,7 +36,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("RED_STATION")
                 .setSelectedGreenLineStation("GREEN_STATION")
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -55,7 +55,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("RED_STATION")
                 .setSelectedGreenLineStation("GREEN_STATION")
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -74,7 +74,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("OLD_RED_STATION")
                 .setSelectedGreenLineStation("GREEN_STATION")
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -116,7 +116,7 @@ class PreferencesRepositoryImplTest {
             UserPreferences.newBuilder()
                 .setSelectedRedLineStation("RED_STATION")
                 .setSelectedGreenLineStation("OLD_GREEN_STATION")
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -157,7 +157,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setLocationPermissionRequested(false)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -198,7 +198,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setIgnoreLocationPermission(false)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -239,7 +239,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setNotificationPermissionRequested(false)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -280,7 +280,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setIgnoreNotificationPermission(false)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -321,7 +321,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setIgnoreLocationPermission(true)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -339,7 +339,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setIgnoreNotificationPermission(true)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -357,7 +357,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setLocationPermissionRequested(true)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 
@@ -375,7 +375,7 @@ class PreferencesRepositoryImplTest {
         val userPreferencesFlow = MutableStateFlow(
             UserPreferences.newBuilder()
                 .setNotificationPermissionRequested(true)
-                .build(),
+                .build()
         )
         coEvery { preferences.data } returns userPreferencesFlow
 

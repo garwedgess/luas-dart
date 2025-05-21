@@ -36,13 +36,13 @@ fun <T : TabItem> AnimatedTabContainer(
     modifier: Modifier = Modifier,
     indicatorColors: ImmutableList<Color> = persistentListOf(MaterialTheme.colorScheme.primary),
     onTabIndexChange: ((index: Int) -> Unit)? = null,
-    onTabSelected: @Composable (T) -> Unit,
+    onTabSelected: @Composable (T) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
         pageCount = {
             tabItems.size
-        },
+        }
     )
 
     LaunchedEffect(pagerState) {
@@ -59,7 +59,7 @@ fun <T : TabItem> AnimatedTabContainer(
         } else {
             indicatorColors.first()
         },
-        label = "Tab Indicator Color",
+        label = "Tab Indicator Color"
     )
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -68,9 +68,9 @@ fun <T : TabItem> AnimatedTabContainer(
             indicator = { tabPositions ->
                 TabRowDefaults.SecondaryIndicator(
                     modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                    color = indicatorColor,
+                    color = indicatorColor
                 )
-            },
+            }
         ) {
             tabItems.forEachIndexed { index, tab ->
                 Tab(
@@ -79,7 +79,7 @@ fun <T : TabItem> AnimatedTabContainer(
                         scope.launch {
                             pagerState.animateScrollToPage(
                                 index,
-                                animationSpec = tween(durationMillis = 500),
+                                animationSpec = tween(durationMillis = 500)
                             )
                         }
                     },
@@ -88,16 +88,16 @@ fun <T : TabItem> AnimatedTabContainer(
                         @Composable {
                             Icon(
                                 imageVector = icon,
-                                contentDescription = tab.title.asString(),
+                                contentDescription = tab.title.asString()
                             )
                         }
-                    },
+                    }
                 )
             }
         }
         HorizontalPager(
             state = pagerState,
-            beyondViewportPageCount = 0,
+            beyondViewportPageCount = 0
         ) { page ->
             val pageOffset = (
                 (pagerState.currentPage - page) + pagerState
@@ -111,7 +111,7 @@ fun <T : TabItem> AnimatedTabContainer(
                         val scale = lerp(
                             start = 0.85f,
                             stop = 1f,
-                            fraction = 1f - pageOffset.coerceIn(0f, 1f),
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
                         )
                         scaleX = scale
                         scaleY = scale
@@ -119,9 +119,9 @@ fun <T : TabItem> AnimatedTabContainer(
                         alpha = lerp(
                             start = 0.5f,
                             stop = 1f,
-                            fraction = 1f - pageOffset.coerceIn(0f, 1f),
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
                         )
-                    },
+                    }
             ) {
                 onTabSelected(tabItems[page])
             }

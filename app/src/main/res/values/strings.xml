@@ -10,4 +10,17 @@
     <string name="nav_title_map">Map</string>
     <string name="nav_title_news">News</string>
     <string name="action_dismiss">Dismiss</string>
+    <string name="location_permission_dialog_title">Location Permission</string>
+    <string name="location_permission_permanently_denied_msg">Location permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant location permission now?</string>
+    <string name="location_permission_rationale_msg">Location permission is only required if you wish to show your current location on the map. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings</string>
+    <string name="btn_yes">Yes</string>
+    <string name="btn_no">No</string>
+    <string name="btn_allow">Allow</string>
+    <string name="btn_deny">Deny</string>
+    <string name="notifying_msg_for_to_in">Notifying for %1$s to %2$s in %3$s</string>
+    <string name="alarm_permission_dialog_title">Alarm Permission</string>
+    <string name="exact_alarm_permission_msg">In order to show the notifications, the app requires to have permission to set exact alarms. You need to manually enable the permission, do you want to be taken to the permission screen now?</string>
+    <string name="notification_permission">Notification Permission</string>
+    <string name="notification_permission_rationale_msg">Notification permission is only required if you want to be notified for a tram arrival. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings</string>
+    <string name="notification_permission_permanently_denied_msg">Notification permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant notification permission now?</string>
 </resources>

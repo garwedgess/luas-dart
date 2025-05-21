@@ -10,13 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 
 @Composable
 fun BottomNavigationBar(
     onNavigateTo: (route: Screens) -> Unit,
+    modifier: Modifier = Modifier,
     selectedItemRoute: String? = null
 ) {
-    NavigationBar {
+    NavigationBar(modifier = modifier) {
         BottomNavItem.all().forEach { item ->
             val isSelected by remember(selectedItemRoute) {
                 derivedStateOf { selectedItemRoute == item.route::class.qualifiedName }
