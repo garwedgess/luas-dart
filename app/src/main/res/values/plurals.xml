@@ -10,4 +10,9 @@
         <item quantity="one">Notify me %d minute before arrival</item>
         <item quantity="other">Notify me %d minutes before arrival</item>
     </plurals>
+
+    <plurals name="dart_minutes">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d mins</item>
+    </plurals>
 </resources>

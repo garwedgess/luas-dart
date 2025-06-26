@@ -7,9 +7,16 @@ option java_multiple_files = true;
 message UserPreferences {
     string selectedGreenLineStation = 1;
     string selectedRedLineStation = 2;
-    bool locationPermissionRequested = 3;
-    bool notificationPermissionRequested = 4;
-    bool locationPermissionRationaleShown = 5;
-    bool ignoreLocationPermission = 6;
-    bool ignoreNotificationPermission = 7;
+    string selectedDartStation = 3;
+    bool locationPermissionRequested = 4;
+    bool notificationPermissionRequested = 5;
+    bool locationPermissionRationaleShown = 6;
+    bool ignoreLocationPermission = 7;
+    bool ignoreNotificationPermission = 8;
+    Transport transportType = 9;
+
+    enum Transport {
+        LUAS = 0;
+        DART = 1;
+    }
 }

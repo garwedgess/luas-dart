@@ -18,13 +18,26 @@ class UserPreferencesSerializerTest {
         val expectedDefault = UserPreferences.newBuilder()
             .setSelectedRedLineStation("")
             .setSelectedGreenLineStation("")
+            .setSelectedDartStation("")
+            .setLocationPermissionRequested(false)
+            .setNotificationPermissionRequested(false)
+            .setIgnoreNotificationPermission(false)
+            .setIgnoreLocationPermission(false)
+            .setTransportType(UserPreferences.Transport.LUAS)
             .build()
 
         // Act
         val actualDefault = UserPreferencesSerializer.defaultValue
 
         // Assert
-        assertEquals(expectedDefault, actualDefault)
+        assertEquals(expectedDefault.selectedRedLineStation, actualDefault.selectedRedLineStation)
+        assertEquals(expectedDefault.selectedGreenLineStation, actualDefault.selectedGreenLineStation)
+        assertEquals(expectedDefault.selectedDartStation, actualDefault.selectedDartStation)
+        assertEquals(expectedDefault.transportType, actualDefault.transportType)
+        assertEquals(expectedDefault.locationPermissionRequested, actualDefault.locationPermissionRequested)
+        assertEquals(expectedDefault.notificationPermissionRequested, actualDefault.notificationPermissionRequested)
+        assertEquals(expectedDefault.ignoreLocationPermission, actualDefault.ignoreLocationPermission)
+        assertEquals(expectedDefault.ignoreNotificationPermission, actualDefault.ignoreNotificationPermission)
     }
 
     @Test

@@ -1,15 +1,18 @@
 package com.wedgess.luas.domain.repository
 
-import com.wedgess.luas.domain.model.ForcastEntity
+import com.wedgess.luas.domain.model.LuasForcastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.StopEntity
+import com.wedgess.luas.domain.model.LuasStopEntity
+import com.wedgess.luas.domain.model.StationLocationEntity
 import kotlinx.coroutines.flow.Flow
 
 interface LuasRepository {
 
-    fun fetchStops(line: LuasLineEntity): Flow<Result<List<StopEntity>>>
+    fun fetchStops(line: LuasLineEntity): Flow<Result<List<LuasStopEntity>>>
 
-    fun fetchAllStops(): Flow<Result<List<StopEntity>>>
+    fun fetchAllStopLocations(): Flow<Result<List<StationLocationEntity>>>
 
-    suspend fun fetchForecast(stopAbv: String): Result<ForcastEntity>
+    fun fetchAllStops(): Flow<Result<List<LuasStopEntity>>>
+
+    suspend fun fetchForecast(stopAbv: String): Result<LuasForcastEntity>
 }

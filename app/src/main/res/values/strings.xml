@@ -23,4 +23,5 @@
     <string name="notification_permission">Notification Permission</string>
     <string name="notification_permission_rationale_msg">Notification permission is only required if you want to be notified for a tram arrival. If not, you can Deny the permission for now and if you wish to allow it in the future, then you can do so from your devices Settings</string>
     <string name="notification_permission_permanently_denied_msg">Notification permission has been permanently denied, you must manually grant it from your devices Settings. Do you want to grant notification permission now?</string>
+    <string name="now">now</string>
 </resources>

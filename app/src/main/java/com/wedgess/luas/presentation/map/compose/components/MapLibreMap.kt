@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.ViewGroup
@@ -16,11 +17,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import com.mapbox.geojson.Feature
@@ -29,6 +28,7 @@ import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
@@ -54,8 +54,9 @@ import com.mapbox.mapboxsdk.style.layers.SymbolLayer
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
-import com.wedgess.luas.domain.model.StopEntity
-import com.wedgess.luas.presentation.map.MapContract
+import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.UserLocation
+import kotlinx.collections.immutable.ImmutableList
 import timber.log.Timber
 
 private const val DEFAULT_LOCATION_ZOOM = 12.0
@@ -64,10 +65,12 @@ private const val DUBLIN_LONGITUDE = -6.2603
 
 @SuppressLint("MissingPermission")
 @Composable
-fun MapLibreMap(
-    uiState: MapContract.UiState,
+fun LuasMapLibreMap(
+    currentLocation: UserLocation,
+    redLineLocations: ImmutableList<StationLocationEntity.LuasStationLocationEntity>,
+    greenLineLocations: ImmutableList<StationLocationEntity.LuasStationLocationEntity>,
     locationPermissionGranted: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
@@ -85,12 +88,12 @@ fun MapLibreMap(
     LaunchedEffect(locationPermissionGranted) {
         if (locationPermissionGranted) {
             mapView.setupMap(
-                uiState = uiState,
+                currentLocation = currentLocation,
                 optionalExtra = { map ->
                     map.style?.let { style ->
                         map.locationComponentSetup(style, context)
                     }
-                }
+                },
             )
         }
     }
@@ -107,16 +110,16 @@ fun MapLibreMap(
                         style.addLinesMarkersAndLabels(
                             map,
                             "red",
-                            uiState.redLineLocations,
+                            redLineLocations,
                             "#E53935",
-                            context
+                            context,
                         )
                         style.addLinesMarkersAndLabels(
                             map,
                             "green",
-                            uiState.greenLineLocations,
+                            greenLineLocations,
                             "#66BF63",
-                            context
+                            context,
                         )
                         map.uiSetup()
                     }
@@ -126,15 +129,80 @@ fun MapLibreMap(
         update = { mv ->
             mv.getMapAsync { map ->
                 map.style?.let { style ->
-                    updateSources(style, "red", uiState.redLineLocations)
-                    updateSources(style, "green", uiState.greenLineLocations)
+                    updateSources(style, "red", redLineLocations)
+                    updateSources(style, "green", greenLineLocations)
                 }
             }
-        }
+        },
     )
 }
 
-private fun updateSources(style: Style, line: String, stops: List<StopEntity>) {
+@SuppressLint("MissingPermission")
+@Composable
+fun DartMapLibreMap(
+    currentLocation: UserLocation,
+    dartStationLocations: ImmutableList<StationLocationEntity.DartStationLocationEntity>,
+    locationPermissionGranted: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val mapView = remember { MapView(context) }
+
+    DisposableEffect(Unit) {
+        mapView.onCreate(null)
+
+        onDispose {
+            (mapView.parent as? ViewGroup)?.removeView(mapView)
+            mapView.onStop()
+            mapView.onDestroy()
+        }
+    }
+
+    LaunchedEffect(locationPermissionGranted) {
+        if (locationPermissionGranted) {
+            mapView.setupMap(
+                currentLocation = currentLocation,
+                optionalExtra = { map ->
+                    map.style?.let { style ->
+                        map.locationComponentSetup(style, context)
+                    }
+                },
+            )
+        }
+    }
+
+    AndroidView(
+        modifier = modifier
+            .fillMaxSize()
+            .zIndex(0f),
+        factory = {
+            mapView.apply {
+                getMapAsync { map ->
+                    setupMapWithDefaultLocation()
+                    map.setupStyle { style ->
+                        style.addLinesMarkersAndLabels(
+                            map,
+                            "green",
+                            dartStationLocations,
+                            "#66BF63",
+                            context,
+                        )
+                        map.uiSetup()
+                    }
+                }
+            }
+        },
+        update = { mv ->
+            mv.getMapAsync { map ->
+                map.style?.let { style ->
+                    updateSources(style, "green", dartStationLocations)
+                }
+            }
+        },
+    )
+}
+
+private fun updateSources(style: Style, line: String, stops: List<StationLocationEntity>) {
     val lineSource = style.getSourceAs<GeoJsonSource>("$line-line-source")
     if (lineSource != null) {
         val updatedFeatures = FeatureCollection.fromFeatures(
@@ -144,12 +212,12 @@ private fun updateSources(style: Style, line: String, stops: List<StopEntity>) {
                         stops.map {
                             Point.fromLngLat(
                                 it.longitude,
-                                it.latitude
+                                it.latitude,
                             )
-                        }
-                    )
-                )
-            )
+                        },
+                    ),
+                ),
+            ),
         )
         lineSource.setGeoJson(updatedFeatures)
     }
@@ -161,30 +229,30 @@ private fun updateSources(style: Style, line: String, stops: List<StopEntity>) {
                     Feature.fromGeometry(
                         Point.fromLngLat(
                             it.longitude,
-                            it.latitude
-                        )
+                            it.latitude,
+                        ),
                     ).apply {
                         addStringProperty("name", it.name)
                     }
-                }
+                },
             )
         markerSource.setGeoJson(updatedMarkerFeatures)
     }
 }
 
-private fun MapView.setupMap(uiState: MapContract.UiState, optionalExtra: ((MapboxMap) -> Unit)? = null) {
+private fun MapView.setupMap(currentLocation: UserLocation, optionalExtra: ((MapboxMap) -> Unit)? = null) {
     getMapAsync { map ->
         val cameraPosition = CameraPosition.Builder()
             .target(
-                com.mapbox.mapboxsdk.geometry.LatLng(
-                    uiState.currentLocation.latitude,
-                    uiState.currentLocation.longitude
-                )
+                LatLng(
+                    currentLocation.latitude,
+                    currentLocation.longitude,
+                ),
             )
             .zoom(DEFAULT_LOCATION_ZOOM)
             .build()
 
-        map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+        map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
         optionalExtra?.invoke(map)
     }
 }
@@ -193,15 +261,15 @@ private fun MapView.setupMapWithDefaultLocation() {
     getMapAsync { map ->
         val cameraPosition = CameraPosition.Builder()
             .target(
-                com.mapbox.mapboxsdk.geometry.LatLng(
+                LatLng(
                     DUBLIN_LATITUDE,
-                    DUBLIN_LONGITUDE
-                )
+                    DUBLIN_LONGITUDE,
+                ),
             )
             .zoom(DEFAULT_LOCATION_ZOOM) // Zoom out a bit to show more of the city
             .build()
 
-        map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+        map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 }
 
@@ -213,7 +281,7 @@ private fun MapboxMap.setupStyle(onSetup: (Style) -> Unit) {
     this.setStyle(
         Style.Builder()
             .withSource(rasterSource)
-            .withLayer(rasterLayer)
+            .withLayer(rasterLayer),
     ) { style ->
         onSetup(style)
     }
@@ -222,9 +290,9 @@ private fun MapboxMap.setupStyle(onSetup: (Style) -> Unit) {
 private fun Style.addLinesMarkersAndLabels(
     map: MapboxMap,
     line: String,
-    stops: List<StopEntity>,
+    stops: List<StationLocationEntity>,
     color: String,
-    context: Context
+    context: Context,
 ) {
     addLine(line, stops, color)
     addMarker(line, stops, color)
@@ -235,38 +303,38 @@ private fun Style.addLineLayer(line: String, color: String) {
     val redLineLayer = LineLayer("$line-line-layer", "$line-line-source")
         .withProperties(
             lineColor(color),
-            lineWidth(5f)
+            lineWidth(5f),
         )
     addLayer(redLineLayer)
 }
 
-private fun Style.addLineSource(line: String, stops: List<StopEntity>) {
+private fun Style.addLineSource(line: String, stops: List<StationLocationEntity>) {
     val lineSource = GeoJsonSource(
         "$line-line-source",
         FeatureCollection.fromFeatures(
             listOf(
                 Feature.fromGeometry(
                     LineString.fromLngLats(
-                        stops.map { Point.fromLngLat(it.longitude, it.latitude) }
-                    )
-                )
-            )
-        )
+                        stops.map { Point.fromLngLat(it.longitude, it.latitude) },
+                    ),
+                ),
+            ),
+        ),
     )
     addSource(lineSource)
 }
 
-private fun Style.addLine(line: String, stops: List<StopEntity>, color: String) {
+private fun Style.addLine(line: String, stops: List<StationLocationEntity>, color: String) {
     addLineSource(line, stops)
     addLineLayer(line, color)
 }
 
-private fun Style.addMarker(line: String, stops: List<StopEntity>, color: String) {
+private fun Style.addMarker(line: String, stops: List<StationLocationEntity>, color: String) {
     addMarkersSource(line, stops)
     addMarkerLayer(line, color)
 }
 
-private fun Style.addMarkersSource(line: String, stops: List<StopEntity>) {
+private fun Style.addMarkersSource(line: String, stops: List<StationLocationEntity>) {
     val markersSource = GeoJsonSource(
         "$line-markers-source",
         FeatureCollection.fromFeatures(
@@ -274,13 +342,13 @@ private fun Style.addMarkersSource(line: String, stops: List<StopEntity>) {
                 Feature.fromGeometry(
                     Point.fromLngLat(
                         it.longitude,
-                        it.latitude
-                    )
+                        it.latitude,
+                    ),
                 ).apply {
                     addStringProperty("name", it.name)
                 }
-            }
-        )
+            },
+        ),
     )
     addSource(markersSource)
 }
@@ -292,21 +360,21 @@ private fun Style.addMarkerLayer(line: String, color: String) {
             circleColor(color),
             circleStrokeWidth(2f),
             circleStrokeColor("#ffffff"),
-            circleOpacity(1f)
+            circleOpacity(1f),
         )
     addLayer(circleLayer)
 }
 
-private fun Style.addLabelSource(line: String, stop: StopEntity) {
+private fun Style.addLabelSource(line: String, stop: StationLocationEntity) {
     val labelSource = GeoJsonSource(
         "$line-markers-source-${stop.name}",
         FeatureCollection.fromFeatures(
             listOf(
                 Feature.fromGeometry(Point.fromLngLat(stop.longitude, stop.latitude)).apply {
                     addStringProperty("name", stop.name)
-                }
-            )
-        )
+                },
+            ),
+        ),
     )
     addSource(labelSource)
 }
@@ -315,7 +383,7 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
     // Use a SymbolLayer to render the markers
     val labelLayer = SymbolLayer(
         "$line-icon-layer-$stopName",
-        "$line-markers-source-$stopName"
+        "$line-markers-source-$stopName",
     ).apply {
         withProperties(
             iconImage("$line-marker-icon-$stopName"),
@@ -324,11 +392,11 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
                     Expression.exponential(1f),
                     Expression.zoom(),
                     Expression.stop(10, 0.5f),
-                    Expression.stop(16, 1.5f)
-                )
+                    Expression.stop(16, 1.5f),
+                ),
             ),
             iconAllowOverlap(true),
-            PropertyFactory.iconOffset(arrayOf(0f, -3.5f))
+            PropertyFactory.iconOffset(arrayOf(0f, -3.5f)),
         )
     }
     addLayerAbove(labelLayer, "$line-circle-layer")
@@ -337,8 +405,8 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
 private fun Style.addLabels(
     map: MapboxMap,
     line: String,
-    stops: List<StopEntity>,
-    context: Context
+    stops: List<StationLocationEntity>,
+    context: Context,
 ) {
     stops.forEach { location ->
         val customMarkerBitmap = createTooltipBitmap(context, location.name)
@@ -361,11 +429,11 @@ private fun MapboxMap.addCameraListener(style: Style, line: String, stopName: St
             if (zoomLevel >= (zoomThreshold - 2)) "visible" else "none"
 
         style.getLayer("$line-icon-layer-$stopName")?.setProperties(
-            PropertyFactory.visibility(labelVisibility)
+            PropertyFactory.visibility(labelVisibility),
         )
 
         style.getLayer("$line-circle-layer")?.setProperties(
-            PropertyFactory.visibility(markerVisibility)
+            PropertyFactory.visibility(markerVisibility),
         )
     }
 }
@@ -398,87 +466,64 @@ private fun MapboxMap.uiSetup() {
 
 private fun createTooltipBitmap(
     context: Context,
-    text: String
+    text: String,
 ): Bitmap {
-    val triangleBaseWidthDp = 10.dp // Width of the triangle's base
-    val triangleHeightDp = 10.dp // Height of the triangle
-    val rectanglePaddingDp = 4.dp
-    val textStyle = TextStyle(
-        color = androidx.compose.ui.graphics.Color.White,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold
-    )
+    val density = context.resources.displayMetrics.density
 
-    val triangleBaseWidth =
-        with(androidx.compose.ui.unit.Density(context.resources.displayMetrics.density)) { triangleBaseWidthDp.toPx() }
-    val triangleHeight =
-        with(androidx.compose.ui.unit.Density(context.resources.displayMetrics.density)) { triangleHeightDp.toPx() }
-    val rectanglePadding =
-        with(androidx.compose.ui.unit.Density(context.resources.displayMetrics.density)) { rectanglePaddingDp.toPx() }
-    val tooltipOffset =
-        with(androidx.compose.ui.unit.Density(context.resources.displayMetrics.density)) { 30.dp.toPx() }
+    val triangleBaseWidth = 10 * density
+    val triangleHeight = 10 * density
+    val rectanglePadding = 8 * density
+    val cornerRadius = 6 * density
+    val tooltipOffset = 30 * density
 
-    val rectanglePaint = Paint().apply {
-        color = android.graphics.Color.argb(150, 0, 0, 0)
-        style = Paint.Style.FILL
-        isAntiAlias = true
-    }
-
-    val textPaint = Paint().apply {
-        color = android.graphics.Color.WHITE
-        textSize = getScaledFontSizeInPixelsFromRawSp(context, textStyle.fontSize.value)
+    val textSizeSp = 14f
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.White.toArgb()
+        textSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_SP,
+            textSizeSp,
+            context.resources.displayMetrics,
+        )
         typeface = Typeface.DEFAULT_BOLD
-        isAntiAlias = true
     }
 
     val textBounds = Rect()
     textPaint.getTextBounds(text, 0, text.length, textBounds)
+    val textWidth = textPaint.measureText(text)
+    val textHeight = textBounds.height().toFloat()
 
-    val rectangleWidth = textBounds.width() + 2 * rectanglePadding
-    val rectangleHeight = textBounds.height() + 2 * rectanglePadding
+    val rectangleWidth = textWidth + rectanglePadding * 2
+    val rectangleHeight = textHeight + rectanglePadding * 2
+
     val bitmapWidth = rectangleWidth.toInt()
     val bitmapHeight = (rectangleHeight + triangleHeight).toInt()
 
-    val bitmap = Bitmap.createBitmap(
-        bitmapWidth,
-        bitmapHeight + tooltipOffset.toInt(),
-        Bitmap.Config.ARGB_8888
-    )
+    val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight + tooltipOffset.toInt(), Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
-    val rectangleX = 0f
+    // Draw background
+    val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.Black.copy(alpha = 0.75f).toArgb()
+        style = Paint.Style.FILL
+    }
 
-    val tooltipPath = Path().apply {
-        // Rectangle
-        moveTo(rectangleX, tooltipOffset)
-        lineTo(rectangleX + rectangleWidth, tooltipOffset)
-        lineTo(rectangleX + rectangleWidth, tooltipOffset + rectangleHeight)
+    val rectF = RectF(0f, 0f, rectangleWidth, rectangleHeight)
+    canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, backgroundPaint)
 
-        // Triangle
-        lineTo(bitmapWidth / 2f + triangleBaseWidth / 2f, tooltipOffset + rectangleHeight)
-        lineTo(bitmapWidth / 2f, tooltipOffset + rectangleHeight + triangleHeight)
-        lineTo(bitmapWidth / 2f - triangleBaseWidth / 2f, tooltipOffset + rectangleHeight)
-        lineTo(rectangleX, tooltipOffset + rectangleHeight)
-
+    // Draw triangle
+    val trianglePath = Path().apply {
+        moveTo(bitmapWidth / 2f - triangleBaseWidth / 2f, rectangleHeight + tooltipOffset)
+        lineTo(bitmapWidth / 2f + triangleBaseWidth / 2f, rectangleHeight + tooltipOffset)
+        lineTo(bitmapWidth / 2f, rectangleHeight + triangleHeight + tooltipOffset)
         close()
     }
     canvas.translate(0f, -tooltipOffset)
-    canvas.drawPath(tooltipPath, rectanglePaint)
+    canvas.drawPath(trianglePath, backgroundPaint)
 
-    canvas.drawText(
-        text,
-        rectangleX + rectanglePadding,
-        tooltipOffset + rectanglePadding + textBounds.height(),
-        textPaint
-    )
+    // Draw text centered
+    val xText = (rectangleWidth - textWidth) / 2
+    val yText = rectanglePadding + textHeight
+    canvas.drawText(text, xText, yText + tooltipOffset, textPaint)
 
     return bitmap
-}
-
-private fun getScaledFontSizeInPixelsFromRawSp(context: Context, rawSpValue: Float): Float {
-    return TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_SP,
-        rawSpValue,
-        context.resources.displayMetrics
-    )
 }

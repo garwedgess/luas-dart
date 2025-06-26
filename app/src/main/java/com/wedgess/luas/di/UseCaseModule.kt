@@ -3,12 +3,12 @@ package com.wedgess.luas.di
 import com.wedgess.luas.domain.repository.LocationRepository
 import com.wedgess.luas.domain.repository.LuasRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
-import com.wedgess.luas.domain.usecase.FetchAllStopsUseCase
+import com.wedgess.luas.domain.usecase.FetchAllLuasStopsUseCase
 import com.wedgess.luas.domain.usecase.FetchCurrentLocationUseCase
-import com.wedgess.luas.domain.usecase.FetchForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedStationUseCase
-import com.wedgess.luas.domain.usecase.FetchStopsUseCase
-import com.wedgess.luas.domain.usecase.UpdateSelectedStationUseCase
+import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
+import com.wedgess.luas.domain.usecase.FetchLuasStopsUseCase
+import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,15 +21,15 @@ object UseCaseModule {
 
     @Provides
     @ViewModelScoped
-    fun provideFetchStopsUseCase(repository: LuasRepository) = FetchStopsUseCase(repository)
+    fun provideFetchStopsUseCase(repository: LuasRepository) = FetchLuasStopsUseCase(repository)
 
     @Provides
     @ViewModelScoped
-    fun provideFetchForecastUseCase(repository: LuasRepository) = FetchForecastUseCase(repository)
+    fun provideFetchForecastUseCase(repository: LuasRepository) = FetchLuasStopForecastUseCase(repository)
 
     @Provides
     @ViewModelScoped
-    fun provideFetchAllStopsUseCase(repository: LuasRepository) = FetchAllStopsUseCase(repository)
+    fun provideFetchAllStopsUseCase(repository: LuasRepository) = FetchAllLuasStopsUseCase(repository)
 
     @Provides
     @ViewModelScoped
@@ -39,10 +39,10 @@ object UseCaseModule {
     @Provides
     @ViewModelScoped
     fun provideUpdateSelectedStationUseCase(repository: PreferencesRepository) =
-        UpdateSelectedStationUseCase(repository)
+        UpdateSelectedLuasStopUseCase(repository)
 
     @Provides
     @ViewModelScoped
     fun provideFetchSelectedStationUseCase(repository: PreferencesRepository) =
-        FetchSelectedStationUseCase(repository)
+        FetchSelectedLuasStopUseCase(repository)
 }

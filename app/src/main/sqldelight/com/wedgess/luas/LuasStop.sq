@@ -1,0 +1,25 @@
+import com.wedgess.luas.data.model.LuasLineData;
+import java.util.UUID;
+import kotlin.Boolean;
+import kotlin.Double;
+
+CREATE TABLE LuasStop (
+    Id TEXT AS UUID PRIMARY KEY NOT NULL,
+    Name TEXT NOT NULL,
+    Abbreviation TEXT NOT NULL,
+    IsParkRide INTEGER AS Boolean NOT NULL,
+    IsCycleRide INTEGER AS Boolean NOT NULL,
+    Latitude REAL AS Double NOT NULL,
+    Longitude REAL AS Double NOT NULL,
+    Line INTEGER AS LuasLineData NOT NULL
+);
+
+selectAll:
+SELECT * FROM LuasStop;
+
+selectByLine:
+SELECT * FROM LuasStop WHERE Line = :line;
+
+insert:
+INSERT OR FAIL INTO LuasStop(Id, Name, Abbreviation, IsParkRide, IsCycleRide, Latitude, Longitude, Line)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);

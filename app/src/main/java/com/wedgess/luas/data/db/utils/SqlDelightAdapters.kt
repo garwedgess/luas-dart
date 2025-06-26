@@ -15,3 +15,9 @@ val luasLineAdapter = object : ColumnAdapter<LuasLineData, Long> {
 
     override fun encode(value: LuasLineData): Long = value.key
 }
+
+val doubleAdapter = object : ColumnAdapter<Double, Double> {
+    override fun decode(databaseValue: Double): Double = databaseValue
+
+    override fun encode(value: Double): Double = value
+}

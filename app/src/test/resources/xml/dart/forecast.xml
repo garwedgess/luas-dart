@@ -1,0 +1,117 @@
+<ArrayOfObjStationData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://api.irishrail.ie/realtime/">
+    <objStationData>
+        <Servertime>2025-06-26T21:16:17.083</Servertime>
+        <Traincode>E949 </Traincode>
+        <Stationfullname>Greystones</Stationfullname>
+        <Stationcode>GSTNS</Stationcode>
+        <Querytime>21:16:17</Querytime>
+        <Traindate>26 Jun 2025</Traindate>
+        <Origin>Greystones</Origin>
+        <Destination>Howth</Destination>
+        <Origintime>21:50</Origintime>
+        <Destinationtime>23:15</Destinationtime>
+        <Status>No Information</Status>
+        <Lastlocation/>
+        <Duein>34</Duein>
+        <Late>0</Late>
+        <Exparrival>00:00</Exparrival>
+        <Expdepart>21:50</Expdepart>
+        <Scharrival>00:00</Scharrival>
+        <Schdepart>21:50</Schdepart>
+        <Direction>Northbound</Direction>
+        <Traintype>DART</Traintype>
+        <Locationtype>O</Locationtype>
+    </objStationData>
+    <objStationData>
+        <Servertime>2025-06-26T21:16:17.083</Servertime>
+        <Traincode>E950 </Traincode>
+        <Stationfullname>Greystones</Stationfullname>
+        <Stationcode>GSTNS</Stationcode>
+        <Querytime>21:16:17</Querytime>
+        <Traindate>26 Jun 2025</Traindate>
+        <Origin>Greystones</Origin>
+        <Destination>Howth</Destination>
+        <Origintime>22:20</Origintime>
+        <Destinationtime>23:45</Destinationtime>
+        <Status>No Information</Status>
+        <Lastlocation/>
+        <Duein>64</Duein>
+        <Late>0</Late>
+        <Exparrival>00:00</Exparrival>
+        <Expdepart>22:20</Expdepart>
+        <Scharrival>00:00</Scharrival>
+        <Schdepart>22:20</Schdepart>
+        <Direction>Northbound</Direction>
+        <Traintype>DART</Traintype>
+        <Locationtype>O</Locationtype>
+    </objStationData>
+    <objStationData>
+        <Servertime>2025-06-26T21:16:17.083</Servertime>
+        <Traincode>E129 </Traincode>
+        <Stationfullname>Greystones</Stationfullname>
+        <Stationcode>GSTNS</Stationcode>
+        <Querytime>21:16:17</Querytime>
+        <Traindate>26 Jun 2025</Traindate>
+        <Origin>Howth</Origin>
+        <Destination>Greystones</Destination>
+        <Origintime>20:45</Origintime>
+        <Destinationtime>21:42</Destinationtime>
+        <Status>En Route</Status>
+        <Lastlocation>Arrived Seapoint</Lastlocation>
+        <Duein>35</Duein>
+        <Late>9</Late>
+        <Exparrival>21:51</Exparrival>
+        <Expdepart>00:00</Expdepart>
+        <Scharrival>21:42</Scharrival>
+        <Schdepart>00:00</Schdepart>
+        <Direction>Southbound</Direction>
+        <Traintype>DART</Traintype>
+        <Locationtype>D</Locationtype>
+    </objStationData>
+    <objStationData>
+        <Servertime>2025-06-26T21:16:17.083</Servertime>
+        <Traincode>E131 </Traincode>
+        <Stationfullname>Greystones</Stationfullname>
+        <Stationcode>GSTNS</Stationcode>
+        <Querytime>21:16:17</Querytime>
+        <Traindate>26 Jun 2025</Traindate>
+        <Origin>Howth</Origin>
+        <Destination>Greystones</Destination>
+        <Origintime>21:19</Origintime>
+        <Destinationtime>22:42</Destinationtime>
+        <Status>En Route</Status>
+        <Lastlocation>Departed Grand Canal Dock</Lastlocation>
+        <Duein>46</Duein>
+        <Late>-40</Late>
+        <Exparrival>22:02</Exparrival>
+        <Expdepart>00:00</Expdepart>
+        <Scharrival>22:42</Scharrival>
+        <Schdepart>00:00</Schdepart>
+        <Direction>Southbound</Direction>
+        <Traintype>DART</Traintype>
+        <Locationtype>D</Locationtype>
+    </objStationData>
+    <objStationData>
+        <Servertime>2025-06-26T21:16:17.083</Servertime>
+        <Traincode>E130 </Traincode>
+        <Stationfullname>Greystones</Stationfullname>
+        <Stationcode>GSTNS</Stationcode>
+        <Querytime>21:16:17</Querytime>
+        <Traindate>26 Jun 2025</Traindate>
+        <Origin>Howth</Origin>
+        <Destination>Greystones</Destination>
+        <Origintime>20:46</Origintime>
+        <Destinationtime>22:09</Destinationtime>
+        <Status>En Route</Status>
+        <Lastlocation>Arrived Tara Street</Lastlocation>
+        <Duein>55</Duein>
+        <Late>2</Late>
+        <Exparrival>22:11</Exparrival>
+        <Expdepart>00:00</Expdepart>
+        <Scharrival>22:09</Scharrival>
+        <Schdepart>00:00</Schdepart>
+        <Direction>Southbound</Direction>
+        <Traintype>DART</Traintype>
+        <Locationtype>D</Locationtype>
+    </objStationData>
+</ArrayOfObjStationData>

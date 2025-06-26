@@ -2,15 +2,16 @@ package com.wedgess.luas.presentation.forecast
 
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.presentation.forecast.model.ForecastDialogState
-import com.wedgess.luas.presentation.map.MapContract.Event
 import com.wedgess.luas.presentation.model.Permission
 
 interface ForecastContract {
 
     data class UiState(
         val dialog: ForecastDialogState = ForecastDialogState.None,
-        val notificationPermission: Permission = Permission.Unknown
+        val notificationPermission: Permission = Permission.Unknown,
+        val transportType: TransportType = TransportType.LUAS,
     )
 
     sealed interface Event {

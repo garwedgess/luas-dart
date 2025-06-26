@@ -1,0 +1,17 @@
+import kotlin.Double;
+
+CREATE TABLE DartStation (
+    Id INTEGER PRIMARY KEY NOT NULL,
+    Name TEXT NOT NULL,
+    Code TEXT NOT NULL,
+    Alias TEXT,
+    Latitude REAL AS Double NOT NULL,
+    Longitude REAL AS Double NOT NULL
+);
+
+selectAll:
+SELECT * FROM DartStation ORDER BY Latitude DESC;
+
+insert:
+INSERT OR FAIL INTO DartStation(Id, Name, Code, Alias, Latitude, Longitude)
+VALUES (?, ?, ?, ?, ?, ?);

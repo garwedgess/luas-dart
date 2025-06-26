@@ -11,7 +11,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.annotation.VisibleForTesting
-import com.wedgess.luas.data.model.NotificationData
+import com.wedgess.luas.data.model.LuasNotificationData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,10 +31,10 @@ class AlarmManagerDataSource @Inject constructor(
     val alarmStateFlow: StateFlow<Boolean> = _alarmStateFlow.asStateFlow()
 
     @SuppressLint("NewApi")
-    fun scheduleAlarm(triggerTimeMillis: Long, notificationData: NotificationData) {
+    fun scheduleAlarm(triggerTimeMillis: Long, luasNotificationData: LuasNotificationData) {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra(AlarmReceiver.EXTRA_ALARM_ID, ALARM_REQUEST_CODE)
-            putExtra(AlarmReceiver.EXTRA_NOTIFICATION_DATA, notificationData)
+            putExtra(AlarmReceiver.EXTRA_NOTIFICATION_DATA, luasNotificationData)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(

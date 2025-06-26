@@ -9,38 +9,41 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.wedgess.luas.presentation.components.MainTopAppbar
-import com.wedgess.luas.presentation.forecast.tab.compose.components.RefreshProgressIndicator
-import com.wedgess.luas.presentation.main.model.TopAppBarState
+import com.wedgess.luas.presentation.forecast.luastab.compose.components.RefreshProgressIndicator
+import com.wedgess.luas.presentation.main.MainContract
+import com.wedgess.luas.presentation.main.MainViewModel
 import com.wedgess.luas.presentation.navigation.BottomNavigationBar
 import com.wedgess.luas.presentation.navigation.MainNavigationGraph
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
-fun MainContent(modifier: Modifier = Modifier) {
+fun MainContent(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel = hiltViewModel(),
+) {
     val navHostController = rememberNavController()
     val backStackEntry = navHostController.currentBackStackEntryAsState()
-
-    var topAppBarState by remember {
-        mutableStateOf(TopAppBarState(title = "Luas"))
-    }
-    var refreshProgress by remember { mutableFloatStateOf(0f) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LuasTheme {
         Scaffold(
             modifier = modifier.fillMaxSize(),
             topBar = {
                 Column(Modifier.wrapContentHeight()) {
-                    MainTopAppbar(topAppBarState = topAppBarState)
-                    AnimatedVisibility(visible = topAppBarState.hasProgress) {
-                        RefreshProgressIndicator(refreshProgress)
+                    MainTopAppbar(
+                        topAppBarState = uiState.appBarState,
+                        onTransportTypeChange = {
+                            viewModel.onEvent(MainContract.Event.OnTransportTypeChange(it))
+                        },
+                    )
+                    AnimatedVisibility(visible = uiState.appBarState.hasProgress) {
+                        RefreshProgressIndicator(uiState.refreshProgress)
                     }
                 }
             },
@@ -52,22 +55,22 @@ fun MainContent(modifier: Modifier = Modifier) {
                             if (route != backStackEntry.value?.destination) {
                                 navHostController.navigate(route)
                             }
-                        }
+                        },
                     )
                 }
-            }
+            },
         ) { innerPadding ->
             MainNavigationGraph(
                 navController = navHostController,
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize(),
-                onUpdateAppbarState = { newState ->
-                    topAppBarState = newState
+                onUpdateAppbarState = {
+                    viewModel.onEvent(MainContract.Event.OnUpdateAppBarState(it))
                 },
                 onRefreshProgressChanged = {
-                    refreshProgress = it
-                }
+                    viewModel.onEvent(MainContract.Event.OnUpdateRefreshProgress(it))
+                },
             )
         }
     }

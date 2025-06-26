@@ -1,8 +1,11 @@
 package com.wedgess.luas.data.repository
 
 import androidx.datastore.core.DataStore
+import com.wedgess.luas.data.mapper.toData
+import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.model.UserPreferences
 import com.wedgess.luas.data.utils.extensions.runWithErrorHandling
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.repository.PreferencesRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +34,16 @@ class PreferencesRepositoryImpl @Inject constructor(
             runWithErrorHandling {
                 preferences.updateData { preferences ->
                     preferences.toBuilder().setSelectedGreenLineStation(abbreviation).build()
+                }
+            }
+        }
+    }
+
+    override suspend fun updateSelectedDartStation(code: String): Result<Unit> {
+        return withContext(ioDispatcher) {
+            runWithErrorHandling {
+                preferences.updateData { preferences ->
+                    preferences.toBuilder().setSelectedDartStation(code).build()
                 }
             }
         }
@@ -76,12 +89,26 @@ class PreferencesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateSelectedTransportType(transportType: TransportType): Result<Unit> {
+        return withContext(ioDispatcher) {
+            runWithErrorHandling {
+                preferences.updateData { preferences ->
+                    preferences.toBuilder().setTransportType(transportType.toData()).build()
+                }
+            }
+        }
+    }
+
     override fun fetchSelectedGreenLineStation(): Flow<String> {
         return preferences.data.map { it.selectedGreenLineStation }
     }
 
     override fun fetchSelectedRedLineStation(): Flow<String> {
         return preferences.data.map { it.selectedRedLineStation }
+    }
+
+    override fun fetchSelectedDartStation(): Flow<String> {
+        return preferences.data.map { it.selectedDartStation }
     }
 
     override fun ignoreLocationPermission(): Flow<Boolean> {
@@ -98,5 +125,9 @@ class PreferencesRepositoryImpl @Inject constructor(
 
     override fun wasNotificationPermissionRequested(): Flow<Boolean> {
         return preferences.data.map { it.notificationPermissionRequested }
+    }
+
+    override fun fetchSelectedTransportType(): Flow<TransportType> {
+        return preferences.data.map { it.transportType.toEntity() }
     }
 }

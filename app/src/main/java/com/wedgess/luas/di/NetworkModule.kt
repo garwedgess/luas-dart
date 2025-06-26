@@ -24,6 +24,7 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.File
+import javax.inject.Named
 import javax.inject.Singleton
 
 private const val XML_INDENTATION = 4
@@ -39,9 +40,10 @@ object NetworkModule {
         .Builder()
         .build()
 
+    @Named("LuasHttpClient")
     @Provides
     @Singleton
-    fun provideHttpClient(
+    fun provideLuasHttpClient(
         okHttpClient: OkHttpClient,
         @ApplicationContext context: Context
     ): HttpClient {
@@ -52,22 +54,47 @@ object NetworkModule {
                 }
                 preconfigured = okHttpClient
             }
-            installContentNegotiation()
+            installLuasContentNegotiation()
             installLogging()
             installRedirect()
         }
     }
 
-    fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installContentNegotiation() =
-        install(ContentNegotiation) {
-            xml(
-                XML {
-                    indent = XML_INDENTATION
-                    autoPolymorphic = false
-                },
-                contentType = ContentType.Text.Html
-            )
+    @Named("DartHttpClient")
+    @Provides
+    @Singleton
+    fun provideDartHttpClient(
+        okHttpClient: OkHttpClient,
+        @ApplicationContext context: Context
+    ): HttpClient {
+        return HttpClient(OkHttp) {
+            engine {
+                config {
+                    cache(Cache(File(context.cacheDir, "ktor"), CACHE_SIZE))
+                }
+                preconfigured = okHttpClient
+            }
+            installDartContentNegotiation()
+            installLogging()
+            installRedirect()
         }
+    }
+
+    fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installLuasContentNegotiation() =
+        install(ContentNegotiation) {
+            xml(createXmlConfig(), contentType = ContentType.Text.Html)
+        }
+
+
+    fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installDartContentNegotiation() =
+        install(ContentNegotiation) {
+            xml(createXmlConfig(), contentType = ContentType.Text.Xml)
+        }
+
+    private fun createXmlConfig(): XML = XML {
+        indent = XML_INDENTATION
+        autoPolymorphic = false
+    }
 
     private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installLogging() =
         install(Logging) {

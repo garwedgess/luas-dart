@@ -5,9 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.wedgess.luas.domain.model.LuasLineEntity
+import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.model.UserLocation
-import com.wedgess.luas.domain.usecase.FetchAllStopsUseCase
+import com.wedgess.luas.domain.usecase.FetchAllDartStationLocationsUseCase
+import com.wedgess.luas.domain.usecase.FetchAllLuasStopLocationsUseCase
 import com.wedgess.luas.domain.usecase.FetchCurrentLocationUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsLocationPermissionIgnoredUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreLocationPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateLocationPermissionRequestedUseCase
@@ -17,12 +21,20 @@ import com.wedgess.luas.presentation.base.SideEffectViewModelImpl
 import com.wedgess.luas.presentation.extensions.toPermission
 import com.wedgess.luas.presentation.map.MapContract
 import com.wedgess.luas.presentation.map.model.MapDialogState
+import com.wedgess.luas.presentation.map.model.TransportLocationData
 import com.wedgess.luas.presentation.model.Permission
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,29 +44,70 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val fetchCurrentLocationUseCase: FetchCurrentLocationUseCase,
-    fetchAllStopsUseCase: FetchAllStopsUseCase,
+    fetchAllLuasStopLocationsUseCase: FetchAllLuasStopLocationsUseCase,
+    fetchAllDartStationLocationsUseCase: FetchAllDartStationLocationsUseCase,
+    fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase,
     private val isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase,
     private val wasLocationPermissionRequestedUseCase: WasLocationPermissionRequestedUseCase,
     private val updateLocationPermissionRequestedUseCase: UpdateLocationPermissionRequestedUseCase,
-    private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase
+    private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase,
 ) : ViewModel(), SideEffectViewModel<MapContract.Effect> by SideEffectViewModelImpl() {
 
     private val _uiState = MutableStateFlow(MapContract.UiState.initial())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiResult = combine(
         _uiState,
         fetchCurrentLocationUseCase(),
-        fetchAllStopsUseCase()
-    ) { state, currentLocation, allStopsResult ->
-        val allStops = allStopsResult.getOrDefault(emptyList())
+        fetchSelectedTransportTypeUseCase().flatMapLatest { transportType ->
+            val locationsFlow: Flow<Result<List<StationLocationEntity>>> = when (transportType) {
+                TransportType.DART -> fetchAllDartStationLocationsUseCase()
+                TransportType.LUAS -> fetchAllLuasStopLocationsUseCase()
+            }
+
+            locationsFlow.map { locationsResult ->
+                locationsResult.map { locations ->
+                    TransportLocationData(transportType, locations)
+                }
+            }
+        },
+    ) { state, currentLocation, allLocationsResult ->
+        val (transportType, locations) = allLocationsResult.getOrDefault(
+            TransportLocationData(TransportType.LUAS, emptyList()),
+        )
         UiResult.Success(
             state.copy(
                 currentLocation = currentLocation ?: UserLocation(0.0, 0.0),
-                greenLineLocations = allStops.filter { it.line == LuasLineEntity.GREEN },
-                redLineLocations = allStops.filter { it.line == LuasLineEntity.RED }
-            )
+                transportType = transportType,
+                greenLineLocations = if (transportType == TransportType.LUAS) {
+                    locations.getLuasStationsByLine(LuasLineEntity.GREEN)
+                } else {
+                    persistentListOf<StationLocationEntity.LuasStationLocationEntity>()
+                },
+                redLineLocations = if (transportType == TransportType.LUAS) {
+                    locations.getLuasStationsByLine(LuasLineEntity.RED)
+                } else {
+                    persistentListOf<StationLocationEntity.LuasStationLocationEntity>()
+                },
+                dartLocations = if (transportType == TransportType.DART) {
+                    locations.getDartStations()
+                } else {
+                    persistentListOf<StationLocationEntity.DartStationLocationEntity>()
+                },
+            ),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
+
+    private fun List<StationLocationEntity>.getLuasStationsByLine(line: LuasLineEntity): ImmutableList<StationLocationEntity.LuasStationLocationEntity> {
+        return this.filterIsInstance<StationLocationEntity.LuasStationLocationEntity>()
+            .filter { it.line == line }
+            .toPersistentList()
+    }
+
+    private fun List<StationLocationEntity>.getDartStations(): ImmutableList<StationLocationEntity.DartStationLocationEntity> {
+        return this.filterIsInstance<StationLocationEntity.DartStationLocationEntity>()
+            .toPersistentList()
+    }
 
     @OptIn(ExperimentalPermissionsApi::class)
     fun onEvent(event: MapContract.Event) {
@@ -93,7 +146,7 @@ class MapViewModel @Inject constructor(
                 it.copy(dialogState = MapDialogState.None)
             }.also {
                 viewModelScope.emitSideEffect(
-                    MapContract.Effect.OpenAppPermissionScreen
+                    MapContract.Effect.OpenAppPermissionScreen,
                 )
             }
 
@@ -118,7 +171,7 @@ class MapViewModel @Inject constructor(
             Timber.d(
                 "Location, wasLocationPermissionRequested: " +
                     "$wasLocationPermissionRequested, ignoreLocationPermission: " +
-                    "$ignoreLocationPermission, permission: $permission"
+                    "$ignoreLocationPermission, permission: $permission",
             )
             _uiState.update {
                 it.copy(
@@ -134,7 +187,7 @@ class MapViewModel @Inject constructor(
                         }
 
                         else -> it.dialogState
-                    }
+                    },
                 )
             }
         }

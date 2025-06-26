@@ -3,7 +3,7 @@ package com.wedgess.luas.data.repository
 import android.os.SystemClock
 import com.wedgess.luas.data.alarm.AlarmManagerDataSource
 import com.wedgess.luas.data.mapper.toData
-import com.wedgess.luas.domain.model.NotificationEntity
+import com.wedgess.luas.domain.model.LuasNotificationEntity
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -54,19 +54,19 @@ class AlarmRepositoryImplTest {
     fun `scheduleAlarm should calculate correct trigger time and call data source`() = runTest {
         // Given
         val secondsFromNow = 60L
-        val notificationEntity = NotificationEntity(
+        val luasNotificationEntity = LuasNotificationEntity(
             dueInMins = 10,
             station = "STSG",
             destination = "CKM",
             notifyMinutesBefore = 9
         )
-        val notificationData = notificationEntity.toData()
+        val notificationData = luasNotificationEntity.toData()
         val expectedTriggerTime = 60_000L + 1000L - 30_000L // (secondsFromNow * 1000) + elapsedRealtime - SAFETY_NET
 
         every { alarmManagerDataSource.scheduleAlarm(any(), any()) } just Runs
 
         // When
-        val result = alarmRepository.scheduleAlarm(secondsFromNow, notificationEntity)
+        val result = alarmRepository.scheduleAlarm(secondsFromNow, luasNotificationEntity)
 
         // Then
         assertTrue(result.isSuccess)
@@ -78,7 +78,7 @@ class AlarmRepositoryImplTest {
     fun `scheduleAlarm should return failure result when exception occurs`() = runTest {
         // Given
         val secondsFromNow = 60L
-        val notificationEntity = NotificationEntity(
+        val luasNotificationEntity = LuasNotificationEntity(
             dueInMins = 10,
             station = "STSG",
             destination = "CKM",
@@ -89,7 +89,7 @@ class AlarmRepositoryImplTest {
         every { alarmManagerDataSource.scheduleAlarm(any(), any()) } throws expectedException
 
         // When
-        val result = alarmRepository.scheduleAlarm(secondsFromNow, notificationEntity)
+        val result = alarmRepository.scheduleAlarm(secondsFromNow, luasNotificationEntity)
 
         // Then
         assertTrue(result.isFailure)

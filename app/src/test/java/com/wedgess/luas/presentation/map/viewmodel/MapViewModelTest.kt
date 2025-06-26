@@ -8,10 +8,13 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.StopEntity
+import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.model.UserLocation
-import com.wedgess.luas.domain.usecase.FetchAllStopsUseCase
+import com.wedgess.luas.domain.usecase.FetchAllDartStationLocationsUseCase
+import com.wedgess.luas.domain.usecase.FetchAllLuasStopLocationsUseCase
 import com.wedgess.luas.domain.usecase.FetchCurrentLocationUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsLocationPermissionIgnoredUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreLocationPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateLocationPermissionRequestedUseCase
@@ -31,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -40,7 +44,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.util.UUID
 
 @OptIn(ExperimentalPermissionsApi::class)
 @ExperimentalCoroutinesApi
@@ -55,7 +58,13 @@ class MapViewModelTest {
     private lateinit var fetchCurrentLocationUseCase: FetchCurrentLocationUseCase
 
     @MockK
-    private lateinit var fetchAllStopsUseCase: FetchAllStopsUseCase
+    private lateinit var fetchAllLuasStopLocationsUseCase: FetchAllLuasStopLocationsUseCase
+
+    @MockK
+    private lateinit var fetchAllDartStationLocationsUseCase: FetchAllDartStationLocationsUseCase
+
+    @MockK
+    private lateinit var fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase
 
     @MockK
     lateinit var isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase
@@ -72,49 +81,33 @@ class MapViewModelTest {
     private lateinit var viewModel: MapViewModel
 
     private val mockGreenLineStops = listOf(
-        StopEntity(
-            id = UUID.randomUUID(),
-            abbreviation = "STA",
+        StationLocationEntity.LuasStationLocationEntity(
             name = "St. Stephens Green",
             latitude = 53.33963,
             longitude = -6.26070,
             line = LuasLineEntity.GREEN,
-            isParkAndRide = false,
-            isCycleAndRide = false
         ),
-        StopEntity(
-            id = UUID.randomUUID(),
-            abbreviation = "HAR",
+        StationLocationEntity.LuasStationLocationEntity(
             name = "Harcourt",
             latitude = 53.33334,
             longitude = -6.26302,
             line = LuasLineEntity.GREEN,
-            isParkAndRide = false,
-            isCycleAndRide = false
-        )
+        ),
     )
 
     private val mockRedLineStops = listOf(
-        StopEntity(
-            id = UUID.randomUUID(),
-            abbreviation = "ABB",
+        StationLocationEntity.LuasStationLocationEntity(
             name = "Abbey Street",
             latitude = 53.34835,
             longitude = -6.25786,
             line = LuasLineEntity.RED,
-            isParkAndRide = false,
-            isCycleAndRide = false
         ),
-        StopEntity(
-            id = UUID.randomUUID(),
-            abbreviation = "JER",
+        StationLocationEntity.LuasStationLocationEntity(
             name = "Jervis",
             latitude = 53.34743,
             longitude = -6.26690,
             line = LuasLineEntity.RED,
-            isParkAndRide = false,
-            isCycleAndRide = false
-        )
+        ),
     )
 
     private val mockUserLocation = UserLocation(53.33963, -6.26070)
@@ -127,7 +120,9 @@ class MapViewModelTest {
         Dispatchers.setMain(testDispatcher)
 
         every { fetchCurrentLocationUseCase() } returns locationFlow
-        every { fetchAllStopsUseCase() } returns stopsFlow
+        every { fetchAllLuasStopLocationsUseCase() } returns stopsFlow
+        every { fetchSelectedTransportTypeUseCase() } returns flowOf(TransportType.LUAS)
+        every { fetchAllDartStationLocationsUseCase() } returns flowOf(Result.success(emptyList()))
         // default behaviour for new use‑cases
         coEvery { isLocationPermissionIgnoredUseCase() } returns false
         coEvery { wasLocationPermissionRequestedUseCase() } returns false
@@ -137,11 +132,13 @@ class MapViewModelTest {
 
         viewModel = MapViewModel(
             fetchCurrentLocationUseCase,
-            fetchAllStopsUseCase,
+            fetchAllLuasStopLocationsUseCase,
+            fetchAllDartStationLocationsUseCase,
+            fetchSelectedTransportTypeUseCase,
             isLocationPermissionIgnoredUseCase,
             wasLocationPermissionRequestedUseCase,
             updateLocationPermissionRequestedUseCase,
-            updateIgnoreLocationPermissionUseCase
+            updateIgnoreLocationPermissionUseCase,
         )
     }
 
@@ -233,16 +230,12 @@ class MapViewModelTest {
     @Test
     fun `should update when stops change`() = runTest {
         val newStops = listOf(
-            StopEntity(
-                id = UUID.randomUUID(),
-                abbreviation = "NEW",
+            StationLocationEntity.LuasStationLocationEntity(
                 name = "New Stop",
                 latitude = 53.35,
                 longitude = -6.27,
                 line = LuasLineEntity.GREEN,
-                isParkAndRide = true,
-                isCycleAndRide = true
-            )
+            ),
         )
 
         stopsFlow.value = Result.success(newStops)
@@ -251,7 +244,7 @@ class MapViewModelTest {
             val result = awaitItem()
             val state = (result as UiResult.Success).data
             assert(state.greenLineLocations.size == 1)
-            assert(state.greenLineLocations.first().abbreviation == "NEW")
+            assert(state.greenLineLocations.first().name == "New Stop")
             assert(state.redLineLocations.isEmpty())
         }
     }
@@ -321,7 +314,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns true
                         every { this@status.isGranted } returns false
                     }
-                }
+                },
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 
@@ -355,7 +348,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns false
                         every { this@status.isGranted } returns false
                     }
-                }
+                },
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 
@@ -389,7 +382,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns false
                         every { this@status.isGranted } returns false
                     }
-                }
+                },
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 

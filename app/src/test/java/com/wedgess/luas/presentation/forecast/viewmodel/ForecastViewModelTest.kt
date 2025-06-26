@@ -6,7 +6,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
 import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreNotificationPermissionUseCase
@@ -25,6 +27,7 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -58,6 +61,9 @@ class ForecastViewModelTest {
     private lateinit var updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase
 
     @MockK
+    private lateinit var fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase
+
+    @MockK
     private lateinit var canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase
 
     @MockK
@@ -77,6 +83,7 @@ class ForecastViewModelTest {
         coEvery { updateIgnoreNotificationPermissionUseCase(any()) } returns Result.success(Unit)
         coEvery { canScheduleExactAlarmsUseCase() } returns true
         coEvery { requestExactAlarmPermissionUseCase() } returns Unit
+        every { fetchSelectedTransportTypeUseCase() } returns flowOf(TransportType.LUAS)
 
         viewModel = ForecastViewModel(
             isNotificationPermissionIgnoredUseCase,
@@ -84,7 +91,8 @@ class ForecastViewModelTest {
             updateNotificationPermissionRequestedUseCase,
             updateIgnoreNotificationPermissionUseCase,
             canScheduleExactAlarmsUseCase,
-            requestExactAlarmPermissionUseCase
+            requestExactAlarmPermissionUseCase,
+            fetchSelectedTransportTypeUseCase
         )
     }
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
 import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreNotificationPermissionUseCase
@@ -19,6 +20,7 @@ import com.wedgess.luas.presentation.model.Permission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,7 +34,8 @@ class ForecastViewModel @Inject constructor(
     private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase,
     private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase,
     private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase,
-    private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase
+    private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
+    fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase,
 ) : ViewModel(),
     SideEffectViewModel<ForecastContract.Effect> by SideEffectViewModelImpl() {
 
@@ -40,8 +43,9 @@ class ForecastViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(initialState)
 
-    val uiState = _uiState
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState)
+    val uiState = _uiState.combine(fetchSelectedTransportTypeUseCase()) { state, transportType ->
+        state.copy(transportType = transportType)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState)
 
     @OptIn(ExperimentalPermissionsApi::class)
     fun onEvent(event: ForecastContract.Event) {
@@ -110,7 +114,7 @@ class ForecastViewModel @Inject constructor(
             Timber.d(
                 "Notification, wasNotificationPermissionRequested: $wasNotificationPermissionRequested, " +
                     "ignoreNotificationPermission: $ignoreNotificationPermission, " +
-                    "permission: $permission"
+                    "permission: $permission",
             )
             _uiState.update {
                 it.copy(
@@ -134,7 +138,7 @@ class ForecastViewModel @Inject constructor(
                         }
 
                         else -> it.dialog
-                    }
+                    },
                 )
             }
         }

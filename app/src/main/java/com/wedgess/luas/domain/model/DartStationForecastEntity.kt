@@ -1,0 +1,25 @@
+package com.wedgess.luas.domain.model
+
+data class DartStationForecastEntity(
+    val serverTime: String,
+    val trainCode: String,
+    val stationFullName: String,
+    val stationCode: String,
+    val queryTime: String,
+    val trainDate: String,
+    val origin: String,
+    val destination: String,
+    val originTime: String,
+    val destinationTime: String,
+    val status: String? = null,
+    val lastLocation: String? = null,
+    val dueIn: Int,
+    val late: Int,
+    val expArrival: String,
+    val expDepart: String,
+    val schArrival: String,
+    val schDepart: String,
+    val direction: DartDirectionEntity,
+    val trainType: String,
+    val locationType: DartLocationTypeEntity,
+)

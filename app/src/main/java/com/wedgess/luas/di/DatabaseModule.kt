@@ -1,11 +1,13 @@
 package com.wedgess.luas.di
 
 import android.content.Context
-import app.cash.sqldelight.ColumnAdapter
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import com.wedgess.luas.Stop
+import com.wedgess.luas.DartStation
+import com.wedgess.luas.LuasStop
 import com.wedgess.luas.data.LuasDatabase
-import com.wedgess.luas.data.db.dao.StopDao
+import com.wedgess.luas.data.db.dao.DartStationDao
+import com.wedgess.luas.data.db.dao.LuasStopDao
+import com.wedgess.luas.data.db.utils.doubleAdapter
 import com.wedgess.luas.data.db.utils.luasLineAdapter
 import com.wedgess.luas.data.db.utils.uuidAdapter
 import dagger.Module
@@ -30,31 +32,23 @@ object DatabaseModule {
     @Provides
     fun provideDb(driver: AndroidSqliteDriver) = LuasDatabase(
         driver,
-        StopAdapter = Stop.Adapter(
+        DartStationAdapter = DartStation.Adapter(
+            LatitudeAdapter = doubleAdapter,
+            LongitudeAdapter = doubleAdapter,
+        ),
+        LuasStopAdapter = LuasStop.Adapter(
             IdAdapter = uuidAdapter,
             LineAdapter = luasLineAdapter,
-            LatitudeAdapter = object : ColumnAdapter<Double, Double> {
-                override fun decode(databaseValue: Double): Double {
-                    return databaseValue
-                }
-
-                override fun encode(value: Double): Double {
-                    return value
-                }
-            },
-            LongitudeAdapter = object : ColumnAdapter<Double, Double> {
-                override fun decode(databaseValue: Double): Double {
-                    return databaseValue
-                }
-
-                override fun encode(value: Double): Double {
-                    return value
-                }
-            }
-        )
+            LatitudeAdapter = doubleAdapter,
+            LongitudeAdapter = doubleAdapter,
+        ),
     )
 
     @Singleton
     @Provides
-    fun provideStopDao(db: LuasDatabase) = StopDao(db)
+    fun provideStopDao(db: LuasDatabase) = LuasStopDao(db)
+
+    @Singleton
+    @Provides
+    fun provideDartStationDao(db: LuasDatabase) = DartStationDao(db)
 }

@@ -1,6 +1,6 @@
 package com.wedgess.luas.data.api
 
-import com.wedgess.luas.data.api.fakes.LuasStopApiServiceFake
+import com.wedgess.luas.data.api.fakes.luas.LuasStopApiServiceFake
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Test

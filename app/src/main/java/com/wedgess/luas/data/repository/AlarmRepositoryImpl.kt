@@ -4,7 +4,7 @@ import android.os.SystemClock
 import com.wedgess.luas.data.alarm.AlarmManagerDataSource
 import com.wedgess.luas.data.mapper.toData
 import com.wedgess.luas.data.utils.extensions.resultOf
-import com.wedgess.luas.domain.model.NotificationEntity
+import com.wedgess.luas.domain.model.LuasNotificationEntity
 import com.wedgess.luas.domain.repository.AlarmRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +20,7 @@ class AlarmRepositoryImpl @Inject constructor(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AlarmRepository {
 
-    override suspend fun scheduleAlarm(secondsFromNow: Long, notificationEntity: NotificationEntity): Result<Long> =
+    override suspend fun scheduleAlarm(secondsFromNow: Long, luasNotificationEntity: LuasNotificationEntity): Result<Long> =
         withContext(dispatcher) {
             resultOf {
                 val triggerMillis = SystemClock.elapsedRealtime() + secondsFromNow * TimeUnit.SECONDS.toMillis(1)
@@ -29,7 +29,7 @@ class AlarmRepositoryImpl @Inject constructor(
                 }
                 alarmManagerDataSource.scheduleAlarm(
                     triggerTimeMillis = triggerTimeMillis,
-                    notificationData = notificationEntity.toData()
+                    luasNotificationData = luasNotificationEntity.toData()
                 )
                 triggerTimeMillis
             }

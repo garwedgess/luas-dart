@@ -1,18 +1,18 @@
 package com.wedgess.luas.data.repository
 
-import com.wedgess.luas.Stop
+import com.wedgess.luas.LuasStop
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
-import com.wedgess.luas.data.db.dao.StopDao
+import com.wedgess.luas.data.db.dao.LuasStopDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toEntity
-import com.wedgess.luas.data.model.DirectionKeyData
+import com.wedgess.luas.data.model.LuasDirectionKeyData
 import com.wedgess.luas.data.model.LuasLineData
-import com.wedgess.luas.data.model.StopForcastResponseData
-import com.wedgess.luas.data.model.StopsResponseData
+import com.wedgess.luas.data.model.LuasStopForcastResponseData
+import com.wedgess.luas.data.model.LuasStopsResponseData
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.StopEntity
+import com.wedgess.luas.domain.model.LuasStopEntity
 import io.mockk.MockKAnnotations
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -44,7 +44,7 @@ class LuasRepositoryImplTest {
     private lateinit var forecastApi: LuasForecastApiService
 
     @RelaxedMockK
-    private lateinit var stopsDao: StopDao
+    private lateinit var stopsDao: LuasStopDao
 
     private lateinit var repository: LuasRepositoryImpl
 
@@ -68,7 +68,7 @@ class LuasRepositoryImplTest {
         val line = LuasLineEntity.RED
         val dbLine = line.fromEntity()
         val dbStops = listOf(
-            Stop(
+            LuasStop(
                 Id = UUID.randomUUID(),
                 Name = "Stop 1",
                 Abbreviation = "S1",
@@ -78,7 +78,7 @@ class LuasRepositoryImplTest {
                 IsParkRide = false,
                 IsCycleRide = false
             ),
-            Stop(
+            LuasStop(
                 Id = UUID.randomUUID(),
                 Name = "Stop 2",
                 Abbreviation = "S2",
@@ -104,13 +104,13 @@ class LuasRepositoryImplTest {
     fun `fetchStops should fetch from remote when local database is empty`() = runTest {
         val line = LuasLineEntity.RED
         val dbLine = line.fromEntity()
-        val emptyList = emptyList<Stop>()
-        val lineResponse = StopsResponseData(
+        val emptyList = emptyList<LuasStop>()
+        val lineResponse = LuasStopsResponseData(
             line = listOf(
-                StopsResponseData.LineData(
+                LuasStopsResponseData.LineData(
                     name = LuasLineData.GREEN,
                     stop = listOf(
-                        StopsResponseData.LineData.StopData(
+                        LuasStopsResponseData.LineData.StopData(
                             name = "Stop 1",
                             pronunciation = "Stop 1",
                             abrev = "S1",
@@ -119,7 +119,7 @@ class LuasRepositoryImplTest {
                             isParkRide = 0,
                             isCycleRide = 0
                         ),
-                        StopsResponseData.LineData.StopData(
+                        LuasStopsResponseData.LineData.StopData(
                             name = "Stop 2",
                             pronunciation = "Stop 2",
                             abrev = "S2",
@@ -151,7 +151,7 @@ class LuasRepositoryImplTest {
         val line = LuasLineEntity.RED
         val dbLine = line.fromEntity()
         val exception = RuntimeException("Network error")
-        val expectedStops = emptyList<StopEntity>()
+        val expectedStops = emptyList<LuasStopEntity>()
         every { stopsDao.fetchAllByLine(dbLine) } returns flowOf(emptyList())
         coEvery { stopsApi.fetchStops() } returns Result.failure(exception)
 
@@ -167,7 +167,7 @@ class LuasRepositoryImplTest {
     @Test
     fun `fetchAllStops should return all stops from database`() = runTest {
         val dbStops = listOf(
-            Stop(
+            LuasStop(
                 Id = UUID.randomUUID(),
                 Name = "Stop 1",
                 Abbreviation = "S1",
@@ -177,7 +177,7 @@ class LuasRepositoryImplTest {
                 IsParkRide = false,
                 IsCycleRide = false
             ),
-            Stop(
+            LuasStop(
                 Id = UUID.randomUUID(),
                 Name = "Stop 2",
                 Abbreviation = "S2",
@@ -202,18 +202,18 @@ class LuasRepositoryImplTest {
     @Test
     fun `fetchForecast should return forecast for stop`() = runTest {
         val stopAbv = "S1"
-        val forecastResponse = StopForcastResponseData(
+        val forecastResponse = LuasStopForcastResponseData(
             created = "2025-03-02T21:48:50",
             stop = "St Stephens Green",
             stopAbv = "STS",
             message = "All services running normally",
             direction = listOf(
-                StopForcastResponseData.DirectionData(
-                    name = DirectionKeyData.INBOUND,
+                LuasStopForcastResponseData.DirectionData(
+                    name = LuasDirectionKeyData.INBOUND,
                     tram = emptyList()
                 ),
-                StopForcastResponseData.DirectionData(
-                    name = DirectionKeyData.OUTBOUND,
+                LuasStopForcastResponseData.DirectionData(
+                    name = LuasDirectionKeyData.OUTBOUND,
                     tram = emptyList()
                 )
             )

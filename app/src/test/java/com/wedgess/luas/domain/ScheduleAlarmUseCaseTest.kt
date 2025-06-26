@@ -1,6 +1,6 @@
 package com.wedgess.luas.domain
 
-import com.wedgess.luas.domain.model.NotificationEntity
+import com.wedgess.luas.domain.model.LuasNotificationEntity
 import com.wedgess.luas.domain.repository.AlarmRepository
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import io.mockk.MockKAnnotations
@@ -23,7 +23,7 @@ class ScheduleAlarmUseCaseTest {
 
     // Mock NotificationEntity if it has complex dependencies or behavior,
     // otherwise, creating a real instance is fine.
-    private val mockNotificationEntity: NotificationEntity = mockk()
+    private val mockLuasNotificationEntity: LuasNotificationEntity = mockk()
 
     @Before
     fun setup() {
@@ -37,13 +37,13 @@ class ScheduleAlarmUseCaseTest {
         val secondsFromNow = 60L
         val expectedAlarmId = 12345L
         val successResult = Result.success(expectedAlarmId)
-        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) } returns successResult
+        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockLuasNotificationEntity) } returns successResult
 
         // When
-        val result = scheduleAlarmUseCase(secondsFromNow, mockNotificationEntity)
+        val result = scheduleAlarmUseCase(secondsFromNow, mockLuasNotificationEntity)
 
         // Then
-        coVerify { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) }
+        coVerify { alarmRepository.scheduleAlarm(secondsFromNow, mockLuasNotificationEntity) }
         assertTrue(result.isSuccess)
         assertEquals(expectedAlarmId, result.getOrNull())
     }
@@ -54,13 +54,13 @@ class ScheduleAlarmUseCaseTest {
         val secondsFromNow = 60L
         val exception = RuntimeException("Scheduling failed")
         val failureResult = Result.failure<Long>(exception)
-        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) } returns failureResult
+        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockLuasNotificationEntity) } returns failureResult
 
         // When
-        val result = scheduleAlarmUseCase(secondsFromNow, mockNotificationEntity)
+        val result = scheduleAlarmUseCase(secondsFromNow, mockLuasNotificationEntity)
 
         // Then
-        coVerify { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) }
+        coVerify { alarmRepository.scheduleAlarm(secondsFromNow, mockLuasNotificationEntity) }
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
     }
@@ -72,7 +72,7 @@ class ScheduleAlarmUseCaseTest {
 
         // When & Then
         try {
-            scheduleAlarmUseCase(secondsFromNow, mockNotificationEntity)
+            scheduleAlarmUseCase(secondsFromNow, mockLuasNotificationEntity)
             fail("Expected IllegalArgumentException was not thrown")
         } catch (e: IllegalArgumentException) {
             assertEquals("Minutes must be greater than 0", e.message)
@@ -88,7 +88,7 @@ class ScheduleAlarmUseCaseTest {
 
         // When & Then
         try {
-            scheduleAlarmUseCase(secondsFromNow, mockNotificationEntity)
+            scheduleAlarmUseCase(secondsFromNow, mockLuasNotificationEntity)
             fail("Expected IllegalArgumentException was not thrown")
         } catch (e: IllegalArgumentException) {
             assertEquals("Minutes must be greater than 0", e.message)
@@ -102,13 +102,13 @@ class ScheduleAlarmUseCaseTest {
         // Given
         val secondsFromNow = 120L
         val expectedAlarmId = 67890L
-        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) } returns
+        coEvery { alarmRepository.scheduleAlarm(secondsFromNow, mockLuasNotificationEntity) } returns
             Result.success(expectedAlarmId)
 
         // When
-        scheduleAlarmUseCase(secondsFromNow, mockNotificationEntity)
+        scheduleAlarmUseCase(secondsFromNow, mockLuasNotificationEntity)
 
         // Then
-        coVerify(exactly = 1) { alarmRepository.scheduleAlarm(secondsFromNow, mockNotificationEntity) }
+        coVerify(exactly = 1) { alarmRepository.scheduleAlarm(secondsFromNow, mockLuasNotificationEntity) }
     }
 }

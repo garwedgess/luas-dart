@@ -8,7 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import com.wedgess.luas.data.model.NotificationData
+import com.wedgess.luas.data.model.LuasNotificationData
 import io.mockk.MockKAnnotations
 import io.mockk.Runs
 import io.mockk.every
@@ -82,11 +82,11 @@ class AlarmManagerDataSourceTest {
     fun `scheduleAlarm sets exact alarm on Android S and above`() {
         // Given
         val triggerTimeMillis = 1000L
-        val notificationData = mockk<NotificationData>()
+        val luasNotificationData = mockk<LuasNotificationData>()
         val intentSlot = slot<Intent>()
 
         // When
-        alarmManagerDataSource.scheduleAlarm(triggerTimeMillis, notificationData)
+        alarmManagerDataSource.scheduleAlarm(triggerTimeMillis, luasNotificationData)
 
         // Then
         verify {
@@ -121,10 +121,10 @@ class AlarmManagerDataSourceTest {
     fun `scheduleAlarm sets exact alarm on Android below M`() {
         // Given
         val triggerTimeMillis = 1000L
-        val notificationData = mockk<NotificationData>()
+        val luasNotificationData = mockk<LuasNotificationData>()
 
         // When
-        alarmManagerDataSource.scheduleAlarm(triggerTimeMillis, notificationData)
+        alarmManagerDataSource.scheduleAlarm(triggerTimeMillis, luasNotificationData)
 
         // Then
         verify {

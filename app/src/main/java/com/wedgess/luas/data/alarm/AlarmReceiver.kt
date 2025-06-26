@@ -10,7 +10,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.wedgess.luas.R
-import com.wedgess.luas.data.model.NotificationData
+import com.wedgess.luas.data.model.LuasNotificationData
 import com.wedgess.luas.domain.navigation.ServiceNavigator
 import com.wedgess.luas.domain.repository.AlarmRepository
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,18 +39,18 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         val alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
-        val notificationData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA, NotificationData::class.java)
+        val luasNotificationData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA, LuasNotificationData::class.java)
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA)
         }
 
-        if (notificationData == null) {
+        if (luasNotificationData == null) {
             return
         }
 
-        Timber.d("Trigger, alarm is triggered, alarmId: $alarmId, notificationData: $notificationData")
+        Timber.d("Trigger, alarm is triggered, alarmId: $alarmId, notificationData: $luasNotificationData")
 
         if (alarmId != -1) {
             val notificationManager = ContextCompat.getSystemService(
@@ -60,8 +60,8 @@ class AlarmReceiver : BroadcastReceiver() {
             createNotificationChannelIfNeeded(notificationManager)
             val notification = buildNotification(
                 context,
-                notificationData.notificationTitle,
-                notificationData.notifyBeforeMins,
+                luasNotificationData.notificationTitle,
+                luasNotificationData.notifyBeforeMins,
                 alarmId
             )
             notificationManager.notify(NOTIFICATION_ID, notification)

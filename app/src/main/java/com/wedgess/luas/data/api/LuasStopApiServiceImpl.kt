@@ -1,7 +1,7 @@
 package com.wedgess.luas.data.api
 
 import com.wedgess.luas.data.model.LuasApiResult
-import com.wedgess.luas.data.model.StopsResponseData
+import com.wedgess.luas.data.model.LuasStopsResponseData
 import com.wedgess.luas.data.utils.extensions.requestResult
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 class LuasStopApiServiceImpl @Inject constructor(val client: HttpClient) : LuasStopApiService {
 
-    override suspend fun fetchStops(): LuasApiResult<StopsResponseData> {
+    override suspend fun fetchStops(): LuasApiResult<LuasStopsResponseData> {
         return client.requestResult {
             url {
                 host = "luasforecasts.rpa.ie"
