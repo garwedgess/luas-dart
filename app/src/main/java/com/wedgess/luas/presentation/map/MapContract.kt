@@ -2,14 +2,12 @@ package com.wedgess.luas.presentation.map
 
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
-import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.model.UserLocation
 import com.wedgess.luas.presentation.map.model.MapDialogState
 import com.wedgess.luas.presentation.model.Permission
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.immutableListOf
 import kotlinx.collections.immutable.persistentListOf
 
 interface MapContract {
@@ -17,11 +15,11 @@ interface MapContract {
     data class UiState(
         val currentLocation: UserLocation,
         val transportType: TransportType,
-        val dartLocations: ImmutableList<StationLocationEntity.DartStationLocationEntity>,
-        val greenLineLocations: ImmutableList<StationLocationEntity.LuasStationLocationEntity>,
-        val redLineLocations: ImmutableList<StationLocationEntity.LuasStationLocationEntity>,
+        val dartLocations: ImmutableList<LocationEntity.Dart>,
+        val greenLineLocations: ImmutableList<LocationEntity.Luas>,
+        val redLineLocations: ImmutableList<LocationEntity.Luas>,
         val locationPermission: Permission,
-        val dialogState: MapDialogState
+        val dialogState: MapDialogState,
     ) {
         companion object {
             fun initial() = UiState(
@@ -31,7 +29,7 @@ interface MapContract {
                 redLineLocations = persistentListOf(),
                 locationPermission = Permission.Unknown,
                 transportType = TransportType.LUAS,
-                dialogState = MapDialogState.None
+                dialogState = MapDialogState.None,
             )
         }
     }

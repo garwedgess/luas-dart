@@ -2,8 +2,6 @@ package com.wedgess.luas.data.api
 
 import com.wedgess.luas.data.model.DartApiResult
 import com.wedgess.luas.data.model.DartStationForecastResponseData
-import com.wedgess.luas.data.model.LuasApiResult
-import com.wedgess.luas.data.model.LuasStopsResponseData
 
 interface DartStationForecastApiService {
 

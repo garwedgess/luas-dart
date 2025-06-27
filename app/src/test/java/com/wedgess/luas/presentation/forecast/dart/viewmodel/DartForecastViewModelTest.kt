@@ -125,7 +125,9 @@ class DartForecastViewModelTest {
     )
 
     private val stationsFlow = MutableStateFlow(Result.success(mockStations))
-    private val forecastFlow = MutableStateFlow<RefreshState<List<DartStationForecastEntity>>>(RefreshState.Success(mockForecasts, 0f))
+    private val forecastFlow = MutableStateFlow<RefreshState<List<DartStationForecastEntity>>>(
+        RefreshState.Success(mockForecasts, 0f)
+    )
     private val selectedStationFlow = MutableStateFlow("")
 
     @Before

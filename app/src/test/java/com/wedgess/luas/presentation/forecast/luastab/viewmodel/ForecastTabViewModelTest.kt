@@ -4,15 +4,15 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import com.wedgess.luas.domain.model.LuasForcastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
+import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
-import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
 import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
+import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchLuasStopsUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
 import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
@@ -89,7 +89,7 @@ class ForecastTabViewModelTest {
             longitude = -6.26070,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false
+            isCycleAndRide = false,
         ),
         LuasStopEntity(
             id = UUID.randomUUID(),
@@ -99,8 +99,8 @@ class ForecastTabViewModelTest {
             longitude = -6.26302,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false
-        )
+            isCycleAndRide = false,
+        ),
     )
 
     private val mockForecast = LuasForcastEntity(
@@ -109,7 +109,7 @@ class ForecastTabViewModelTest {
         createdAt = "2025-03-02T21:48:50",
         inboundTrams = emptyList(),
         outboundTrams = emptyList(),
-        stopAbv = "STS"
+        stopAbv = "STS",
     )
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
@@ -141,7 +141,7 @@ class ForecastTabViewModelTest {
             scheduleAlarmUseCase = scheduleAlarmUseCase,
             isAlarmRunningUseCase = isAlarmRunningUseCase,
             fetchSelectedLuasStopUseCase = fetchSelectedLuasStopUseCase,
-            requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase
+            requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase,
         )
     }
 
@@ -294,8 +294,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination
-            )
+                destination = destination,
+            ),
         )
 
         // When
@@ -342,8 +342,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination
-            )
+                destination = destination,
+            ),
         )
 
         viewModel.uiResult.test {
@@ -365,7 +365,7 @@ class ForecastTabViewModelTest {
             longitude = 0.0,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false
+            isCycleAndRide = false,
         )
 
         // When
@@ -386,8 +386,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination
-            )
+                destination = destination,
+            ),
         )
         viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 5))
 
@@ -429,8 +429,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination
-            )
+                destination = destination,
+            ),
         )
 
         // Then
@@ -444,8 +444,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = -5,
-                destination = destination
-            )
+                destination = destination,
+            ),
         )
 
         // Then

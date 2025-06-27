@@ -1,10 +1,9 @@
 package com.wedgess.luas.data.mapper
 
 import com.wedgess.luas.DartStation
-import com.wedgess.luas.LuasStop
 import com.wedgess.luas.data.model.DartStationsResponseData
 import com.wedgess.luas.domain.model.DartStationEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.LocationEntity
 
 fun DartStationEntity.toDao() = DartStation(
     Id = this.id,
@@ -35,8 +34,8 @@ fun DartStationsResponseData.toDao() = this.stations.map { station ->
     )
 }
 
-fun DartStation.toLocationEntity() = StationLocationEntity.DartStationLocationEntity(
+fun DartStation.toLocationEntity() = LocationEntity.Dart(
     name = this.Name,
     latitude = this.Latitude,
-    longitude = this.Longitude
+    longitude = this.Longitude,
 )

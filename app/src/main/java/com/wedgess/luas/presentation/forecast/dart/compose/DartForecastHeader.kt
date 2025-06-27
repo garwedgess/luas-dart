@@ -47,7 +47,6 @@ fun DartForecastHeader(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             style = MaterialTheme.typography.titleMedium,
         )
-
     }
 }
 

@@ -85,7 +85,6 @@ object NetworkModule {
             xml(createXmlConfig(), contentType = ContentType.Text.Html)
         }
 
-
     fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installDartContentNegotiation() =
         install(ContentNegotiation) {
             xml(createXmlConfig(), contentType = ContentType.Text.Xml)

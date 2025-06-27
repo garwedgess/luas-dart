@@ -22,21 +22,29 @@ object ApiServiceModule {
 
     @Provides
     @Singleton
-    fun provideLuasStopApiService(@Named("LuasHttpClient") client: HttpClient): LuasStopApiService =
+    fun provideLuasStopApiService(
+        @Named("LuasHttpClient") client: HttpClient,
+    ): LuasStopApiService =
         LuasStopApiServiceImpl(client)
 
     @Provides
     @Singleton
-    fun provideLuasForecastApiService(@Named("LuasHttpClient") client: HttpClient): LuasForecastApiService =
+    fun provideLuasForecastApiService(
+        @Named("LuasHttpClient") client: HttpClient,
+    ): LuasForecastApiService =
         LuasForecastApiServiceImpl(client)
 
     @Provides
     @Singleton
-    fun provideDartStationApiService(@Named("DartHttpClient") client: HttpClient): DartStationsApiService =
+    fun provideDartStationApiService(
+        @Named("DartHttpClient") client: HttpClient,
+    ): DartStationsApiService =
         DartStationsApiServiceImpl(client)
 
     @Provides
     @Singleton
-    fun provideDartStationForecastApiService(@Named("DartHttpClient") client: HttpClient): DartStationForecastApiService =
+    fun provideDartStationForecastApiService(
+        @Named("DartHttpClient") client: HttpClient,
+    ): DartStationForecastApiService =
         DartStationForecastApiServiceImpl(client)
 }

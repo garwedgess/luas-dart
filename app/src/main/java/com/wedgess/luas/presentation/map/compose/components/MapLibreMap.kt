@@ -54,7 +54,7 @@ import com.mapbox.mapboxsdk.style.layers.SymbolLayer
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
-import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.UserLocation
 import kotlinx.collections.immutable.ImmutableList
 import timber.log.Timber
@@ -67,8 +67,8 @@ private const val DUBLIN_LONGITUDE = -6.2603
 @Composable
 fun LuasMapLibreMap(
     currentLocation: UserLocation,
-    redLineLocations: ImmutableList<StationLocationEntity.LuasStationLocationEntity>,
-    greenLineLocations: ImmutableList<StationLocationEntity.LuasStationLocationEntity>,
+    redLineLocations: ImmutableList<LocationEntity.Luas>,
+    greenLineLocations: ImmutableList<LocationEntity.Luas>,
     locationPermissionGranted: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -141,7 +141,7 @@ fun LuasMapLibreMap(
 @Composable
 fun DartMapLibreMap(
     currentLocation: UserLocation,
-    dartStationLocations: ImmutableList<StationLocationEntity.DartStationLocationEntity>,
+    dartStationLocations: ImmutableList<LocationEntity.Dart>,
     locationPermissionGranted: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -202,7 +202,7 @@ fun DartMapLibreMap(
     )
 }
 
-private fun updateSources(style: Style, line: String, stops: List<StationLocationEntity>) {
+private fun updateSources(style: Style, line: String, stops: List<LocationEntity>) {
     val lineSource = style.getSourceAs<GeoJsonSource>("$line-line-source")
     if (lineSource != null) {
         val updatedFeatures = FeatureCollection.fromFeatures(
@@ -290,7 +290,7 @@ private fun MapboxMap.setupStyle(onSetup: (Style) -> Unit) {
 private fun Style.addLinesMarkersAndLabels(
     map: MapboxMap,
     line: String,
-    stops: List<StationLocationEntity>,
+    stops: List<LocationEntity>,
     color: String,
     context: Context,
 ) {
@@ -308,7 +308,7 @@ private fun Style.addLineLayer(line: String, color: String) {
     addLayer(redLineLayer)
 }
 
-private fun Style.addLineSource(line: String, stops: List<StationLocationEntity>) {
+private fun Style.addLineSource(line: String, stops: List<LocationEntity>) {
     val lineSource = GeoJsonSource(
         "$line-line-source",
         FeatureCollection.fromFeatures(
@@ -324,17 +324,17 @@ private fun Style.addLineSource(line: String, stops: List<StationLocationEntity>
     addSource(lineSource)
 }
 
-private fun Style.addLine(line: String, stops: List<StationLocationEntity>, color: String) {
+private fun Style.addLine(line: String, stops: List<LocationEntity>, color: String) {
     addLineSource(line, stops)
     addLineLayer(line, color)
 }
 
-private fun Style.addMarker(line: String, stops: List<StationLocationEntity>, color: String) {
+private fun Style.addMarker(line: String, stops: List<LocationEntity>, color: String) {
     addMarkersSource(line, stops)
     addMarkerLayer(line, color)
 }
 
-private fun Style.addMarkersSource(line: String, stops: List<StationLocationEntity>) {
+private fun Style.addMarkersSource(line: String, stops: List<LocationEntity>) {
     val markersSource = GeoJsonSource(
         "$line-markers-source",
         FeatureCollection.fromFeatures(
@@ -365,7 +365,7 @@ private fun Style.addMarkerLayer(line: String, color: String) {
     addLayer(circleLayer)
 }
 
-private fun Style.addLabelSource(line: String, stop: StationLocationEntity) {
+private fun Style.addLabelSource(line: String, stop: LocationEntity) {
     val labelSource = GeoJsonSource(
         "$line-markers-source-${stop.name}",
         FeatureCollection.fromFeatures(
@@ -405,7 +405,7 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
 private fun Style.addLabels(
     map: MapboxMap,
     line: String,
-    stops: List<StationLocationEntity>,
+    stops: List<LocationEntity>,
     context: Context,
 ) {
     stops.forEach { location ->

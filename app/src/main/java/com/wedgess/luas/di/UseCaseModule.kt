@@ -6,8 +6,8 @@ import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.domain.usecase.FetchAllLuasStopsUseCase
 import com.wedgess.luas.domain.usecase.FetchCurrentLocationUseCase
 import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
 import com.wedgess.luas.domain.usecase.FetchLuasStopsUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import dagger.Module
 import dagger.Provides

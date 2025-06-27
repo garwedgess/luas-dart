@@ -114,13 +114,3 @@ fun DartListContent(
         }
     }
 }
-
-//@Preview
-//@Composable
-//private fun ForecastTabContentPreview() {
-//    LuasTheme {
-//        Surface {
-//            ForecastTabContent(LuasLineEntity.GREEN, onRefreshAction = {}, onProgressChange = {})
-//        }
-//    }
-//}

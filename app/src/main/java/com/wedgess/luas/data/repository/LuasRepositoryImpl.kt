@@ -8,10 +8,10 @@ import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.mapper.toLocationEntity
 import com.wedgess.luas.data.utils.extensions.resultOf
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.LuasForcastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
 import com.wedgess.luas.domain.repository.LuasRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,7 +27,7 @@ class LuasRepositoryImpl @Inject constructor(
     private val stopsApi: LuasStopApiService,
     private val forecastApi: LuasForecastApiService,
     private val stopsDao: LuasStopDao,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : LuasRepository {
 
     override fun fetchStops(line: LuasLineEntity): Flow<Result<List<LuasStopEntity>>> {
@@ -42,7 +42,7 @@ class LuasRepositoryImpl @Inject constructor(
             }.resultOf()
     }
 
-    override fun fetchAllStopLocations(): Flow<Result<List<StationLocationEntity>>> {
+    override fun fetchAllStopLocations(): Flow<Result<List<LocationEntity>>> {
         return stopsDao.fetchAll().map { stops -> stops.map { it.toLocationEntity() } }.resultOf()
     }
 
@@ -75,7 +75,7 @@ class LuasRepositoryImpl @Inject constructor(
             },
             onFailure = { error ->
                 Timber.e(error, "Failed to insert remote stops: ${error.message}")
-            }
+            },
         )
     }
 }

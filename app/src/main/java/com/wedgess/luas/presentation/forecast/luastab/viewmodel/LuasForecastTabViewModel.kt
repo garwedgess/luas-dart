@@ -4,15 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.model.LuasLineEntity
+import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
-import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
 import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
+import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
 import com.wedgess.luas.domain.usecase.FetchLuasStopsUseCase
+import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
 import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
@@ -54,7 +54,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val scheduleAlarmUseCase: ScheduleAlarmUseCase,
     private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
     isAlarmRunningUseCase: FetchIsAlarmRunningUseCase,
-    fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase
+    fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LuasForecastTabContract.UiState())
@@ -64,7 +64,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val stopsAndStationFlow = combine(
         fetchLuasStopsUseCase(luasLine),
         fetchSelectedLuasStopUseCase(luasLine),
-        isAlarmRunningUseCase()
+        isAlarmRunningUseCase(),
     ) { stopsResult, currentSelectedStop, alarmIsRunning ->
         stopsResult.mapCatching { stops ->
             val selectedStop = if (currentSelectedStop.isBlank()) {
@@ -85,7 +85,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                         it.copy(
                             stops = stops,
                             selectedStop = selectedStop,
-                            alarmIsRunning = alarmIsRunning
+                            alarmIsRunning = alarmIsRunning,
                         )
                     }
 
@@ -97,14 +97,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                                 when (forecastRefreshResult) {
                                     is RefreshState.Error -> UiResult.Error(
                                         forecastRefreshResult.exception.message
-                                            ?: "Failed to fetch forecast"
+                                            ?: "Failed to fetch forecast",
                                     )
 
                                     is RefreshState.Success -> {
                                         val updatedState = _uiState.updateAndGet { currentState ->
                                             currentState.copy(
                                                 refreshProgress = forecastRefreshResult.progress,
-                                                forecast = forecastRefreshResult.data
+                                                forecast = forecastRefreshResult.data,
                                             )
                                         }
 
@@ -116,7 +116,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                 },
                 onFailure = { throwable ->
                     flowOf(UiResult.Error(throwable.message ?: "Failed to fetch stops"))
-                }
+                },
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
@@ -148,7 +148,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (event.dueInMins > 0) {
                 showNotificationDialog(
                     event.dueInMins,
-                    event.destination
+                    event.destination,
                 ).also {
                     eventTriggerTime = System.currentTimeMillis()
                 }
@@ -178,12 +178,12 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                     dueInMins = dueInMins,
                     destination = destination,
                     station = it.selectedStop.name,
-                    notifyMinutesBefore = dueInMins
+                    notifyMinutesBefore = dueInMins,
                 )
                 Timber.d("Notification State: $notificationState, ${_uiState.value}")
                 it.copy(
                     notificationState = notificationState,
-                    dialog = ForecastTabDialogState.Notification
+                    dialog = ForecastTabDialogState.Notification,
                 )
             }
         } else {
@@ -197,7 +197,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         viewModelScope.launch {
             scheduleAlarmUseCase(
                 secondsFromNow = notificationState.triggerTimeSeconds(eventTriggerTime),
-                luasNotificationEntity = notificationState.toEntity()
+                luasNotificationEntity = notificationState.toEntity(),
             ).also {
                 eventTriggerTime = 0
                 startTimer(notificationState.dueInMins)

@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 
-
 @Composable
 fun LateWarningBadge(
     lateMinutes: Int,
@@ -48,4 +47,3 @@ private fun LateWarningBadgePreview() {
         LateWarningBadge(13)
     }
 }
-

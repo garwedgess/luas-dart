@@ -1,22 +1,20 @@
 package com.wedgess.luas.domain.model
 
-sealed interface StationLocationEntity {
+sealed interface LocationEntity {
     val name: String
     val latitude: Double
     val longitude: Double
 
-    data class DartStationLocationEntity(
+    data class Dart(
         override val name: String,
         override val latitude: Double,
         override val longitude: Double,
-    ) : StationLocationEntity
+    ) : LocationEntity
 
-    data class LuasStationLocationEntity(
+    data class Luas(
         override val name: String,
         override val latitude: Double,
         override val longitude: Double,
         val line: LuasLineEntity,
-    ) : StationLocationEntity
+    ) : LocationEntity
 }
-
-

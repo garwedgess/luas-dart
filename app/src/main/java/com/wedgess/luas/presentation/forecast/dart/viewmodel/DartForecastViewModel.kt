@@ -15,8 +15,8 @@ import com.wedgess.luas.domain.usecase.UpdateSelectedDartStationUseCase
 import com.wedgess.luas.presentation.components.sectionedlist.model.Section
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionItem
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionedListState
-import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
+import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.PersistentMap
@@ -85,7 +85,9 @@ class DartForecastViewModel @Inject constructor(
                                         val updatedState = _uiState.updateAndGet { currentState ->
                                             currentState.copy(
                                                 refreshProgress = forecastRefreshResult.progress,
-                                                sectionedListState = forecastRefreshResult.data.toSectionListState(expandedSections),
+                                                sectionedListState = forecastRefreshResult.data.toSectionListState(
+                                                    expandedSections,
+                                                ),
                                             )
                                         }
 
@@ -103,7 +105,7 @@ class DartForecastViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
 
     private fun List<DartStationForecastEntity>.toSectionListState(
-        expandedSections: PersistentMap<Long, Boolean>
+        expandedSections: PersistentMap<Long, Boolean>,
     ): SectionedListState<DartForecastSectionRowData> {
         // Group existing forecasts by direction
         val forecastsByDirection = this.groupBy { it.direction }
@@ -152,7 +154,7 @@ class DartForecastViewModel @Inject constructor(
 
         return SectionedListState(
             sections = sections,
-            expandedSections = expandedSections
+            expandedSections = expandedSections,
         )
     }
 

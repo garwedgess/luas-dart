@@ -7,8 +7,8 @@ import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.map.MapContract
 import com.wedgess.luas.presentation.map.compose.components.DartMapLibreMap
-import com.wedgess.luas.presentation.map.compose.components.MapDialogs
 import com.wedgess.luas.presentation.map.compose.components.LuasMapLibreMap
+import com.wedgess.luas.presentation.map.compose.components.MapDialogs
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.presentation.model.Permission
 import com.wedgess.luas.presentation.model.UiResult

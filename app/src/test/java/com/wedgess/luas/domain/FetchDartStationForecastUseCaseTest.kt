@@ -8,7 +8,6 @@ import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.repository.DartRepository
 import com.wedgess.luas.domain.usecase.FetchDartStationForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.impl.annotations.MockK
@@ -54,7 +53,7 @@ class FetchDartStationForecastUseCaseTest {
         schDepart = "21:50",
         direction = DartDirectionEntity.NORTHBOUND,
         trainType = "DART",
-        locationType = DartLocationTypeEntity.ORIGIN
+        locationType = DartLocationTypeEntity.ORIGIN,
     )
 
     @Before
@@ -100,7 +99,7 @@ class FetchDartStationForecastUseCaseTest {
         assertTrue(result is RefreshState.Success)
         assertEquals(
             100f,
-            (result as RefreshState.Success).progress
+            (result as RefreshState.Success).progress,
         )
     }
 }

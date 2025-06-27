@@ -1,7 +1,6 @@
 package com.wedgess.luas.data.api
 
 import com.wedgess.luas.data.api.fakes.dart.DartForecastApiServiceFake
-import com.wedgess.luas.data.api.fakes.luas.LuasForecastApiServiceFake
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Test

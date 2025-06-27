@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.model.UserLocation
 import com.wedgess.luas.domain.usecase.FetchAllDartStationLocationsUseCase
@@ -60,7 +60,7 @@ class MapViewModel @Inject constructor(
         _uiState,
         fetchCurrentLocationUseCase(),
         fetchSelectedTransportTypeUseCase().flatMapLatest { transportType ->
-            val locationsFlow: Flow<Result<List<StationLocationEntity>>> = when (transportType) {
+            val locationsFlow: Flow<Result<List<LocationEntity>>> = when (transportType) {
                 TransportType.DART -> fetchAllDartStationLocationsUseCase()
                 TransportType.LUAS -> fetchAllLuasStopLocationsUseCase()
             }
@@ -82,30 +82,30 @@ class MapViewModel @Inject constructor(
                 greenLineLocations = if (transportType == TransportType.LUAS) {
                     locations.getLuasStationsByLine(LuasLineEntity.GREEN)
                 } else {
-                    persistentListOf<StationLocationEntity.LuasStationLocationEntity>()
+                    persistentListOf<LocationEntity.Luas>()
                 },
                 redLineLocations = if (transportType == TransportType.LUAS) {
                     locations.getLuasStationsByLine(LuasLineEntity.RED)
                 } else {
-                    persistentListOf<StationLocationEntity.LuasStationLocationEntity>()
+                    persistentListOf<LocationEntity.Luas>()
                 },
                 dartLocations = if (transportType == TransportType.DART) {
                     locations.getDartStations()
                 } else {
-                    persistentListOf<StationLocationEntity.DartStationLocationEntity>()
+                    persistentListOf<LocationEntity.Dart>()
                 },
             ),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
 
-    private fun List<StationLocationEntity>.getLuasStationsByLine(line: LuasLineEntity): ImmutableList<StationLocationEntity.LuasStationLocationEntity> {
-        return this.filterIsInstance<StationLocationEntity.LuasStationLocationEntity>()
+    private fun List<LocationEntity>.getLuasStationsByLine(line: LuasLineEntity): ImmutableList<LocationEntity.Luas> {
+        return this.filterIsInstance<LocationEntity.Luas>()
             .filter { it.line == line }
             .toPersistentList()
     }
 
-    private fun List<StationLocationEntity>.getDartStations(): ImmutableList<StationLocationEntity.DartStationLocationEntity> {
-        return this.filterIsInstance<StationLocationEntity.DartStationLocationEntity>()
+    private fun List<LocationEntity>.getDartStations(): ImmutableList<LocationEntity.Dart> {
+        return this.filterIsInstance<LocationEntity.Dart>()
             .toPersistentList()
     }
 

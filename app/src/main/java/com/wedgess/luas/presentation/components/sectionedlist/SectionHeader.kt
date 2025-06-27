@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.ui.theme.LuasTheme
 
@@ -72,6 +73,7 @@ fun SectionHeader(
     }
 }
 
+@Preview
 @Composable
 private fun SectionRowPreview() {
     LuasTheme {

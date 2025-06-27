@@ -33,13 +33,13 @@ fun DartStationForecastResponseData.toEntity() = this.stationData.map {
     )
 }
 
-fun DartDirectionData.toEntity() = when(this) {
+fun DartDirectionData.toEntity() = when (this) {
     DartDirectionData.NORTHBOUND -> DartDirectionEntity.NORTHBOUND
     DartDirectionData.SOUTHBOUND -> DartDirectionEntity.SOUTHBOUND
     DartDirectionData.UNKNOWN -> DartDirectionEntity.UNKNOWN
 }
 
-fun DartLocationTypeData.toEntity() = when(this) {
+fun DartLocationTypeData.toEntity() = when (this) {
     DartLocationTypeData.ORIGIN -> DartLocationTypeEntity.ORIGIN
     DartLocationTypeData.DESTINATION -> DartLocationTypeEntity.DESTINATION
     DartLocationTypeData.STOP -> DartLocationTypeEntity.STOP

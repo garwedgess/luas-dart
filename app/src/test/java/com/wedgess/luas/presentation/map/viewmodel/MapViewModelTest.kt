@@ -7,8 +7,8 @@ import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.model.UserLocation
 import com.wedgess.luas.domain.usecase.FetchAllDartStationLocationsUseCase
@@ -81,13 +81,13 @@ class MapViewModelTest {
     private lateinit var viewModel: MapViewModel
 
     private val mockGreenLineStops = listOf(
-        StationLocationEntity.LuasStationLocationEntity(
+        LocationEntity.Luas(
             name = "St. Stephens Green",
             latitude = 53.33963,
             longitude = -6.26070,
             line = LuasLineEntity.GREEN,
         ),
-        StationLocationEntity.LuasStationLocationEntity(
+        LocationEntity.Luas(
             name = "Harcourt",
             latitude = 53.33334,
             longitude = -6.26302,
@@ -96,13 +96,13 @@ class MapViewModelTest {
     )
 
     private val mockRedLineStops = listOf(
-        StationLocationEntity.LuasStationLocationEntity(
+        LocationEntity.Luas(
             name = "Abbey Street",
             latitude = 53.34835,
             longitude = -6.25786,
             line = LuasLineEntity.RED,
         ),
-        StationLocationEntity.LuasStationLocationEntity(
+        LocationEntity.Luas(
             name = "Jervis",
             latitude = 53.34743,
             longitude = -6.26690,
@@ -230,7 +230,7 @@ class MapViewModelTest {
     @Test
     fun `should update when stops change`() = runTest {
         val newStops = listOf(
-            StationLocationEntity.LuasStationLocationEntity(
+            LocationEntity.Luas(
                 name = "New Stop",
                 latitude = 53.35,
                 longitude = -6.27,

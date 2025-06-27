@@ -1,6 +1,6 @@
 package com.wedgess.luas.domain
 
-import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.repository.DartRepository
 import com.wedgess.luas.domain.usecase.FetchAllDartStationLocationsUseCase
 import io.mockk.MockKAnnotations
@@ -31,12 +31,12 @@ class FetchAllDartStationLocationsUseCaseTest {
     fun `invoke should return repository result when successful`() = runTest {
         // Given
         val mockStations = listOf(
-            StationLocationEntity.DartStationLocationEntity(
+            LocationEntity.Dart(
                 name = "St. Stephens Green",
                 latitude = 53.33963,
                 longitude = -6.26070,
             ),
-            StationLocationEntity.DartStationLocationEntity(
+            LocationEntity.Dart(
                 name = "Harcourt",
                 latitude = 53.33334,
                 longitude = -6.26302,
@@ -58,7 +58,7 @@ class FetchAllDartStationLocationsUseCaseTest {
     fun `invoke should return repository error when failure occurs`() = runTest {
         // Given
         val exception = Exception("Network error")
-        val errorResult = Result.failure<List<StationLocationEntity.DartStationLocationEntity>>(exception)
+        val errorResult = Result.failure<List<LocationEntity.Dart>>(exception)
         every { dartRepository.fetchAllStationLocations() } returns flowOf(errorResult)
 
         // When

@@ -20,7 +20,10 @@ class AlarmRepositoryImpl @Inject constructor(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AlarmRepository {
 
-    override suspend fun scheduleAlarm(secondsFromNow: Long, luasNotificationEntity: LuasNotificationEntity): Result<Long> =
+    override suspend fun scheduleAlarm(
+        secondsFromNow: Long,
+        luasNotificationEntity: LuasNotificationEntity
+    ): Result<Long> =
         withContext(dispatcher) {
             resultOf {
                 val triggerMillis = SystemClock.elapsedRealtime() + secondsFromNow * TimeUnit.SECONDS.toMillis(1)

@@ -2,8 +2,8 @@ package com.wedgess.luas.data.mapper
 
 import com.wedgess.luas.LuasStop
 import com.wedgess.luas.data.model.LuasStopsResponseData
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
 import java.util.UUID
 
 fun LuasStopEntity.toDao() = LuasStop(
@@ -43,9 +43,9 @@ fun LuasStopsResponseData.toDao() = this.line.flatMap { line ->
     }
 }
 
-fun LuasStop.toLocationEntity() = StationLocationEntity.LuasStationLocationEntity(
+fun LuasStop.toLocationEntity() = LocationEntity.Luas(
     name = this.Name,
     latitude = this.Latitude,
     longitude = this.Longitude,
-    line = this.Line.toEntity()
+    line = this.Line.toEntity(),
 )

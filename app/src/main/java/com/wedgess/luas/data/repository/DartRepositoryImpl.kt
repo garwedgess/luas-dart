@@ -9,7 +9,7 @@ import com.wedgess.luas.data.mapper.toLocationEntity
 import com.wedgess.luas.data.utils.extensions.resultOf
 import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.DartStationForecastEntity
-import com.wedgess.luas.domain.model.StationLocationEntity
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.repository.DartRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,7 @@ class DartRepositoryImpl @Inject constructor(
             }.resultOf()
     }
 
-    override fun fetchAllStationLocations(): Flow<Result<List<StationLocationEntity>>> {
+    override fun fetchAllStationLocations(): Flow<Result<List<LocationEntity>>> {
         return stationsDao.fetchAll().map { stations -> stations.map { it.toLocationEntity() } }.resultOf()
     }
 

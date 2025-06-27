@@ -8,7 +8,6 @@ import com.wedgess.luas.domain.repository.DartRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import timber.log.Timber
 import javax.inject.Inject
 
 class FetchDartStationForecastUseCase @Inject constructor(private val dartRepository: DartRepository) {
