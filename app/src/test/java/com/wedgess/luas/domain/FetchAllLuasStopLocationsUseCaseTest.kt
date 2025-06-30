@@ -36,14 +36,14 @@ class FetchAllLuasStopLocationsUseCaseTest {
                 name = "St. Stephens Green",
                 latitude = 53.33963,
                 longitude = -6.26070,
-                line = LuasLineEntity.GREEN,
+                line = LuasLineEntity.GREEN
             ),
             LocationEntity.Luas(
                 name = "Harcourt",
                 latitude = 53.33334,
                 longitude = -6.26302,
-                line = LuasLineEntity.GREEN,
-            ),
+                line = LuasLineEntity.GREEN
+            )
         )
         val successResult = Result.success(mockStops)
         every { luasRepository.fetchAllStopLocations() } returns flowOf(successResult)

@@ -55,7 +55,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val scheduleAlarmUseCase: ScheduleAlarmUseCase,
     private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
     isAlarmRunningUseCase: FetchIsAlarmRunningUseCase,
-    fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase,
+    fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LuasForecastTabContract.UiState())
@@ -65,7 +65,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val stopsAndStationFlow = combine(
         fetchLuasStopsUseCase(luasLine),
         fetchSelectedLuasStopUseCase(luasLine),
-        isAlarmRunningUseCase(),
+        isAlarmRunningUseCase()
     ) { stopsResult, currentSelectedStop, alarmIsRunning ->
         stopsResult.mapCatching { stops ->
             val selectedStop = if (currentSelectedStop.isBlank()) {
@@ -86,7 +86,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                         it.copy(
                             stops = stops.toImmutableList(),
                             selectedStop = selectedStop,
-                            alarmIsRunning = alarmIsRunning,
+                            alarmIsRunning = alarmIsRunning
                         )
                     }
 
@@ -98,14 +98,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                                 when (forecastRefreshResult) {
                                     is RefreshState.Error -> UiResult.Error(
                                         forecastRefreshResult.exception.message
-                                            ?: "Failed to fetch forecast",
+                                            ?: "Failed to fetch forecast"
                                     )
 
                                     is RefreshState.Success -> {
                                         val updatedState = _uiState.updateAndGet { currentState ->
                                             currentState.copy(
                                                 refreshProgress = forecastRefreshResult.progress,
-                                                forecast = forecastRefreshResult.data,
+                                                forecast = forecastRefreshResult.data
                                             )
                                         }
 
@@ -117,7 +117,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                 },
                 onFailure = { throwable ->
                     flowOf(UiResult.Error(throwable.message ?: "Failed to fetch stops"))
-                },
+                }
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
@@ -149,7 +149,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (event.dueInMins > 0) {
                 showNotificationDialog(
                     event.dueInMins,
-                    event.destination,
+                    event.destination
                 ).also {
                     eventTriggerTime = System.currentTimeMillis()
                 }
@@ -179,12 +179,12 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                     dueInMins = dueInMins,
                     destination = destination,
                     station = it.selectedStop.name,
-                    notifyMinutesBefore = dueInMins,
+                    notifyMinutesBefore = dueInMins
                 )
                 Timber.d("Notification State: $luasNotificationState, ${_uiState.value}")
                 it.copy(
                     luasNotificationState = luasNotificationState,
-                    dialog = LuasForecastTabDialogState.Notification,
+                    dialog = LuasForecastTabDialogState.Notification
                 )
             }
         } else {
@@ -198,7 +198,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         viewModelScope.launch {
             scheduleAlarmUseCase(
                 secondsFromNow = luasNotificationState.triggerTimeSeconds(eventTriggerTime),
-                luasNotificationEntity = luasNotificationState.toEntity(),
+                luasNotificationEntity = luasNotificationState.toEntity()
             ).also {
                 eventTriggerTime = 0
                 startTimer(luasNotificationState.dueInMins)

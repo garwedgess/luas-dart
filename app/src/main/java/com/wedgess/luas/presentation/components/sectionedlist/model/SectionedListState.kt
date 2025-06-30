@@ -6,5 +6,5 @@ import kotlinx.collections.immutable.persistentMapOf
 
 data class SectionedListState<T>(
     val sections: ImmutableList<Section<T>>,
-    val expandedSections: ImmutableMap<Long, Boolean> = persistentMapOf(),
+    val expandedSections: ImmutableMap<Long, Boolean> = persistentMapOf()
 )

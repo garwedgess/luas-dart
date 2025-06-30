@@ -63,7 +63,7 @@ class DartForecastViewModelTest {
             alias = "Connolly",
             latitude = 53.3508,
             longitude = -6.2518,
-            code = "CNLLY",
+            code = "CNLLY"
         ),
         DartStationEntity(
             id = 2,
@@ -71,8 +71,8 @@ class DartForecastViewModelTest {
             alias = "Pearse",
             latitude = 53.3437,
             longitude = -6.2494,
-            code = "PERSE",
-        ),
+            code = "PERSE"
+        )
     )
 
     private val mockForecasts = listOf(
@@ -97,7 +97,7 @@ class DartForecastViewModelTest {
             schDepart = "10:31",
             trainType = "DART",
             direction = DartDirectionEntity.SOUTHBOUND,
-            locationType = DartLocationTypeEntity.STOP,
+            locationType = DartLocationTypeEntity.STOP
         ),
         DartStationForecastEntity(
             serverTime = "2025-06-26T21:35:15.323",
@@ -120,8 +120,8 @@ class DartForecastViewModelTest {
             schDepart = "10:46",
             trainType = "DART",
             direction = DartDirectionEntity.NORTHBOUND,
-            locationType = DartLocationTypeEntity.STOP,
-        ),
+            locationType = DartLocationTypeEntity.STOP
+        )
     )
 
     private val stationsFlow = MutableStateFlow(Result.success(mockStations))
@@ -144,7 +144,7 @@ class DartForecastViewModelTest {
             fetchAllDartStationsUseCase = fetchAllDartStationsUseCase,
             fetchDartStationForecastUseCase = fetchDartStationForecastUseCase,
             updateSelectedDartStationsUseCase = updateSelectedDartStationsUseCase,
-            fetchSelectedDartStationsUseCase = fetchSelectedDartStationsUseCase,
+            fetchSelectedDartStationsUseCase = fetchSelectedDartStationsUseCase
         )
     }
 
@@ -318,7 +318,7 @@ class DartForecastViewModelTest {
         // Given
         val multipleTrains = mockForecasts + listOf(
             mockForecasts[0].copy(trainCode = "D789", dueIn = 12),
-            mockForecasts[0].copy(trainCode = "D999", dueIn = 15),
+            mockForecasts[0].copy(trainCode = "D999", dueIn = 15)
         )
         forecastFlow.value = RefreshState.Success(multipleTrains, 0f)
 
@@ -395,7 +395,7 @@ class DartForecastViewModelTest {
             alias = "NonExistent",
             latitude = 0.0,
             longitude = 0.0,
-            code = "NON",
+            code = "NON"
         )
 
         // When
@@ -476,7 +476,7 @@ class DartForecastViewModelTest {
             schArrival = "10:00",
             schDepart = "10:01",
             expArrival = "10:02",
-            expDepart = "10:03",
+            expDepart = "10:03"
         )
         forecastFlow.value = RefreshState.Success(listOf(originForecast), 0f)
 

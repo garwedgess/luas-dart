@@ -34,13 +34,13 @@ class FetchAllDartStationLocationsUseCaseTest {
             LocationEntity.Dart(
                 name = "St. Stephens Green",
                 latitude = 53.33963,
-                longitude = -6.26070,
+                longitude = -6.26070
             ),
             LocationEntity.Dart(
                 name = "Harcourt",
                 latitude = 53.33334,
-                longitude = -6.26302,
-            ),
+                longitude = -6.26302
+            )
         )
         val successResult = Result.success(mockStations)
         every { dartRepository.fetchAllStationLocations() } returns flowOf(successResult)

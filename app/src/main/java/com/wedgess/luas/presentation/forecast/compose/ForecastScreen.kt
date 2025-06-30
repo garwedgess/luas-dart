@@ -13,9 +13,8 @@ import com.wedgess.luas.ui.theme.LuasTheme
 fun ForecastScreen(
     transportType: TransportType,
     setRefreshAction: (() -> Unit) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
-
     Surface(modifier) {
         when (transportType) {
             TransportType.LUAS -> LuasForecastContent(setRefreshAction = setRefreshAction)

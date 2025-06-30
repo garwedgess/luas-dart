@@ -3,25 +3,20 @@
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>CyclomaticComplexMethod:ListPicker.kt$@Composable fun &lt;E&gt; ListPicker( initialValue: E, values: ImmutableList&lt;E&gt;, onValueChange: (E) -&gt; Unit, onIsErrorChange: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, wrapSelectorWheel: Boolean = false, format: E.() -&gt; String = { toString() }, parse: (String.() -&gt; E?)? = null, enableEdition: Boolean = parse != null, outOfBoundsPageCount: Int = 1, textStyle: TextStyle = LocalTextStyle.current, verticalPadding: Dp = 16.dp, dividerColor: Color = MaterialTheme.colorScheme.outline, dividerThickness: Dp = 1.dp, keyboardType: KeyboardType = KeyboardType.Text )</ID>
-    <ID>Filename:sectionWithItems.kt$com.wedgess.luas.presentation.components.sectionedlist.sectionWithItems.kt</ID>
-    <ID>ImportOrdering:LuasRepository.kt$import com.wedgess.luas.domain.model.LuasForcastEntity import com.wedgess.luas.domain.model.LuasLineEntity import com.wedgess.luas.domain.model.LuasStopEntity import com.wedgess.luas.domain.model.LocationEntity import kotlinx.coroutines.flow.Flow</ID>
-    <ID>LambdaParameterEventTrailing:ForecastAlarmRow.kt$onCancelAlarm</ID>
     <ID>LambdaParameterEventTrailing:ForecastAppBarActions.kt$onRefresh</ID>
-    <ID>LambdaParameterEventTrailing:ForecastItemRow.kt$onRowClick</ID>
-    <ID>LambdaParameterEventTrailing:ForecastScreen.kt$onProgressChange</ID>
+    <ID>LambdaParameterEventTrailing:LuasForecastAlarmRow.kt$onCancelAlarm</ID>
+    <ID>LambdaParameterEventTrailing:LuasForecastItemRow.kt$onRowClick</ID>
     <ID>LambdaParameterEventTrailing:MainTopAppbar.kt$onTransportTypeChange</ID>
     <ID>LambdaParameterEventTrailing:TransportTypeDropdown.kt$onTransportTypeChange</ID>
     <ID>LambdaParameterInRestartableEffect:CollectSideEffect.kt$onSideEffect</ID>
-    <ID>LambdaParameterInRestartableEffect:DartForecastContent.kt$onProgressChange</ID>
-    <ID>LambdaParameterInRestartableEffect:DartForecastContent.kt$onRefreshAction</ID>
-    <ID>LambdaParameterInRestartableEffect:ForecastScreen.kt$setRefreshAction</ID>
-    <ID>LambdaParameterInRestartableEffect:ForecastTabContent.kt$onProgressChange</ID>
-    <ID>LambdaParameterInRestartableEffect:ForecastTabContent.kt$onRefreshAction</ID>
+    <ID>LambdaParameterInRestartableEffect:DartForecastContent.kt$setRefreshAction</ID>
     <ID>LambdaParameterInRestartableEffect:ListPicker.kt$onValueChange</ID>
-    <ID>LongParameterList:ForecastTabContent.kt$( uiState: LuasForecastTabContract.UiState, onShowTravelUpdatesDialog: () -&gt; Unit, onStopSelect: (LuasStopEntity) -&gt; Unit, onTramClick: (Int, String) -&gt; Unit, onProgressChange: (Float) -&gt; Unit, onCancelAlarm: () -&gt; Unit )</ID>
-    <ID>LongParameterList:ForecastViewModel.kt$ForecastViewModel$( private val isNotificationPermissionIgnoredUseCase: IsNotificationPermissionIgnoredUseCase, private val wasNotificationPermissionRequestedUseCase: WasNotificationPermissionRequestedUseCase, private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase, private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase, fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase, )</ID>
-    <ID>LongParameterList:LuasForecastTabViewModel.kt$LuasForecastTabViewModel$( @Assisted val luasLine: LuasLineEntity, fetchLuasStopsUseCase: FetchLuasStopsUseCase, private val fetchLuasStopForecastUseCase: FetchLuasStopForecastUseCase, private val updateSelectedLuasStopUseCase: UpdateSelectedLuasStopUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val cancelAlarmUseCase: CancelAlarmUseCase, private val scheduleAlarmUseCase: ScheduleAlarmUseCase, private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase, isAlarmRunningUseCase: FetchIsAlarmRunningUseCase, fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase, )</ID>
-    <ID>LongParameterList:MapViewModel.kt$MapViewModel$( private val fetchCurrentLocationUseCase: FetchCurrentLocationUseCase, fetchAllLuasStopLocationsUseCase: FetchAllLuasStopLocationsUseCase, fetchAllDartStationLocationsUseCase: FetchAllDartStationLocationsUseCase, fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase, private val isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase, private val wasLocationPermissionRequestedUseCase: WasLocationPermissionRequestedUseCase, private val updateLocationPermissionRequestedUseCase: UpdateLocationPermissionRequestedUseCase, private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase, )</ID>
+    <ID>LambdaParameterInRestartableEffect:LuasForecastTabContent.kt$onProgressChange</ID>
+    <ID>LambdaParameterInRestartableEffect:LuasForecastTabContent.kt$onRefreshAction</ID>
+    <ID>LongParameterList:ForecastViewModel.kt$ForecastViewModel$( private val isNotificationPermissionIgnoredUseCase: IsNotificationPermissionIgnoredUseCase, private val wasNotificationPermissionRequestedUseCase: WasNotificationPermissionRequestedUseCase, private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase, private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase, fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase )</ID>
+    <ID>LongParameterList:LuasForecastTabContent.kt$( uiState: LuasForecastTabContract.UiState, onShowTravelUpdatesDialog: () -&gt; Unit, onStopSelect: (LuasStopEntity) -&gt; Unit, onTramClick: (Int, String) -&gt; Unit, onProgressChange: (Float) -&gt; Unit, onCancelAlarm: () -&gt; Unit )</ID>
+    <ID>LongParameterList:LuasForecastTabViewModel.kt$LuasForecastTabViewModel$( @Assisted val luasLine: LuasLineEntity, fetchLuasStopsUseCase: FetchLuasStopsUseCase, private val fetchLuasStopForecastUseCase: FetchLuasStopForecastUseCase, private val updateSelectedLuasStopUseCase: UpdateSelectedLuasStopUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val cancelAlarmUseCase: CancelAlarmUseCase, private val scheduleAlarmUseCase: ScheduleAlarmUseCase, private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase, isAlarmRunningUseCase: FetchIsAlarmRunningUseCase, fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase )</ID>
+    <ID>LongParameterList:MapViewModel.kt$MapViewModel$( private val fetchCurrentLocationUseCase: FetchCurrentLocationUseCase, fetchAllLuasStopLocationsUseCase: FetchAllLuasStopLocationsUseCase, fetchAllDartStationLocationsUseCase: FetchAllDartStationLocationsUseCase, fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase, private val isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase, private val wasLocationPermissionRequestedUseCase: WasLocationPermissionRequestedUseCase, private val updateLocationPermissionRequestedUseCase: UpdateLocationPermissionRequestedUseCase, private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase )</ID>
     <ID>MagicNumber:DartDirectionEntity.kt$DartDirectionEntity.UNKNOWN$3L</ID>
     <ID>MagicNumber:DartForecastHeader.kt$0.2f</ID>
     <ID>MagicNumber:DartForecastHeader.kt$0.4f</ID>
@@ -29,15 +24,19 @@
     <ID>MagicNumber:DartForecastItemRow.kt$0.4f</ID>
     <ID>MagicNumber:DartForecastItemRow.kt$0.8f</ID>
     <ID>MagicNumber:DropdownTextField.kt$0xFF119955</ID>
-    <ID>MagicNumber:ForecastScreen.kt$0xFF66BF63</ID>
-    <ID>MagicNumber:ForecastScreen.kt$0xFFE53935</ID>
-    <ID>MagicNumber:ForecastStatusMessage.kt$0xFF228A43</ID>
-    <ID>MagicNumber:ForecastStatusMessage.kt$0xFF996600</ID>
     <ID>MagicNumber:LateWarningBadge.kt$0xFF1AC1C1</ID>
     <ID>MagicNumber:LateWarningBadge.kt$0xFFE53E3E</ID>
     <ID>MagicNumber:ListPicker.kt$0.5F</ID>
     <ID>MagicNumber:ListPicker.kt$3</ID>
     <ID>MagicNumber:LocationRepositoryImpl.kt$LocationRepositoryImpl$10f</ID>
+    <ID>MagicNumber:LuasForecastContent.kt$0xFF66BF63</ID>
+    <ID>MagicNumber:LuasForecastContent.kt$0xFFE53935</ID>
+    <ID>MagicNumber:LuasForecastHeader.kt$0.4f</ID>
+    <ID>MagicNumber:LuasForecastHeader.kt$0.6f</ID>
+    <ID>MagicNumber:LuasForecastItemRow.kt$0.4f</ID>
+    <ID>MagicNumber:LuasForecastItemRow.kt$0.6f</ID>
+    <ID>MagicNumber:LuasForecastStatusMessage.kt$0xFF228A43</ID>
+    <ID>MagicNumber:LuasForecastStatusMessage.kt$0xFF996600</ID>
     <ID>MagicNumber:MapLibreMap.kt$0.5f</ID>
     <ID>MagicNumber:MapLibreMap.kt$1.5f</ID>
     <ID>MagicNumber:MapLibreMap.kt$10</ID>
@@ -51,15 +50,14 @@
     <ID>MagicNumber:MapLibreMap.kt$8</ID>
     <ID>MagicNumber:MapLibreMap.kt$8f</ID>
     <ID>MagicNumber:SectionHeader.kt$500</ID>
-    <ID>MagicNumber:sectionWithItems.kt$300</ID>
-    <ID>MaximumLineLength:LuasDirectionKeyData.kt$LuasDirectionKeyData.Companion$ </ID>
+    <ID>MagicNumber:SectionWithItems.kt$300</ID>
+    <ID>ModifierMissing:DartForecastContent.kt$DartForecastContent</ID>
     <ID>ModifierMissing:DartForecastContent.kt$DartListContent</ID>
-    <ID>ModifierMissing:ForecastTabContent.kt$TabListContent</ID>
+    <ID>ModifierMissing:LuasForecastTabContent.kt$LuasTabListContent</ID>
     <ID>ModifierNotUsedAtRoot:ForecastAppBarActions.kt$modifier = modifier</ID>
-    <ID>ModifierNotUsedAtRoot:ForecastScreen.kt$modifier = modifier</ID>
-    <ID>ModifierNotUsedAtRoot:TramDirectionHeader.kt$modifier = modifier .fillMaxWidth() .background(MaterialTheme.colorScheme.primaryContainer) .padding(8.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:LuasDirectionHeader.kt$modifier = modifier .fillMaxWidth() .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) .padding(8.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:LuasForecastContent.kt$modifier = modifier</ID>
     <ID>ParameterNaming:AnimatedTabContainer.kt$onTabSelected</ID>
-    <ID>ParameterNaming:MainNavigationGraph.kt$onRefreshProgressChanged</ID>
     <ID>SpreadOperator:UiText.kt$UiText$(id, *formatArgs)</ID>
     <ID>SpreadOperator:UiText.kt$UiText$(id, count, *formatArgs)</ID>
     <ID>ThrowsCount:RequestResult.kt$private suspend inline fun &lt;reified T&gt; HttpResponse.handleResponse(): T</ID>

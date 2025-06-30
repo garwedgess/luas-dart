@@ -50,7 +50,7 @@ class MapViewModel @Inject constructor(
     private val isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase,
     private val wasLocationPermissionRequestedUseCase: WasLocationPermissionRequestedUseCase,
     private val updateLocationPermissionRequestedUseCase: UpdateLocationPermissionRequestedUseCase,
-    private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase,
+    private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase
 ) : ViewModel(), SideEffectViewModel<MapContract.Effect> by SideEffectViewModelImpl() {
 
     private val _uiState = MutableStateFlow(MapContract.UiState.initial())
@@ -70,10 +70,10 @@ class MapViewModel @Inject constructor(
                     TransportLocationData(transportType, locations)
                 }
             }
-        },
+        }
     ) { state, currentLocation, allLocationsResult ->
         val (transportType, locations) = allLocationsResult.getOrDefault(
-            TransportLocationData(TransportType.LUAS, emptyList()),
+            TransportLocationData(TransportType.LUAS, emptyList())
         )
         UiResult.Success(
             state.copy(
@@ -93,8 +93,8 @@ class MapViewModel @Inject constructor(
                     locations.getDartStations()
                 } else {
                     persistentListOf<LocationEntity.Dart>()
-                },
-            ),
+                }
+            )
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
 
@@ -146,7 +146,7 @@ class MapViewModel @Inject constructor(
                 it.copy(dialogState = MapDialogState.None)
             }.also {
                 viewModelScope.emitSideEffect(
-                    MapContract.Effect.OpenAppPermissionScreen,
+                    MapContract.Effect.OpenAppPermissionScreen
                 )
             }
 
@@ -171,7 +171,7 @@ class MapViewModel @Inject constructor(
             Timber.d(
                 "Location, wasLocationPermissionRequested: " +
                     "$wasLocationPermissionRequested, ignoreLocationPermission: " +
-                    "$ignoreLocationPermission, permission: $permission",
+                    "$ignoreLocationPermission, permission: $permission"
             )
             _uiState.update {
                 it.copy(
@@ -187,7 +187,7 @@ class MapViewModel @Inject constructor(
                         }
 
                         else -> it.dialogState
-                    },
+                    }
                 )
             }
         }

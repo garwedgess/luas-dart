@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 class LuasStopDao @Inject constructor(
     db: LuasDatabase,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     private val queries = db.luasStopQueries
@@ -25,7 +25,7 @@ class LuasStopDao @Inject constructor(
             IsCycleRide = this.IsCycleRide,
             Latitude = this.Latitude,
             Longitude = this.Longitude,
-            Line = this.Line,
+            Line = this.Line
         )
     }
 

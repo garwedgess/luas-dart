@@ -25,36 +25,36 @@ import com.wedgess.luas.domain.model.TransportType
 fun TransportTypeDropdown(
     selectedTransportType: TransportType,
     modifier: Modifier = Modifier,
-    onTransportTypeChange: (TransportType) -> Unit,
+    onTransportTypeChange: (TransportType) -> Unit
 ) {
     var isDropdownExpanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         IconButton(
-            onClick = { isDropdownExpanded = !isDropdownExpanded },
+            onClick = { isDropdownExpanded = !isDropdownExpanded }
         ) {
             Icon(
                 painter = selectedTransportType.image(),
-                contentDescription = "Transport options",
+                contentDescription = "Transport options"
             )
         }
 
         DropdownMenu(
             expanded = isDropdownExpanded,
-            onDismissRequest = { isDropdownExpanded = false },
+            onDismissRequest = { isDropdownExpanded = false }
         ) {
             TransportType.entries.forEach { transportType ->
                 DropdownMenuItem(
                     text = {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = transportType == selectedTransportType,
                                 onClick = {
                                     onTransportTypeChange(transportType)
                                     isDropdownExpanded = false
-                                },
+                                }
                             )
                             Icon(painter = transportType.image(), contentDescription = transportType.name)
                             Text(transportType.name)
@@ -63,7 +63,7 @@ fun TransportTypeDropdown(
                     onClick = {
                         onTransportTypeChange(transportType)
                         isDropdownExpanded = false
-                    },
+                    }
                 )
             }
         }

@@ -19,7 +19,7 @@ interface MapContract {
         val greenLineLocations: ImmutableList<LocationEntity.Luas>,
         val redLineLocations: ImmutableList<LocationEntity.Luas>,
         val locationPermission: Permission,
-        val dialogState: MapDialogState,
+        val dialogState: MapDialogState
     ) {
         companion object {
             fun initial() = UiState(
@@ -29,7 +29,7 @@ interface MapContract {
                 redLineLocations = persistentListOf(),
                 locationPermission = Permission.Unknown,
                 transportType = TransportType.LUAS,
-                dialogState = MapDialogState.None,
+                dialogState = MapDialogState.None
             )
         }
     }

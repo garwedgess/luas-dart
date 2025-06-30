@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase,
-    private val updateSelectedTransportTypeUseCase: UpdateSelectedTransportTypeUseCase,
+    private val updateSelectedTransportTypeUseCase: UpdateSelectedTransportTypeUseCase
 ) : ViewModel() {
 
     private val initialState = MainContract.UiState()

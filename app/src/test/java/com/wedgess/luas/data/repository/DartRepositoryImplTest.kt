@@ -53,7 +53,7 @@ class DartRepositoryImplTest {
         repository = DartRepositoryImpl(
             stationsApi = stationsApi,
             forecastApi = forecastApi,
-            stationsDao = stationsDao,
+            stationsDao = stationsDao
         )
     }
 
@@ -71,7 +71,7 @@ class DartRepositoryImplTest {
                 Code = "S1",
                 Alias = "S1",
                 Latitude = 53.0,
-                Longitude = -6.0,
+                Longitude = -6.0
             ),
             DartStation(
                 Id = 2,
@@ -79,8 +79,8 @@ class DartRepositoryImplTest {
                 Code = "S2",
                 Alias = "S2",
                 Latitude = 54.0,
-                Longitude = -5.0,
-            ),
+                Longitude = -5.0
+            )
         )
         val expectedStops = dbStops.map { it.toEntity() }
         every { stationsDao.fetchAll() } returns flowOf(dbStops)
@@ -104,7 +104,7 @@ class DartRepositoryImplTest {
                     stationCode = "S1",
                     stationAlias = "S1",
                     stationLatitude = 53.0,
-                    stationLongitude = -6.0,
+                    stationLongitude = -6.0
                 ),
                 DartStationsResponseData.DartStationData(
                     stationId = 2,
@@ -112,9 +112,9 @@ class DartRepositoryImplTest {
                     stationCode = "S2",
                     stationAlias = "S2",
                     stationLatitude = 54.0,
-                    stationLongitude = -5.0,
-                ),
-            ),
+                    stationLongitude = -5.0
+                )
+            )
         )
         every { stationsDao.fetchAll() } returns flowOf(emptyList)
         coEvery { stationsApi.fetchStations() } returns Result.success(lineResponse)
@@ -155,7 +155,7 @@ class DartRepositoryImplTest {
                 Code = "S1",
                 Alias = "S1",
                 Latitude = 53.0,
-                Longitude = -6.0,
+                Longitude = -6.0
             ),
             DartStation(
                 Id = 2,
@@ -163,8 +163,8 @@ class DartRepositoryImplTest {
                 Code = "S2",
                 Alias = "S2",
                 Latitude = 54.0,
-                Longitude = -5.0,
-            ),
+                Longitude = -5.0
+            )
         )
         val expectedStops = dbStops.map { it.toEntity() }
 
@@ -203,7 +203,7 @@ class DartRepositoryImplTest {
                     schDepart = "21:50",
                     direction = DartDirectionData.NORTHBOUND,
                     trainType = "DART",
-                    locationType = DartLocationTypeData.ORIGIN,
+                    locationType = DartLocationTypeData.ORIGIN
                 ),
                 DartStationForecastData(
                     serverTime = "2025-06-26T21:35:15.323",
@@ -226,9 +226,9 @@ class DartRepositoryImplTest {
                     schDepart = "22:20",
                     direction = DartDirectionData.NORTHBOUND,
                     trainType = "DART",
-                    locationType = DartLocationTypeData.ORIGIN,
-                ),
-            ),
+                    locationType = DartLocationTypeData.ORIGIN
+                )
+            )
         )
         val expectedForecast = forecastResponse.toEntity()
         coEvery { forecastApi.fetchForecast(stopAbv) } returns Result.success(forecastResponse)

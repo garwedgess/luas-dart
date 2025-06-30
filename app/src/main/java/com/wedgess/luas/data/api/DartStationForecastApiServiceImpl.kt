@@ -13,7 +13,7 @@ class DartStationForecastApiServiceImpl @Inject constructor(val client: HttpClie
 
     override suspend fun fetchForecast(
         stationCode: String,
-        numMinutes: Int,
+        numMinutes: Int
     ): DartApiResult<DartStationForecastResponseData> {
         return client.requestResult {
             url {

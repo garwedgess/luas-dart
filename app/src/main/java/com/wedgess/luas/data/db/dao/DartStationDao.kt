@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 class DartStationDao @Inject constructor(
     db: LuasDatabase,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     private val queries = db.dartStationQueries
@@ -22,7 +22,7 @@ class DartStationDao @Inject constructor(
             Code = this.Code,
             Alias = this.Alias,
             Latitude = this.Latitude,
-            Longitude = this.Longitude,
+            Longitude = this.Longitude
         )
     }
 

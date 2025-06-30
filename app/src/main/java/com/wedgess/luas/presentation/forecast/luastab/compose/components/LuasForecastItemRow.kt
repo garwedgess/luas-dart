@@ -25,28 +25,28 @@ fun LuasForecastItemRow(
     dueIn: Int,
     destination: String,
     modifier: Modifier = Modifier,
-    onRowClick: (Int, String) -> Unit,
+    onRowClick: (Int, String) -> Unit
 ) {
     val animatedValue by animateIntAsState(
         targetValue = dueIn,
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-        label = "Animated Number",
+        label = "Animated Number"
     )
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onRowClick(dueIn, destination) }
             .padding(vertical = 4.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             modifier = Modifier.weight(0.6f),
             text = destination,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
         )
         AnimatedVisibility(
             modifier = Modifier.weight(0.4f),
-            visible = animatedValue != -1,
+            visible = animatedValue != -1
         ) {
             Text(
                 text = if (animatedValue == 0) {
@@ -54,7 +54,7 @@ fun LuasForecastItemRow(
                 } else {
                     pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
                 },
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge
             )
         }
     }

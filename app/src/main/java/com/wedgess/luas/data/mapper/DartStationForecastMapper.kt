@@ -29,7 +29,7 @@ fun DartStationForecastResponseData.toEntity() = this.stationData.map {
         schDepart = it.schDepart,
         direction = it.direction.toEntity(),
         trainType = it.trainType,
-        locationType = it.locationType.toEntity(),
+        locationType = it.locationType.toEntity()
     )
 }
 

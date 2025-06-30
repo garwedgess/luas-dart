@@ -8,13 +8,13 @@ sealed interface LocationEntity {
     data class Dart(
         override val name: String,
         override val latitude: Double,
-        override val longitude: Double,
+        override val longitude: Double
     ) : LocationEntity
 
     data class Luas(
         override val name: String,
         override val latitude: Double,
         override val longitude: Double,
-        val line: LuasLineEntity,
+        val line: LuasLineEntity
     ) : LocationEntity
 }

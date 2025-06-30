@@ -19,23 +19,23 @@ import kotlin.math.abs
 @Composable
 fun LateWarningBadge(
     lateMinutes: Int,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .background(
                 color = if (lateMinutes >= 0) Color(0xFFE53E3E) else Color(0xFF1AC1C1),
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(4.dp)
             ),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = "${abs(lateMinutes)}",
             color = Color.White,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-            ),
+                fontWeight = FontWeight.Bold
+            )
         )
     }
 }

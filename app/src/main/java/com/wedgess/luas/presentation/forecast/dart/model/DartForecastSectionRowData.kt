@@ -11,5 +11,5 @@ data class DartForecastSectionRowData(
     val late: Int,
     val expectedAt: String,
     val scheduledAt: String,
-    val direction: DartDirectionEntity,
+    val direction: DartDirectionEntity
 )

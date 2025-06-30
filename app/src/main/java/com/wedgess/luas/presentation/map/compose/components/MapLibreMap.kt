@@ -70,7 +70,7 @@ fun LuasMapLibreMap(
     redLineLocations: ImmutableList<LocationEntity.Luas>,
     greenLineLocations: ImmutableList<LocationEntity.Luas>,
     locationPermissionGranted: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
@@ -93,7 +93,7 @@ fun LuasMapLibreMap(
                     map.style?.let { style ->
                         map.locationComponentSetup(style, context)
                     }
-                },
+                }
             )
         }
     }
@@ -112,14 +112,14 @@ fun LuasMapLibreMap(
                             "red",
                             redLineLocations,
                             "#E53935",
-                            context,
+                            context
                         )
                         style.addLinesMarkersAndLabels(
                             map,
                             "green",
                             greenLineLocations,
                             "#66BF63",
-                            context,
+                            context
                         )
                         map.uiSetup()
                     }
@@ -133,7 +133,7 @@ fun LuasMapLibreMap(
                     updateSources(style, "green", greenLineLocations)
                 }
             }
-        },
+        }
     )
 }
 
@@ -143,7 +143,7 @@ fun DartMapLibreMap(
     currentLocation: UserLocation,
     dartStationLocations: ImmutableList<LocationEntity.Dart>,
     locationPermissionGranted: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
@@ -166,7 +166,7 @@ fun DartMapLibreMap(
                     map.style?.let { style ->
                         map.locationComponentSetup(style, context)
                     }
-                },
+                }
             )
         }
     }
@@ -185,7 +185,7 @@ fun DartMapLibreMap(
                             "green",
                             dartStationLocations,
                             "#66BF63",
-                            context,
+                            context
                         )
                         map.uiSetup()
                     }
@@ -198,7 +198,7 @@ fun DartMapLibreMap(
                     updateSources(style, "green", dartStationLocations)
                 }
             }
-        },
+        }
     )
 }
 
@@ -212,12 +212,12 @@ private fun updateSources(style: Style, line: String, stops: List<LocationEntity
                         stops.map {
                             Point.fromLngLat(
                                 it.longitude,
-                                it.latitude,
+                                it.latitude
                             )
-                        },
-                    ),
-                ),
-            ),
+                        }
+                    )
+                )
+            )
         )
         lineSource.setGeoJson(updatedFeatures)
     }
@@ -229,12 +229,12 @@ private fun updateSources(style: Style, line: String, stops: List<LocationEntity
                     Feature.fromGeometry(
                         Point.fromLngLat(
                             it.longitude,
-                            it.latitude,
-                        ),
+                            it.latitude
+                        )
                     ).apply {
                         addStringProperty("name", it.name)
                     }
-                },
+                }
             )
         markerSource.setGeoJson(updatedMarkerFeatures)
     }
@@ -246,8 +246,8 @@ private fun MapView.setupMap(currentLocation: UserLocation, optionalExtra: ((Map
             .target(
                 LatLng(
                     currentLocation.latitude,
-                    currentLocation.longitude,
-                ),
+                    currentLocation.longitude
+                )
             )
             .zoom(DEFAULT_LOCATION_ZOOM)
             .build()
@@ -263,8 +263,8 @@ private fun MapView.setupMapWithDefaultLocation() {
             .target(
                 LatLng(
                     DUBLIN_LATITUDE,
-                    DUBLIN_LONGITUDE,
-                ),
+                    DUBLIN_LONGITUDE
+                )
             )
             .zoom(DEFAULT_LOCATION_ZOOM) // Zoom out a bit to show more of the city
             .build()
@@ -281,7 +281,7 @@ private fun MapboxMap.setupStyle(onSetup: (Style) -> Unit) {
     this.setStyle(
         Style.Builder()
             .withSource(rasterSource)
-            .withLayer(rasterLayer),
+            .withLayer(rasterLayer)
     ) { style ->
         onSetup(style)
     }
@@ -292,7 +292,7 @@ private fun Style.addLinesMarkersAndLabels(
     line: String,
     stops: List<LocationEntity>,
     color: String,
-    context: Context,
+    context: Context
 ) {
     addLine(line, stops, color)
     addMarker(line, stops, color)
@@ -303,7 +303,7 @@ private fun Style.addLineLayer(line: String, color: String) {
     val redLineLayer = LineLayer("$line-line-layer", "$line-line-source")
         .withProperties(
             lineColor(color),
-            lineWidth(5f),
+            lineWidth(5f)
         )
     addLayer(redLineLayer)
 }
@@ -315,11 +315,11 @@ private fun Style.addLineSource(line: String, stops: List<LocationEntity>) {
             listOf(
                 Feature.fromGeometry(
                     LineString.fromLngLats(
-                        stops.map { Point.fromLngLat(it.longitude, it.latitude) },
-                    ),
-                ),
-            ),
-        ),
+                        stops.map { Point.fromLngLat(it.longitude, it.latitude) }
+                    )
+                )
+            )
+        )
     )
     addSource(lineSource)
 }
@@ -342,13 +342,13 @@ private fun Style.addMarkersSource(line: String, stops: List<LocationEntity>) {
                 Feature.fromGeometry(
                     Point.fromLngLat(
                         it.longitude,
-                        it.latitude,
-                    ),
+                        it.latitude
+                    )
                 ).apply {
                     addStringProperty("name", it.name)
                 }
-            },
-        ),
+            }
+        )
     )
     addSource(markersSource)
 }
@@ -360,7 +360,7 @@ private fun Style.addMarkerLayer(line: String, color: String) {
             circleColor(color),
             circleStrokeWidth(2f),
             circleStrokeColor("#ffffff"),
-            circleOpacity(1f),
+            circleOpacity(1f)
         )
     addLayer(circleLayer)
 }
@@ -372,9 +372,9 @@ private fun Style.addLabelSource(line: String, stop: LocationEntity) {
             listOf(
                 Feature.fromGeometry(Point.fromLngLat(stop.longitude, stop.latitude)).apply {
                     addStringProperty("name", stop.name)
-                },
-            ),
-        ),
+                }
+            )
+        )
     )
     addSource(labelSource)
 }
@@ -383,7 +383,7 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
     // Use a SymbolLayer to render the markers
     val labelLayer = SymbolLayer(
         "$line-icon-layer-$stopName",
-        "$line-markers-source-$stopName",
+        "$line-markers-source-$stopName"
     ).apply {
         withProperties(
             iconImage("$line-marker-icon-$stopName"),
@@ -392,11 +392,11 @@ private fun Style.addLabelLayer(line: String, stopName: String) {
                     Expression.exponential(1f),
                     Expression.zoom(),
                     Expression.stop(10, 0.5f),
-                    Expression.stop(16, 1.5f),
-                ),
+                    Expression.stop(16, 1.5f)
+                )
             ),
             iconAllowOverlap(true),
-            PropertyFactory.iconOffset(arrayOf(0f, -3.5f)),
+            PropertyFactory.iconOffset(arrayOf(0f, -3.5f))
         )
     }
     addLayerAbove(labelLayer, "$line-circle-layer")
@@ -406,7 +406,7 @@ private fun Style.addLabels(
     map: MapboxMap,
     line: String,
     stops: List<LocationEntity>,
-    context: Context,
+    context: Context
 ) {
     stops.forEach { location ->
         val customMarkerBitmap = createTooltipBitmap(context, location.name)
@@ -429,11 +429,11 @@ private fun MapboxMap.addCameraListener(style: Style, line: String, stopName: St
             if (zoomLevel >= (zoomThreshold - 2)) "visible" else "none"
 
         style.getLayer("$line-icon-layer-$stopName")?.setProperties(
-            PropertyFactory.visibility(labelVisibility),
+            PropertyFactory.visibility(labelVisibility)
         )
 
         style.getLayer("$line-circle-layer")?.setProperties(
-            PropertyFactory.visibility(markerVisibility),
+            PropertyFactory.visibility(markerVisibility)
         )
     }
 }
@@ -466,7 +466,7 @@ private fun MapboxMap.uiSetup() {
 
 private fun createTooltipBitmap(
     context: Context,
-    text: String,
+    text: String
 ): Bitmap {
     val density = context.resources.displayMetrics.density
 
@@ -482,7 +482,7 @@ private fun createTooltipBitmap(
         textSize = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_SP,
             textSizeSp,
-            context.resources.displayMetrics,
+            context.resources.displayMetrics
         )
         typeface = Typeface.DEFAULT_BOLD
     }

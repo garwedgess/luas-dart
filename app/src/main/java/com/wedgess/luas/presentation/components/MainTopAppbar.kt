@@ -16,7 +16,7 @@ import com.wedgess.luas.presentation.main.model.TopAppBarState
 fun MainTopAppbar(
     topAppBarState: TopAppBarState,
     modifier: Modifier = Modifier,
-    onTransportTypeChange: (TransportType) -> Unit,
+    onTransportTypeChange: (TransportType) -> Unit
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
@@ -27,11 +27,11 @@ fun MainTopAppbar(
             // Add your custom actions first
             TransportTypeDropdown(
                 selectedTransportType = topAppBarState.transportType,
-                onTransportTypeChange = onTransportTypeChange,
+                onTransportTypeChange = onTransportTypeChange
             )
 
             // Then add the existing actions if they exist
             topAppBarState.actions?.invoke(this)
-        },
+        }
     )
 }

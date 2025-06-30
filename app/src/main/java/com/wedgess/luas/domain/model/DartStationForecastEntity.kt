@@ -21,5 +21,5 @@ data class DartStationForecastEntity(
     val schDepart: String,
     val direction: DartDirectionEntity,
     val trainType: String,
-    val locationType: DartLocationTypeEntity,
+    val locationType: DartLocationTypeEntity
 )

@@ -9,11 +9,11 @@ interface DartForecastTabContract {
 
     data class UiState(
         val sectionedListState: SectionedListState<DartForecastSectionRowData> = SectionedListState(
-            sections = persistentListOf(),
+            sections = persistentListOf()
         ),
         val stations: List<DartStationEntity> = emptyList(),
         val selectedStation: DartStationEntity = DartStationEntity.initial(),
-        val refreshProgress: Float = 0f,
+        val refreshProgress: Float = 0f
     )
 
     sealed interface Event {

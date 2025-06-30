@@ -14,7 +14,7 @@ fun LuasStopEntity.toDao() = LuasStop(
     IsCycleRide = this.isCycleAndRide,
     Latitude = this.latitude,
     Longitude = this.longitude,
-    Line = this.line.fromEntity(),
+    Line = this.line.fromEntity()
 )
 
 fun LuasStop.toEntity() = LuasStopEntity(
@@ -25,7 +25,7 @@ fun LuasStop.toEntity() = LuasStopEntity(
     isCycleAndRide = this.IsCycleRide,
     latitude = this.Latitude,
     longitude = this.Longitude,
-    line = this.Line.toEntity(),
+    line = this.Line.toEntity()
 )
 
 fun LuasStopsResponseData.toDao() = this.line.flatMap { line ->
@@ -38,7 +38,7 @@ fun LuasStopsResponseData.toDao() = this.line.flatMap { line ->
             IsCycleRide = stop.isCycleRide == 1,
             Latitude = stop.lat,
             Longitude = stop.long,
-            Line = line.name,
+            Line = line.name
         )
     }
 }
@@ -47,5 +47,5 @@ fun LuasStop.toLocationEntity() = LocationEntity.Luas(
     name = this.Name,
     latitude = this.Latitude,
     longitude = this.Longitude,
-    line = this.Line.toEntity(),
+    line = this.Line.toEntity()
 )

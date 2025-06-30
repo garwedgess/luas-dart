@@ -47,8 +47,8 @@ fun NavGraphBuilder.forecastRoot(
                 TopAppBarState(
                     title = context.getString(R.string.nav_title_forecast),
                     actions = { ForecastAppBarActions(onRefresh = refreshAction) },
-                    hasProgress = true,
-                ),
+                    hasProgress = true
+                )
             )
         }
         LaunchedEffect(permissionState.status) {

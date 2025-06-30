@@ -39,14 +39,14 @@ class DartForecastViewModel @Inject constructor(
     fetchAllDartStationsUseCase: FetchAllDartStationsUseCase,
     private val fetchDartStationForecastUseCase: FetchDartStationForecastUseCase,
     private val updateSelectedDartStationsUseCase: UpdateSelectedDartStationUseCase,
-    fetchSelectedDartStationsUseCase: FetchSelectedDartStationUseCase,
+    fetchSelectedDartStationsUseCase: FetchSelectedDartStationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DartForecastTabContract.UiState())
     private val _expandedSections = MutableStateFlow(persistentMapOf<Long, Boolean>())
 
     private val stopsAndStationFlow = fetchAllDartStationsUseCase().combine(
-        fetchSelectedDartStationsUseCase(),
+        fetchSelectedDartStationsUseCase()
     ) { stopsResult, currentSelectedStop ->
         stopsResult.mapCatching { stations ->
             val selectedStation = if (currentSelectedStop.isBlank()) {
@@ -66,7 +66,7 @@ class DartForecastViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             stations = stops,
-                            selectedStation = selectedStop,
+                            selectedStation = selectedStop
                         )
                     }
 
@@ -78,7 +78,7 @@ class DartForecastViewModel @Inject constructor(
                                 when (forecastRefreshResult) {
                                     is RefreshState.Error -> UiResult.Error(
                                         forecastRefreshResult.exception.message
-                                            ?: "Failed to fetch forecast",
+                                            ?: "Failed to fetch forecast"
                                     )
 
                                     is RefreshState.Success -> {
@@ -86,8 +86,8 @@ class DartForecastViewModel @Inject constructor(
                                             currentState.copy(
                                                 refreshProgress = forecastRefreshResult.progress,
                                                 sectionedListState = forecastRefreshResult.data.toSectionListState(
-                                                    expandedSections,
-                                                ),
+                                                    expandedSections
+                                                )
                                             )
                                         }
 
@@ -99,13 +99,13 @@ class DartForecastViewModel @Inject constructor(
                 },
                 onFailure = { throwable ->
                     flowOf(UiResult.Error(throwable.message ?: "Failed to fetch stations"))
-                },
+                }
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
 
     private fun List<DartStationForecastEntity>.toSectionListState(
-        expandedSections: PersistentMap<Long, Boolean>,
+        expandedSections: PersistentMap<Long, Boolean>
     ): SectionedListState<DartForecastSectionRowData> {
         // Group existing forecasts by direction
         val forecastsByDirection = this.groupBy { it.direction }
@@ -144,17 +144,17 @@ class DartForecastViewModel @Inject constructor(
                                     DartLocationTypeEntity.DESTINATION,
                                     DartLocationTypeEntity.STOP -> forecast.expArrival
                                 },
-                                direction = forecast.direction,
-                            ),
+                                direction = forecast.direction
+                            )
                         )
-                    }.toImmutableList(),
+                    }.toImmutableList()
                 )
             }
             .toImmutableList()
 
         return SectionedListState(
             sections = sections,
-            expandedSections = expandedSections,
+            expandedSections = expandedSections
         )
     }
 

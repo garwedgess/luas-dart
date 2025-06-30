@@ -37,7 +37,7 @@ class FetchAllDartStationsUseCaseTest {
                 code = "STA",
                 alias = "STA",
                 latitude = 53.33963,
-                longitude = -6.26070,
+                longitude = -6.26070
             ),
             DartStationEntity(
                 id = 1,
@@ -45,8 +45,8 @@ class FetchAllDartStationsUseCaseTest {
                 code = "HAR",
                 alias = "HAR",
                 latitude = 53.33334,
-                longitude = -6.26302,
-            ),
+                longitude = -6.26302
+            )
         )
         val successResult = Result.success(mockStations)
         every { dartRepository.fetchStations() } returns flowOf(successResult)

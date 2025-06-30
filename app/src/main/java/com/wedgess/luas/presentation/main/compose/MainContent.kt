@@ -21,7 +21,7 @@ import com.wedgess.luas.ui.theme.LuasTheme
 @Composable
 fun MainContent(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val navHostController = rememberNavController()
     val backStackEntry = navHostController.currentBackStackEntryAsState()
@@ -35,7 +35,7 @@ fun MainContent(
                     topAppBarState = uiState.appBarState,
                     onTransportTypeChange = {
                         viewModel.onEvent(MainContract.Event.OnTransportTypeChange(it))
-                    },
+                    }
                 )
             },
             bottomBar = {
@@ -46,10 +46,10 @@ fun MainContent(
                             if (route != backStackEntry.value?.destination) {
                                 navHostController.navigate(route)
                             }
-                        },
+                        }
                     )
                 }
-            },
+            }
         ) { innerPadding ->
             MainNavigationGraph(
                 navController = navHostController,
@@ -58,7 +58,7 @@ fun MainContent(
                     .fillMaxSize(),
                 onUpdateAppbarState = {
                     viewModel.onEvent(MainContract.Event.OnUpdateAppBarState(it))
-                },
+                }
             )
         }
     }

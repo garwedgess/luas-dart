@@ -6,7 +6,7 @@ data class DartStationEntity(
     val code: String,
     val alias: String? = null,
     val latitude: Double,
-    val longitude: Double,
+    val longitude: Double
 ) {
     companion object {
         fun initial(id: Long = 0L) = DartStationEntity(
@@ -15,7 +15,7 @@ data class DartStationEntity(
             code = "",
             alias = null,
             latitude = 0.0,
-            longitude = 0.0,
+            longitude = 0.0
         )
     }
 }

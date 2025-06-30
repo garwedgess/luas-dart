@@ -35,20 +35,20 @@ class DartStationDaoTest {
         driver = AndroidSqliteDriver(
             LuasDatabase.Schema,
             context,
-            null,
+            null
         )
         database = LuasDatabase(
             driver = driver,
             DartStationAdapter = DartStation.Adapter(
                 LatitudeAdapter = doubleAdapter,
-                LongitudeAdapter = doubleAdapter,
+                LongitudeAdapter = doubleAdapter
             ),
             LuasStopAdapter = LuasStop.Adapter(
                 IdAdapter = uuidAdapter,
                 LineAdapter = luasLineAdapter,
                 LatitudeAdapter = doubleAdapter,
-                LongitudeAdapter = doubleAdapter,
-            ),
+                LongitudeAdapter = doubleAdapter
+            )
         )
         dao = DartStationDao(database)
     }

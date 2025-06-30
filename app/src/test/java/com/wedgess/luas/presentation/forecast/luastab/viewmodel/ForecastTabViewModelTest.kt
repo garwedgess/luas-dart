@@ -89,7 +89,7 @@ class ForecastTabViewModelTest {
             longitude = -6.26070,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
+            isCycleAndRide = false
         ),
         LuasStopEntity(
             id = UUID.randomUUID(),
@@ -99,8 +99,8 @@ class ForecastTabViewModelTest {
             longitude = -6.26302,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
-        ),
+            isCycleAndRide = false
+        )
     )
 
     private val mockForecast = LuasForecastEntity(
@@ -109,11 +109,12 @@ class ForecastTabViewModelTest {
         createdAt = "2025-03-02T21:48:50",
         inboundTrams = emptyList(),
         outboundTrams = emptyList(),
-        stopAbv = "STS",
+        stopAbv = "STS"
     )
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
-    private val forecastFlow = MutableStateFlow<RefreshState<LuasForecastEntity>>(RefreshState.Success(mockForecast, 0f))
+    private val forecastFlow =
+        MutableStateFlow<RefreshState<LuasForecastEntity>>(RefreshState.Success(mockForecast, 0f))
     private val selectedStationFlow = MutableStateFlow("")
     private val isAlarmRunningFlow = MutableStateFlow(false)
 
@@ -141,7 +142,7 @@ class ForecastTabViewModelTest {
             scheduleAlarmUseCase = scheduleAlarmUseCase,
             isAlarmRunningUseCase = isAlarmRunningUseCase,
             fetchSelectedLuasStopUseCase = fetchSelectedLuasStopUseCase,
-            requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase,
+            requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase
         )
     }
 
@@ -294,8 +295,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         // When
@@ -342,8 +343,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         viewModel.uiResult.test {
@@ -365,7 +366,7 @@ class ForecastTabViewModelTest {
             longitude = 0.0,
             line = LuasLineEntity.GREEN,
             isParkAndRide = false,
-            isCycleAndRide = false,
+            isCycleAndRide = false
         )
 
         // When
@@ -386,8 +387,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
         viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 5))
 
@@ -429,8 +430,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = dueInMins,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         // Then
@@ -444,8 +445,8 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(
             LuasForecastTabContract.Event.OnShowNotificationsDialog(
                 dueInMins = -5,
-                destination = destination,
-            ),
+                destination = destination
+            )
         )
 
         // Then

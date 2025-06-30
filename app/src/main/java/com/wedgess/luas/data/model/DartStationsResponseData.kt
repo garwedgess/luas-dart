@@ -8,7 +8,7 @@ import nl.adaptivity.xmlutil.serialization.XmlSerialName
 @XmlSerialName("ArrayOfObjStation", namespace = "http://api.irishrail.ie/realtime/", prefix = "")
 data class DartStationsResponseData(
     @XmlElement(true)
-    val stations: List<DartStationData>,
+    val stations: List<DartStationData>
 ) {
     @Serializable
     @XmlSerialName("objStation")
@@ -35,6 +35,6 @@ data class DartStationsResponseData(
 
         @XmlElement(true)
         @XmlSerialName("StationId")
-        val stationId: Int,
+        val stationId: Int
     )
 }

@@ -18,12 +18,12 @@ fun <T> SectionedList(
     onSectionToggle: (sectionId: Long) -> Unit,
     modifier: Modifier = Modifier,
     sectionHeader: @Composable (LazyItemScope.() -> Unit)? = null,
-    itemContent: @Composable (item: T) -> Unit,
+    itemContent: @Composable (item: T) -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
         state = rememberLazyListState(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         state.sections.forEachIndexed { index, section ->
             val isExpanded = state.expandedSections[section.id] ?: true
@@ -39,7 +39,7 @@ fun <T> SectionedList(
                 sectionHeader = sectionHeader,
                 isExpanded = isExpanded,
                 onToggle = { onSectionToggle(section.id) },
-                itemContent = itemContent,
+                itemContent = itemContent
             )
         }
     }

@@ -17,7 +17,7 @@ object DartStationsApiServiceFake {
             respond(
                 content = stops,
                 status = HttpStatusCode.OK,
-                headers = headersOf("Content-Type", "text/xml"),
+                headers = headersOf("Content-Type", "text/xml")
             )
         }
         return HttpClient(mockEngine) {
@@ -30,7 +30,7 @@ object DartStationsApiServiceFake {
             respond(
                 content = "",
                 status = HttpStatusCode.InternalServerError,
-                headers = headersOf("Content-Type", "text/xml"),
+                headers = headersOf("Content-Type", "text/xml")
             )
         }
         return HttpClient(mockEngine) {

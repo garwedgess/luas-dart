@@ -1,9 +1,9 @@
 package com.wedgess.luas.domain.repository
 
+import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.domain.model.LocationEntity
 import kotlinx.coroutines.flow.Flow
 
 interface LuasRepository {

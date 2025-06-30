@@ -18,7 +18,7 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun LuasForecastContent(
     setRefreshAction: (() -> Unit) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val luasForecastTabs = remember { LuasForecastTab.all() }
     var currentTab by remember { mutableStateOf(luasForecastTabs.first()) }
@@ -30,12 +30,12 @@ fun LuasForecastContent(
             modifier = modifier,
             tabItems = luasForecastTabs,
             indicatorColors = persistentListOf(Color(0xFF66BF63), Color(0xFFE53935)),
-            onTabIndexChange = { index -> currentTab = luasForecastTabs[index] },
+            onTabIndexChange = { index -> currentTab = luasForecastTabs[index] }
         ) { tab ->
             LuasForecastTabContent(
                 line = tab.line,
-                onRefreshAction = { action ->  setRefreshAction(action) },
-                onProgressChange = { progress -> if (tab == currentTab) refreshProgress = progress  },
+                onRefreshAction = { action -> setRefreshAction(action) },
+                onProgressChange = { progress -> if (tab == currentTab) refreshProgress = progress }
             )
         }
     }

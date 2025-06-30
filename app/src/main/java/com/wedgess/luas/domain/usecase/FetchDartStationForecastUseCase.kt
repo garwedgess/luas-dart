@@ -29,8 +29,8 @@ class FetchDartStationForecastUseCase @Inject constructor(private val dartReposi
                                 emit(
                                     RefreshState.Success(
                                         data = forecast,
-                                        progress = percentageBeforeRefresh,
-                                    ),
+                                        progress = percentageBeforeRefresh
+                                    )
                                 )
                                 delay(interval)
                             }
@@ -38,8 +38,8 @@ class FetchDartStationForecastUseCase @Inject constructor(private val dartReposi
                         }.onFailure {
                             emit(
                                 RefreshState.Error(
-                                    result.exceptionOrNull() ?: Exception("Unknown error"),
-                                ),
+                                    result.exceptionOrNull() ?: Exception("Unknown error")
+                                )
                             )
                         }
                     }

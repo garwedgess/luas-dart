@@ -6,5 +6,5 @@ class Section<T>(
     val id: Long,
     val title: String,
     val subTitle: String? = null,
-    val items: ImmutableList<SectionItem<T>>,
+    val items: ImmutableList<SectionItem<T>>
 )

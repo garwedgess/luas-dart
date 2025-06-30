@@ -35,7 +35,7 @@ class ForecastViewModel @Inject constructor(
     private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase,
     private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase,
     private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
-    fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase,
+    fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase
 ) : ViewModel(),
     SideEffectViewModel<ForecastContract.Effect> by SideEffectViewModelImpl() {
 
@@ -114,7 +114,7 @@ class ForecastViewModel @Inject constructor(
             Timber.d(
                 "Notification, wasNotificationPermissionRequested: $wasNotificationPermissionRequested, " +
                     "ignoreNotificationPermission: $ignoreNotificationPermission, " +
-                    "permission: $permission",
+                    "permission: $permission"
             )
             _uiState.update {
                 it.copy(
@@ -138,7 +138,7 @@ class ForecastViewModel @Inject constructor(
                         }
 
                         else -> it.dialog
-                    },
+                    }
                 )
             }
         }

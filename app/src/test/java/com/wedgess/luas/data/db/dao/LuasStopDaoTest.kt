@@ -37,20 +37,20 @@ class LuasStopDaoTest {
         driver = AndroidSqliteDriver(
             LuasDatabase.Schema,
             context,
-            null,
+            null
         )
         database = LuasDatabase(
             driver = driver,
             DartStationAdapter = DartStation.Adapter(
                 LatitudeAdapter = doubleAdapter,
-                LongitudeAdapter = doubleAdapter,
+                LongitudeAdapter = doubleAdapter
             ),
             LuasStopAdapter = LuasStop.Adapter(
                 IdAdapter = uuidAdapter,
                 LineAdapter = luasLineAdapter,
                 LatitudeAdapter = doubleAdapter,
-                LongitudeAdapter = doubleAdapter,
-            ),
+                LongitudeAdapter = doubleAdapter
+            )
         )
         dao = LuasStopDao(database)
     }
@@ -74,7 +74,7 @@ class LuasStopDaoTest {
     fun `fetchByLine - fetches correct stops by line`() = runTest {
         val stops = listOf(
             LuasStopEntity.initial().copy(line = LuasLineEntity.GREEN).toDao(),
-            LuasStopEntity.initial().copy(line = LuasLineEntity.RED).toDao(),
+            LuasStopEntity.initial().copy(line = LuasLineEntity.RED).toDao()
         )
 
         dao.insert(stops)

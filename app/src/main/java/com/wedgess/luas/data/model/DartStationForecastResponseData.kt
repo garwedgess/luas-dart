@@ -15,7 +15,7 @@ import timber.log.Timber
 @XmlSerialName("ArrayOfObjStationData", "http://api.irishrail.ie/realtime/", "")
 data class DartStationForecastResponseData(
     @XmlElement(true)
-    val stationData: List<DartStationForecastData>,
+    val stationData: List<DartStationForecastData>
 ) {
 
     @Serializable
@@ -105,7 +105,7 @@ data class DartStationForecastResponseData(
         @Serializable(with = LocationTypeSerializer::class)
         @XmlElement(true)
         @XmlSerialName("Locationtype")
-        val locationType: DartLocationTypeData,
+        val locationType: DartLocationTypeData
     )
 
     private object DirectionSerializer : KSerializer<DartDirectionData> {

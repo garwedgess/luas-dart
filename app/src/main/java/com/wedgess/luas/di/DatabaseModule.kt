@@ -34,14 +34,14 @@ object DatabaseModule {
         driver,
         DartStationAdapter = DartStation.Adapter(
             LatitudeAdapter = doubleAdapter,
-            LongitudeAdapter = doubleAdapter,
+            LongitudeAdapter = doubleAdapter
         ),
         LuasStopAdapter = LuasStop.Adapter(
             IdAdapter = uuidAdapter,
             LineAdapter = luasLineAdapter,
             LatitudeAdapter = doubleAdapter,
-            LongitudeAdapter = doubleAdapter,
-        ),
+            LongitudeAdapter = doubleAdapter
+        )
     )
 
     @Singleton

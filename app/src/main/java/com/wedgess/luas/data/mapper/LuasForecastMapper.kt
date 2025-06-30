@@ -21,7 +21,7 @@ fun LuasStopForcastResponseData.toEntity() = LuasForecastEntity(
         .flatMap { data -> data.tram.map { tram -> tram.toEntity() } }
         .filterNot { tram ->
             tram.destination == NO_TRAMS_MSG || tram.destination == NO_TRAMS_NEWS_MSG
-        },
+        }
 )
 
 fun LuasStopForcastResponseData.DirectionData.TramData.toEntity() = LuasForecastEntity.TramEntity(
@@ -30,5 +30,5 @@ fun LuasStopForcastResponseData.DirectionData.TramData.toEntity() = LuasForecast
     } else {
         this.dueMins.toIntOrNull() ?: 0
     },
-    destination = this.destination,
+    destination = this.destination
 )

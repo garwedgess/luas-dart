@@ -53,17 +53,17 @@ fun DartForecastContent(
                     uiState = uiState,
                     onStopSelect = { stop ->
                         dartForecastViewModel.onEvent(
-                            DartForecastTabContract.Event.OnStationSelected(stop),
+                            DartForecastTabContract.Event.OnStationSelected(stop)
                         )
                     },
                     onSectionToggle = { sectionId ->
                         dartForecastViewModel.onEvent(
-                            DartForecastTabContract.Event.OnToggleSection(sectionId),
+                            DartForecastTabContract.Event.OnToggleSection(sectionId)
                         )
-                    },
+                    }
                 )
             }
-        },
+        }
     )
 }
 
@@ -73,7 +73,7 @@ fun DartForecastContent(
 fun DartListContent(
     uiState: DartForecastTabContract.UiState,
     onSectionToggle: (Long) -> Unit,
-    onStopSelect: (DartStationEntity) -> Unit,
+    onStopSelect: (DartStationEntity) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -85,20 +85,20 @@ fun DartListContent(
             valueFormatter = { item -> item.name },
             options = uiState.stations.toImmutableList(),
             selectedValue = uiState.selectedStation,
-            onValueChange = onStopSelect,
+            onValueChange = onStopSelect
         )
         SectionedList(
             modifier = Modifier.fillMaxSize(),
             sectionHeader = { DartForecastHeader() },
             state = uiState.sectionedListState,
-            onSectionToggle = onSectionToggle,
+            onSectionToggle = onSectionToggle
         ) { rowData ->
             DartForecastItemRow(
                 destination = rowData.destination,
                 eta = rowData.expectedAt,
                 dueIn = rowData.dueIn,
                 scheduledTime = rowData.scheduledAt,
-                late = rowData.late,
+                late = rowData.late
             )
         }
     }

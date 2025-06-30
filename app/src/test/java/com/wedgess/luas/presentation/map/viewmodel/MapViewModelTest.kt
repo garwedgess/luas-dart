@@ -85,14 +85,14 @@ class MapViewModelTest {
             name = "St. Stephens Green",
             latitude = 53.33963,
             longitude = -6.26070,
-            line = LuasLineEntity.GREEN,
+            line = LuasLineEntity.GREEN
         ),
         LocationEntity.Luas(
             name = "Harcourt",
             latitude = 53.33334,
             longitude = -6.26302,
-            line = LuasLineEntity.GREEN,
-        ),
+            line = LuasLineEntity.GREEN
+        )
     )
 
     private val mockRedLineStops = listOf(
@@ -100,14 +100,14 @@ class MapViewModelTest {
             name = "Abbey Street",
             latitude = 53.34835,
             longitude = -6.25786,
-            line = LuasLineEntity.RED,
+            line = LuasLineEntity.RED
         ),
         LocationEntity.Luas(
             name = "Jervis",
             latitude = 53.34743,
             longitude = -6.26690,
-            line = LuasLineEntity.RED,
-        ),
+            line = LuasLineEntity.RED
+        )
     )
 
     private val mockUserLocation = UserLocation(53.33963, -6.26070)
@@ -138,7 +138,7 @@ class MapViewModelTest {
             isLocationPermissionIgnoredUseCase,
             wasLocationPermissionRequestedUseCase,
             updateLocationPermissionRequestedUseCase,
-            updateIgnoreLocationPermissionUseCase,
+            updateIgnoreLocationPermissionUseCase
         )
     }
 
@@ -234,8 +234,8 @@ class MapViewModelTest {
                 name = "New Stop",
                 latitude = 53.35,
                 longitude = -6.27,
-                line = LuasLineEntity.GREEN,
-            ),
+                line = LuasLineEntity.GREEN
+            )
         )
 
         stopsFlow.value = Result.success(newStops)
@@ -314,7 +314,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns true
                         every { this@status.isGranted } returns false
                     }
-                },
+                }
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 
@@ -348,7 +348,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns false
                         every { this@status.isGranted } returns false
                     }
-                },
+                }
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 
@@ -382,7 +382,7 @@ class MapViewModelTest {
                         every { this@status.shouldShowRationale } returns false
                         every { this@status.isGranted } returns false
                     }
-                },
+                }
             )
             every { mockPermissionState.revokedPermissions } returns listOf(mockk(relaxed = true))
 

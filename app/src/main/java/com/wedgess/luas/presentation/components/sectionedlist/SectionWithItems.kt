@@ -22,13 +22,13 @@ fun <T> LazyListScope.sectionWithItems(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     sectionHeader: @Composable (LazyItemScope.() -> Unit)? = null,
-    itemContent: @Composable (T) -> Unit,
+    itemContent: @Composable (T) -> Unit
 ) {
     stickyHeader(key = section.id) {
         Column(
             modifier = Modifier.animateContentSize(
-                animationSpec = tween(300),
-            ),
+                animationSpec = tween(300)
+            )
         ) {
             SectionHeader(
                 title = section.title,
@@ -45,7 +45,7 @@ fun <T> LazyListScope.sectionWithItems(
 
     items(
         items = section.items,
-        key = { it.id },
+        key = { it.id }
     ) { item ->
         AnimatedVisibility(
             visible = isExpanded,
@@ -55,7 +55,7 @@ fun <T> LazyListScope.sectionWithItems(
                 Modifier
             },
             enter = fadeIn(tween(300)) + expandVertically(tween(300)),
-            exit = fadeOut(tween(300)) + shrinkVertically(tween(300)),
+            exit = fadeOut(tween(300)) + shrinkVertically(tween(300))
         ) {
             itemContent(item.content)
         }

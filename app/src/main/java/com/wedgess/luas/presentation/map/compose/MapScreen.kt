@@ -25,20 +25,20 @@ fun MapScreen(uiResult: UiResult<MapContract.UiState>, onEvent: (MapContract.Eve
                     currentLocation = uiState.currentLocation,
                     greenLineLocations = uiState.greenLineLocations,
                     redLineLocations = uiState.redLineLocations,
-                    locationPermissionGranted = uiState.locationPermission == Permission.Granted,
+                    locationPermissionGranted = uiState.locationPermission == Permission.Granted
                 )
 
                 TransportType.DART -> DartMapLibreMap(
                     currentLocation = uiState.currentLocation,
                     dartStationLocations = uiState.dartLocations,
-                    locationPermissionGranted = uiState.locationPermission == Permission.Granted,
+                    locationPermissionGranted = uiState.locationPermission == Permission.Granted
                 )
             }
 
             MapDialogs(
                 dialogState = uiState.dialogState,
-                onEvent = onEvent,
+                onEvent = onEvent
             )
-        },
+        }
     )
 }

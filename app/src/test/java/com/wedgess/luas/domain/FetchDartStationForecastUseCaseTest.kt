@@ -53,7 +53,7 @@ class FetchDartStationForecastUseCaseTest {
         schDepart = "21:50",
         direction = DartDirectionEntity.NORTHBOUND,
         trainType = "DART",
-        locationType = DartLocationTypeEntity.ORIGIN,
+        locationType = DartLocationTypeEntity.ORIGIN
     )
 
     @Before
@@ -99,7 +99,7 @@ class FetchDartStationForecastUseCaseTest {
         assertTrue(result is RefreshState.Success)
         assertEquals(
             100f,
-            (result as RefreshState.Success).progress,
+            (result as RefreshState.Success).progress
         )
     }
 }

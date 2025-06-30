@@ -31,7 +31,7 @@ fun DartForecastItemRow(
     eta: String,
     dueIn: Int,
     late: Int,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val animatedValue by animateIntAsState(
         targetValue = dueIn,
@@ -42,17 +42,17 @@ fun DartForecastItemRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .padding(horizontal = 4.dp, vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier.weight(0.4f),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 modifier = Modifier.weight(0.8f),
                 text = destination,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium
             )
             AnimatedVisibility(modifier = Modifier.weight(0.2f), visible = late != 0) {
                 LateWarningBadge(late, modifier = Modifier.size(16.dp))
@@ -61,12 +61,12 @@ fun DartForecastItemRow(
         Text(
             modifier = Modifier.weight(0.2f),
             text = scheduledTime,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium
         )
         Text(
             modifier = Modifier.weight(0.2f),
             text = eta,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium
         )
         Text(
             modifier = Modifier.weight(0.2f),
@@ -75,7 +75,7 @@ fun DartForecastItemRow(
             } else {
                 pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
             },
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }
@@ -91,7 +91,7 @@ private fun DartForecastItemRowPreview() {
                     scheduledTime = "16:34",
                     eta = "16.35",
                     dueIn = 3,
-                    late = 3,
+                    late = 3
                 )
             }
         }

@@ -44,8 +44,8 @@ fun LuasForecastTabContent(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
             factory.create(line)
-        },
-    ),
+        }
+    )
 ) {
     val uiResult by luasForecastTabViewModel.uiResult.collectAsStateWithLifecycle()
 
@@ -53,20 +53,26 @@ fun LuasForecastTabContent(
         onRefreshAction { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnRefresh) }
     }
     val onStopSelect = remember(luasForecastTabViewModel) {
-        { stop: LuasStopEntity ->
+        {
+                stop: LuasStopEntity ->
             luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(stop))
         }
     }
     val onShowTravelUpdatesDialog = remember(luasForecastTabViewModel) {
-        { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowTravelUpdatesDialog) }
+        {
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowTravelUpdatesDialog)
+        }
     }
     val onTramClick = remember(luasForecastTabViewModel) {
-        { mins: Int, destination: String ->
+        {
+                mins: Int, destination: String ->
             luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination))
         }
     }
     val onCancelAlarm = remember(luasForecastTabViewModel) {
-        { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification) }
+        {
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification)
+        }
     }
     uiResult.Compose(
         onLoading = {
@@ -85,14 +91,14 @@ fun LuasForecastTabContent(
                 onShowTravelUpdatesDialog = onShowTravelUpdatesDialog,
                 onTramClick = onTramClick,
                 onCancelAlarm = onCancelAlarm,
-                onProgressChange = onProgressChange,
+                onProgressChange = onProgressChange
             )
             LuasForecastTabDialogs(
                 dialogsState = uiState.dialog,
                 luasNotificationState = uiState.luasNotificationState,
-                onEvent = luasForecastTabViewModel::onEvent,
+                onEvent = luasForecastTabViewModel::onEvent
             )
-        },
+        }
     )
 }
 
@@ -105,7 +111,7 @@ fun LuasTabListContent(
     onStopSelect: (LuasStopEntity) -> Unit,
     onTramClick: (Int, String) -> Unit,
     onProgressChange: (Float) -> Unit,
-    onCancelAlarm: () -> Unit,
+    onCancelAlarm: () -> Unit
 ) {
     LaunchedEffect(uiState.refreshProgress) {
         onProgressChange(uiState.refreshProgress)
@@ -115,7 +121,7 @@ fun LuasTabListContent(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         stickyHeader {
             DropdownTextField(
@@ -124,28 +130,28 @@ fun LuasTabListContent(
                 valueFormatter = { item -> item.name },
                 options = uiState.stops.toImmutableList(),
                 selectedValue = uiState.selectedStop,
-                onValueChange = onStopSelect,
+                onValueChange = onStopSelect
             )
         }
         item {
             AnimatedVisibility(uiState.alarmIsRunning) {
                 LuasForecastAlarmRow(
                     luasNotificationState = uiState.luasNotificationState,
-                    onCancelAlarm = onCancelAlarm,
+                    onCancelAlarm = onCancelAlarm
                 )
             }
         }
         item {
             LuasForecastStatusMessage(
                 message = uiState.forecast.message,
-                showTravelUpdatesDialog = onShowTravelUpdatesDialog,
+                showTravelUpdatesDialog = onShowTravelUpdatesDialog
             )
         }
         item {
             Column {
                 LuasDirectionHeader(
                     title = stringResource(R.string.forecast_title_outbound),
-                    noTramsDue = uiState.forecast.outboundTrams.isEmpty(),
+                    noTramsDue = uiState.forecast.outboundTrams.isEmpty()
                 )
                 AnimatedVisibility(visible = uiState.forecast.outboundTrams.isNotEmpty()) {
                     LuasForecastHeader()
@@ -156,7 +162,7 @@ fun LuasTabListContent(
             LuasForecastItemRow(
                 dueIn = tram.dueMins,
                 destination = tram.destination,
-                onRowClick = onTramClick,
+                onRowClick = onTramClick
             )
         }
 
@@ -164,7 +170,7 @@ fun LuasTabListContent(
             Column {
                 LuasDirectionHeader(
                     title = stringResource(R.string.forecast_title_inbound),
-                    noTramsDue = uiState.forecast.inboundTrams.isEmpty(),
+                    noTramsDue = uiState.forecast.inboundTrams.isEmpty()
                 )
                 AnimatedVisibility(visible = uiState.forecast.inboundTrams.isNotEmpty()) {
                     LuasForecastHeader()
@@ -175,7 +181,7 @@ fun LuasTabListContent(
             LuasForecastItemRow(
                 dueIn = tram.dueMins,
                 destination = tram.destination,
-                onRowClick = onTramClick,
+                onRowClick = onTramClick
             )
         }
     }

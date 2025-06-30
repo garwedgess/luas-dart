@@ -6,12 +6,12 @@ enum class TransportType(val type: Int) {
 
     companion object {
         operator fun get(type: Int) = requireNotNull(
-            entries.find { it.type == type },
+            entries.find { it.type == type }
         ) {
             "Unable to find ${TransportType::class.simpleName} for type: $type, possible values ${
                 entries.joinToString(
                     separator = ",",
-                    transform = { "${it.name}:${it.type}" },
+                    transform = { "${it.name}:${it.type}" }
                 )
             }"
         }

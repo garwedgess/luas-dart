@@ -9,7 +9,7 @@ enum class LuasDirectionKeyData(val key: String) {
             requireNotNull(LuasDirectionKeyData.entries.find { it.key == key }) {
                 "Could not find key: $key for ${LuasDirectionKeyData::class.java::getSimpleName}, " +
                     "available values are ${LuasDirectionKeyData.entries.joinToString(", ")
-                }"
+                    }"
             }
     }
 }

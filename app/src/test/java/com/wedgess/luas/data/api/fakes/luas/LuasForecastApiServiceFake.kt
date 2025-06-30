@@ -17,7 +17,7 @@ object LuasForecastApiServiceFake {
             respond(
                 content = stops,
                 status = HttpStatusCode.OK,
-                headers = headersOf("Content-Type", "text/html"),
+                headers = headersOf("Content-Type", "text/html")
             )
         }
         return HttpClient(mockEngine) {
@@ -30,7 +30,7 @@ object LuasForecastApiServiceFake {
             respond(
                 content = "",
                 status = HttpStatusCode.InternalServerError,
-                headers = headersOf("Content-Type", "text/html"),
+                headers = headersOf("Content-Type", "text/html")
             )
         }
         return HttpClient(mockEngine) {

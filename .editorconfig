@@ -12,6 +12,9 @@ insert_final_newline = true
 ktlint_code_style = intellij_idea
 max_line_length = 120
 
+ktlint_standard_no-unused-imports = enabled
+ktlint_standard_import-ordering = enabled
+
 # Trailing comma settings - align with Detekt
 ij_kotlin_allow_trailing_comma = false
 ij_kotlin_allow_trailing_comma_on_call_site = false
@@ -33,9 +36,6 @@ ktlint_standard_function-signature = disabled
 ktlint_standard_parameter-wrapping = disabled
 ktlint_standard_value-argument-comment = disabled
 ktlint_standard_value-parameter-comment = disabled
-
-# Import organization
-ktlint_standard_import-ordering = disabled
 
 [app/src/test/**/*.kt]
 max_line_length = off

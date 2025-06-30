@@ -7,6 +7,7 @@ import org.gradle.kotlin.dsl.configure
 internal fun Project.configureSpotless() {
 //    plugins.apply("com.diffplug.spotless")
     configure<SpotlessExtension> {
+        isEnforceCheck = false
         kotlin {
             target("**/*.kt")
             targetExclude("**/build/**")

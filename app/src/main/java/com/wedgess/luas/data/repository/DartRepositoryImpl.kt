@@ -24,7 +24,7 @@ class DartRepositoryImpl @Inject constructor(
     private val stationsApi: DartStationsApiService,
     private val forecastApi: DartStationForecastApiService,
     private val stationsDao: DartStationDao,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : DartRepository {
 
     override fun fetchStations(): Flow<Result<List<DartStationEntity>>> {
@@ -58,7 +58,7 @@ class DartRepositoryImpl @Inject constructor(
             },
             onFailure = { error ->
                 Timber.e(error, "Failed to insert remote stops: ${error.message}")
-            },
+            }
         )
     }
 }

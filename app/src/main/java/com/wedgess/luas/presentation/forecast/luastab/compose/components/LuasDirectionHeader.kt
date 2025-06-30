@@ -23,7 +23,7 @@ import com.wedgess.luas.ui.theme.LuasTheme
 fun LuasDirectionHeader(
     title: String,
     noTramsDue: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
@@ -33,12 +33,12 @@ fun LuasDirectionHeader(
                 .padding(8.dp),
             text = title,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium
         )
         AnimatedVisibility(noTramsDue) {
             Text(
                 text = "No trams forecasted",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge
             )
         }
     }
@@ -47,13 +47,13 @@ fun LuasDirectionHeader(
 @Preview
 @Composable
 private fun LuasDirectionHeaderPreview(
-    @PreviewParameter(LuasDirectionHeaderPreviewProvider::class) param: Boolean,
+    @PreviewParameter(LuasDirectionHeaderPreviewProvider::class) param: Boolean
 ) {
     LuasTheme {
         Surface {
             LuasDirectionHeader(
                 title = stringResource(R.string.forecast_title_outbound),
-                noTramsDue = param,
+                noTramsDue = param
             )
         }
     }
@@ -63,6 +63,6 @@ private class LuasDirectionHeaderPreviewProvider : PreviewParameterProvider<Bool
     override val values: Sequence<Boolean>
         get() = sequenceOf(
             true,
-            false,
+            false
         )
 }

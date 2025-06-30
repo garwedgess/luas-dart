@@ -11,7 +11,7 @@ fun DartStationEntity.toDao() = DartStation(
     Code = this.code,
     Alias = this.alias,
     Latitude = this.latitude,
-    Longitude = this.longitude,
+    Longitude = this.longitude
 )
 
 fun DartStation.toEntity() = DartStationEntity(
@@ -20,7 +20,7 @@ fun DartStation.toEntity() = DartStationEntity(
     code = this.Code,
     alias = this.Alias,
     latitude = this.Latitude,
-    longitude = this.Longitude,
+    longitude = this.Longitude
 )
 
 fun DartStationsResponseData.toDao() = this.stations.map { station ->
@@ -30,12 +30,12 @@ fun DartStationsResponseData.toDao() = this.stations.map { station ->
         Code = station.stationCode,
         Alias = station.stationAlias,
         Latitude = station.stationLatitude,
-        Longitude = station.stationLongitude,
+        Longitude = station.stationLongitude
     )
 }
 
 fun DartStation.toLocationEntity() = LocationEntity.Dart(
     name = this.Name,
     latitude = this.Latitude,
-    longitude = this.Longitude,
+    longitude = this.Longitude
 )
