@@ -2,7 +2,7 @@ package com.wedgess.luas.presentation.forecast.luastab.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.model.RefreshMode
@@ -17,7 +17,7 @@ import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
-import com.wedgess.luas.presentation.forecast.luastab.model.ForecastTabDialogState
+import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
 import com.wedgess.luas.presentation.model.UiResult
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -103,7 +103,7 @@ class ForecastTabViewModelTest {
         ),
     )
 
-    private val mockForecast = LuasForcastEntity(
+    private val mockForecast = LuasForecastEntity(
         message = "Trams operating normally",
         stop = "St. Stephens Green",
         createdAt = "2025-03-02T21:48:50",
@@ -113,7 +113,7 @@ class ForecastTabViewModelTest {
     )
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
-    private val forecastFlow = MutableStateFlow<RefreshState<LuasForcastEntity>>(RefreshState.Success(mockForecast, 0f))
+    private val forecastFlow = MutableStateFlow<RefreshState<LuasForecastEntity>>(RefreshState.Success(mockForecast, 0f))
     private val selectedStationFlow = MutableStateFlow("")
     private val isAlarmRunningFlow = MutableStateFlow(false)
 
@@ -269,7 +269,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(ForecastTabDialogState.TravelUpdatesAlert, (result as UiResult.Success).data.dialog)
+            assertEquals(LuasForecastTabDialogState.TravelUpdatesAlert, (result as UiResult.Success).data.dialog)
         }
     }
 
@@ -305,7 +305,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(dueInMins, (result as UiResult.Success).data.notificationState.dueInMins)
+            assertEquals(dueInMins, (result as UiResult.Success).data.luasNotificationState.dueInMins)
         }
 
         // Advance past timer end (2 minutes plus a bit more)
@@ -316,7 +316,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(0, (result as UiResult.Success).data.notificationState.dueInMins)
+            assertEquals(0, (result as UiResult.Success).data.luasNotificationState.dueInMins)
         }
 
         // Advance more time - should still be at 0
@@ -326,7 +326,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(0, (result as UiResult.Success).data.notificationState.dueInMins)
+            assertEquals(0, (result as UiResult.Success).data.luasNotificationState.dueInMins)
         }
     }
 
@@ -349,7 +349,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(ForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
+            assertEquals(LuasForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
         }
         verify { requestExactAlarmPermissionUseCase() }
     }
@@ -398,7 +398,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(9, (result as UiResult.Success).data.notificationState.dueInMins)
+            assertEquals(9, (result as UiResult.Success).data.luasNotificationState.dueInMins)
         }
 
         // Stop the notification
@@ -437,7 +437,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(ForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
+            assertEquals(LuasForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
         }
 
         // Try with negative minutes
@@ -452,7 +452,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(ForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
+            assertEquals(LuasForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
         }
     }
 

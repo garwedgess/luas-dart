@@ -10,9 +10,16 @@ insert_final_newline = true
 
 [*.{kt,kts}]
 ktlint_code_style = intellij_idea
-ij_kotlin_allow_trailing_comma = true
-ij_kotlin_allow_trailing_comma_on_call_site = true
-ktlint_function_naming_ignore_when_annotated_with = Composable, Test
+max_line_length = 120
+
+# Trailing comma settings - align with Detekt
+ij_kotlin_allow_trailing_comma = false
+ij_kotlin_allow_trailing_comma_on_call_site = false
+
+# Function naming - allow Composable functions to use PascalCase
+ktlint_function_naming_ignore_when_annotated_with = Composable, Test, Preview, ThemePreview, ThemePreviewWithBackground
+
+# Disable rules that conflict with Detekt or are too strict
 ktlint_standard_backing-property-naming = disabled
 ktlint_standard_binary-expression-wrapping = disabled
 ktlint_standard_chain-method-continuation = disabled
@@ -23,9 +30,12 @@ ktlint_standard_function-literal = disabled
 ktlint_standard_function-type-modifier-spacing = disabled
 ktlint_standard_multiline-loop = disabled
 ktlint_standard_function-signature = disabled
+ktlint_standard_parameter-wrapping = disabled
+ktlint_standard_value-argument-comment = disabled
+ktlint_standard_value-parameter-comment = disabled
 
-[app/src/main/**/*.kt]
-max_line_length = 120
+# Import organization
+ktlint_standard_import-ordering = disabled
 
 [app/src/test/**/*.kt]
 max_line_length = off

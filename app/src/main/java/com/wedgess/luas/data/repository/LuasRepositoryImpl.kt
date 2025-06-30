@@ -9,7 +9,7 @@ import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.mapper.toLocationEntity
 import com.wedgess.luas.data.utils.extensions.resultOf
 import com.wedgess.luas.domain.model.LocationEntity
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.repository.LuasRepository
@@ -55,11 +55,12 @@ class LuasRepositoryImpl @Inject constructor(
             }.resultOf()
     }
 
-    override suspend fun fetchForecast(stopAbv: String): Result<LuasForcastEntity> =
+    override suspend fun fetchForecast(stopAbv: String): Result<LuasForecastEntity> =
         withContext(ioDispatcher) {
             try {
-                forecastApi.fetchForecast(stopAbv).mapCatching { it.toEntity() }
-                    .onFailure { Timber.e(it, "Call has failed: ${it.message}") }
+                forecastApi.fetchForecast(stopAbv).mapCatching {
+                    it.toEntity()
+                }.onFailure { Timber.e(it, "Call has failed: ${it.message}") }
             } catch (ce: CancellationException) {
                 Timber.e(ce, "Call has failed: ${ce.message}")
                 Result.failure(ce)

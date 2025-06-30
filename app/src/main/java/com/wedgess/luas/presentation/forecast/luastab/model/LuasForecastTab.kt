@@ -6,20 +6,15 @@ import com.wedgess.luas.presentation.model.TabItem
 import com.wedgess.luas.presentation.model.UiText
 import kotlinx.collections.immutable.persistentListOf
 
-sealed class ForecastTab(override val title: UiText, val line: LuasLineEntity) :
+sealed class LuasForecastTab(override val title: UiText, val line: LuasLineEntity) :
     TabItem(title = title, icon = null) {
 
-    data object GreenLine : ForecastTab(
+    data object GreenLine : LuasForecastTab(
         title = UiText.StringResource(R.string.forecast_tab_title_green_line),
         line = LuasLineEntity.GREEN
     )
 
-    data object RedLine : ForecastTab(
-        title = UiText.StringResource(R.string.forecast_tab_title_red_line),
-        line = LuasLineEntity.RED
-    )
-
-    data object Dart : ForecastTab(
+    data object RedLine : LuasForecastTab(
         title = UiText.StringResource(R.string.forecast_tab_title_red_line),
         line = LuasLineEntity.RED
     )

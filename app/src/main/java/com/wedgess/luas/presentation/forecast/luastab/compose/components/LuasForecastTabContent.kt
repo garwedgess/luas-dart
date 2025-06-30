@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,7 +36,7 @@ import com.wedgess.luas.ui.theme.LuasTheme
 import kotlinx.collections.immutable.toImmutableList
 
 @Composable
-fun ForecastTabContent(
+fun LuasForecastTabContent(
     line: LuasLineEntity,
     onRefreshAction: (() -> Unit) -> Unit,
     onProgressChange: (Float) -> Unit,
@@ -42,13 +44,29 @@ fun ForecastTabContent(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
             factory.create(line)
-        }
-    )
+        },
+    ),
 ) {
     val uiResult by luasForecastTabViewModel.uiResult.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         onRefreshAction { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnRefresh) }
+    }
+    val onStopSelect = remember(luasForecastTabViewModel) {
+        { stop: LuasStopEntity ->
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(stop))
+        }
+    }
+    val onShowTravelUpdatesDialog = remember(luasForecastTabViewModel) {
+        { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowTravelUpdatesDialog) }
+    }
+    val onTramClick = remember(luasForecastTabViewModel) {
+        { mins: Int, destination: String ->
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination))
+        }
+    }
+    val onCancelAlarm = remember(luasForecastTabViewModel) {
+        { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification) }
     }
     uiResult.Compose(
         onLoading = {
@@ -61,48 +79,33 @@ fun ForecastTabContent(
             EmptyContent(it)
         },
         onSuccess = { uiState ->
-            TabListContent(
+            LuasTabListContent(
                 uiState = uiState,
-                onStopSelect = { stop ->
-                    luasForecastTabViewModel.onEvent(
-                        LuasForecastTabContract.Event.OnStopSelected(stop)
-                    )
-                },
+                onStopSelect = onStopSelect,
+                onShowTravelUpdatesDialog = onShowTravelUpdatesDialog,
+                onTramClick = onTramClick,
+                onCancelAlarm = onCancelAlarm,
                 onProgressChange = onProgressChange,
-                onShowTravelUpdatesDialog = {
-                    luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowTravelUpdatesDialog)
-                },
-                onTramClick = { mins, destination ->
-                    luasForecastTabViewModel.onEvent(
-                        LuasForecastTabContract.Event.OnShowNotificationsDialog(
-                            mins,
-                            destination
-                        )
-                    )
-                },
-                onCancelAlarm = {
-                    luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification)
-                }
             )
-            ForecastTabDialogs(
+            LuasForecastTabDialogs(
                 dialogsState = uiState.dialog,
-                notificationState = uiState.notificationState,
-                onEvent = luasForecastTabViewModel::onEvent
+                luasNotificationState = uiState.luasNotificationState,
+                onEvent = luasForecastTabViewModel::onEvent,
             )
-        }
+        },
     )
 }
 
 @SuppressLint("ComposeModifierMissing")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TabListContent(
+fun LuasTabListContent(
     uiState: LuasForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (LuasStopEntity) -> Unit,
     onTramClick: (Int, String) -> Unit,
     onProgressChange: (Float) -> Unit,
-    onCancelAlarm: () -> Unit
+    onCancelAlarm: () -> Unit,
 ) {
     LaunchedEffect(uiState.refreshProgress) {
         onProgressChange(uiState.refreshProgress)
@@ -112,7 +115,7 @@ fun TabListContent(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         stickyHeader {
             DropdownTextField(
@@ -121,48 +124,58 @@ fun TabListContent(
                 valueFormatter = { item -> item.name },
                 options = uiState.stops.toImmutableList(),
                 selectedValue = uiState.selectedStop,
-                onValueChange = onStopSelect
+                onValueChange = onStopSelect,
             )
         }
         item {
             AnimatedVisibility(uiState.alarmIsRunning) {
-                ForecastAlarmRow(
-                    notificationState = uiState.notificationState,
-                    onCancelAlarm = onCancelAlarm
+                LuasForecastAlarmRow(
+                    luasNotificationState = uiState.luasNotificationState,
+                    onCancelAlarm = onCancelAlarm,
                 )
             }
         }
         item {
-            ForecastStatusMessage(
+            LuasForecastStatusMessage(
                 message = uiState.forecast.message,
-                showTravelUpdatesDialog = onShowTravelUpdatesDialog
+                showTravelUpdatesDialog = onShowTravelUpdatesDialog,
             )
         }
         item {
-            TramDirectionHeader(
-                title = stringResource(R.string.forecast_title_outbound),
-                noTramsDue = uiState.forecast.outboundTrams.isEmpty()
-            )
+            Column {
+                LuasDirectionHeader(
+                    title = stringResource(R.string.forecast_title_outbound),
+                    noTramsDue = uiState.forecast.outboundTrams.isEmpty(),
+                )
+                AnimatedVisibility(visible = uiState.forecast.outboundTrams.isNotEmpty()) {
+                    LuasForecastHeader()
+                }
+            }
         }
         items(uiState.forecast.outboundTrams) { tram ->
-            ForecastItemRow(
-                dueInMins = tram.dueMins,
+            LuasForecastItemRow(
+                dueIn = tram.dueMins,
                 destination = tram.destination,
-                onRowClick = onTramClick
+                onRowClick = onTramClick,
             )
         }
 
         item {
-            TramDirectionHeader(
-                title = stringResource(R.string.forecast_title_inbound),
-                noTramsDue = uiState.forecast.inboundTrams.isEmpty()
-            )
+            Column {
+                LuasDirectionHeader(
+                    title = stringResource(R.string.forecast_title_inbound),
+                    noTramsDue = uiState.forecast.inboundTrams.isEmpty(),
+                )
+                AnimatedVisibility(visible = uiState.forecast.inboundTrams.isNotEmpty()) {
+                    LuasForecastHeader()
+                }
+            }
         }
         items(uiState.forecast.inboundTrams) { tram ->
-            ForecastItemRow(
-                dueInMins = tram.dueMins,
+            LuasForecastItemRow(
+                dueIn = tram.dueMins,
                 destination = tram.destination,
-                onRowClick = onTramClick
+                onRowClick = onTramClick,
             )
         }
     }
@@ -173,7 +186,7 @@ fun TabListContent(
 private fun ForecastTabContentPreview() {
     LuasTheme {
         Surface {
-            ForecastTabContent(LuasLineEntity.GREEN, onRefreshAction = {}, onProgressChange = {})
+            LuasForecastTabContent(LuasLineEntity.GREEN, onRefreshAction = {}, onProgressChange = {})
         }
     }
 }

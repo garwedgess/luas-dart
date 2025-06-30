@@ -1,7 +1,7 @@
 package com.wedgess.luas.domain.usecase
 
 import com.wedgess.luas.domain.RefreshFlow
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.repository.LuasRepository
@@ -17,7 +17,7 @@ class FetchLuasStopForecastUseCase @Inject constructor(private val luasRepositor
     private val refreshFlow: RefreshFlow = RefreshFlow()
     private var refreshMode = RefreshMode.AUTOMATIC
 
-    operator fun invoke(stopAbv: String): Flow<RefreshState<LuasForcastEntity>> {
+    operator fun invoke(stopAbv: String): Flow<RefreshState<LuasForecastEntity>> {
         return refreshFlow.flatMapLatest {
             flow {
                 when (refreshMode) {

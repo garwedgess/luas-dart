@@ -19,12 +19,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
-import com.wedgess.luas.presentation.forecast.luastab.model.NotificationState
+import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationState
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
-fun ForecastAlarmRow(
-    notificationState: NotificationState,
+fun LuasForecastAlarmRow(
+    luasNotificationState: LuasNotificationState,
     modifier: Modifier = Modifier,
     onCancelAlarm: () -> Unit
 ) {
@@ -41,9 +41,9 @@ fun ForecastAlarmRow(
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 text = stringResource(
                     R.string.notifying_msg_for_to_in,
-                    notificationState.station,
-                    notificationState.destination,
-                    notificationState.dueInMins
+                    luasNotificationState.station,
+                    luasNotificationState.destination,
+                    luasNotificationState.dueInMins
                 ),
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center
@@ -57,11 +57,11 @@ fun ForecastAlarmRow(
 
 @Preview
 @Composable
-private fun ForecastAlarmRowPreview() {
+private fun LuasForecastAlarmRowPreview() {
     LuasTheme {
         Surface {
-            ForecastAlarmRow(
-                notificationState = NotificationState(
+            LuasForecastAlarmRow(
+                luasNotificationState = LuasNotificationState(
                     dueInMins = 10,
                     destination = "Carickmines",
                     station = "St. Stephen's Green",

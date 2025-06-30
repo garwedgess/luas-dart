@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
-fun ForecastStatusMessage(
+fun LuasForecastStatusMessage(
     message: String,
     modifier: Modifier = Modifier,
     showTravelUpdatesDialog: () -> Unit
@@ -74,12 +74,12 @@ fun ForecastStatusMessage(
 
 @Preview
 @Composable
-private fun ForecastStatusMessagePreview(
+private fun LuasForecastStatusMessagePreview(
     @PreviewParameter(ForecastStatusMessagePreviewProvider::class) message: String
 ) {
     LuasTheme {
         Surface {
-            ForecastStatusMessage(message, showTravelUpdatesDialog = {})
+            LuasForecastStatusMessage(message, showTravelUpdatesDialog = {})
         }
     }
 }

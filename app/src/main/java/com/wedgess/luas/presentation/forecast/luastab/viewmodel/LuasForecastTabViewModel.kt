@@ -19,12 +19,13 @@ import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.extensions.toEntity
 import com.wedgess.luas.presentation.forecast.luastab.extensions.triggerTimeSeconds
-import com.wedgess.luas.presentation.forecast.luastab.model.ForecastTabDialogState
-import com.wedgess.luas.presentation.forecast.luastab.model.NotificationState
+import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
+import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationState
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -83,7 +84,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                 onSuccess = { (stops, selectedStop, alarmIsRunning) ->
                     _uiState.update {
                         it.copy(
-                            stops = stops,
+                            stops = stops.toImmutableList(),
                             selectedStop = selectedStop,
                             alarmIsRunning = alarmIsRunning,
                         )
@@ -126,23 +127,23 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             is LuasForecastTabContract.Event.OnStopSelected -> onStopSelected((event.stopAbrv))
             LuasForecastTabContract.Event.OnRefresh -> fetchLuasStopForecastUseCase.refresh(RefreshMode.MANUAL)
             LuasForecastTabContract.Event.OnDismissDialog -> _uiState.update {
-                it.copy(dialog = ForecastTabDialogState.None)
+                it.copy(dialog = LuasForecastTabDialogState.None)
             }
 
             LuasForecastTabContract.Event.OnShowTravelUpdatesDialog -> _uiState.update {
-                it.copy(dialog = ForecastTabDialogState.TravelUpdatesAlert)
+                it.copy(dialog = LuasForecastTabDialogState.TravelUpdatesAlert)
             }
 
             is LuasForecastTabContract.Event.OnStartNotification -> _uiState.updateAndGet {
-                it.copy(dialog = ForecastTabDialogState.None)
+                it.copy(dialog = LuasForecastTabDialogState.None)
             }.also {
-                scheduleNotification(it.notificationState.copy(notifyMinutesBefore = event.minutes))
+                scheduleNotification(it.luasNotificationState.copy(notifyMinutesBefore = event.minutes))
             }
 
             LuasForecastTabContract.Event.OnStopNotification -> stopNotification()
 
             is LuasForecastTabContract.Event.OnNotificationMinutesChanged -> _uiState.update {
-                it.copy(notificationState = it.notificationState.copy(notifyMinutesBefore = event.minutes))
+                it.copy(luasNotificationState = it.luasNotificationState.copy(notifyMinutesBefore = event.minutes))
             }
 
             is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (event.dueInMins > 0) {
@@ -162,7 +163,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             var minutesRemaining = timeInMinutes
             while (minutesRemaining >= 0 && isActive) {
                 _uiState.update {
-                    it.copy(notificationState = it.notificationState.copy(dueInMins = minutesRemaining))
+                    it.copy(luasNotificationState = it.luasNotificationState.copy(dueInMins = minutesRemaining))
                 }
                 delay(TimeUnit.MINUTES.toMillis(1))
                 minutesRemaining--
@@ -174,16 +175,16 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private fun showNotificationDialog(dueInMins: Int, destination: String) {
         if (canScheduleExactAlarmsUseCase.invoke()) {
             _uiState.update {
-                val notificationState = NotificationState(
+                val luasNotificationState = LuasNotificationState(
                     dueInMins = dueInMins,
                     destination = destination,
                     station = it.selectedStop.name,
                     notifyMinutesBefore = dueInMins,
                 )
-                Timber.d("Notification State: $notificationState, ${_uiState.value}")
+                Timber.d("Notification State: $luasNotificationState, ${_uiState.value}")
                 it.copy(
-                    notificationState = notificationState,
-                    dialog = ForecastTabDialogState.Notification,
+                    luasNotificationState = luasNotificationState,
+                    dialog = LuasForecastTabDialogState.Notification,
                 )
             }
         } else {
@@ -193,14 +194,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
 
     private fun stopNotification() = cancelAlarmUseCase.invoke()
 
-    private fun scheduleNotification(notificationState: NotificationState) {
+    private fun scheduleNotification(luasNotificationState: LuasNotificationState) {
         viewModelScope.launch {
             scheduleAlarmUseCase(
-                secondsFromNow = notificationState.triggerTimeSeconds(eventTriggerTime),
-                luasNotificationEntity = notificationState.toEntity(),
+                secondsFromNow = luasNotificationState.triggerTimeSeconds(eventTriggerTime),
+                luasNotificationEntity = luasNotificationState.toEntity(),
             ).also {
                 eventTriggerTime = 0
-                startTimer(notificationState.dueInMins)
+                startTimer(luasNotificationState.dueInMins)
             }
         }
     }

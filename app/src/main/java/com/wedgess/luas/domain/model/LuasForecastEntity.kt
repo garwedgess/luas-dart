@@ -1,6 +1,6 @@
 package com.wedgess.luas.domain.model
 
-data class LuasForcastEntity(
+data class LuasForecastEntity(
     val createdAt: String,
     val stop: String,
     val stopAbv: String,
@@ -14,7 +14,7 @@ data class LuasForcastEntity(
     )
 
     companion object {
-        fun initial() = LuasForcastEntity(
+        fun initial() = LuasForecastEntity(
             createdAt = "",
             stop = "",
             stopAbv = "",

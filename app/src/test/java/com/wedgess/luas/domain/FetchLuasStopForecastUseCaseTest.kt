@@ -1,6 +1,6 @@
 package com.wedgess.luas.domain
 
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.repository.LuasRepository
@@ -29,7 +29,7 @@ class FetchLuasStopForecastUseCaseTest {
     private lateinit var fetchLuasStopForecastUseCase: FetchLuasStopForecastUseCase
 
     private val stopAbv = "STA"
-    private val mockForecast = LuasForcastEntity(
+    private val mockForecast = LuasForecastEntity(
         message = "Trams operating normally",
         stop = "St. Stephens Green",
         createdAt = "2025-03-02T21:48:50",
@@ -48,7 +48,7 @@ class FetchLuasStopForecastUseCaseTest {
 
     @Test
     fun `invoke should emit success states with increasing progress in AUTOMATIC mode`() = runTest {
-        val results = mutableListOf<RefreshState<LuasForcastEntity>>()
+        val results = mutableListOf<RefreshState<LuasForecastEntity>>()
         val job = launch { fetchLuasStopForecastUseCase(stopAbv).take(5).toList(results) }
 
         advanceTimeBy(5000)
@@ -56,7 +56,7 @@ class FetchLuasStopForecastUseCaseTest {
         assertTrue(results.isNotEmpty())
         assertTrue(results.all { it is RefreshState.Success })
         val progressValues =
-            results.filterIsInstance<RefreshState.Success<LuasForcastEntity>>().map { it.progress }
+            results.filterIsInstance<RefreshState.Success<LuasForecastEntity>>().map { it.progress }
         assertTrue(progressValues.first() < progressValues.last())
 
         job.cancel()

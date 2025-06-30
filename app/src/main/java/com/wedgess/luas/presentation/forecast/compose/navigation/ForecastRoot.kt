@@ -33,8 +33,7 @@ import com.wedgess.luas.presentation.navigation.Screens
 @SuppressLint("InlinedApi")
 @OptIn(ExperimentalPermissionsApi::class)
 fun NavGraphBuilder.forecastRoot(
-    onUpdateAppbarState: (TopAppBarState) -> Unit,
-    onRefreshProgressChanged: (Float) -> Unit,
+    onUpdateAppbarState: (TopAppBarState) -> Unit
 ) {
     composable<Screens.Forecast> {
         val viewModel: ForecastViewModel = hiltViewModel()
@@ -73,11 +72,7 @@ fun NavGraphBuilder.forecastRoot(
                 context.startActivity(intent)
             }
         }
-        ForecastScreen(
-            uiState.transportType,
-            setRefreshAction = { refreshAction = it },
-            onProgressChange = onRefreshProgressChanged,
-        )
+        ForecastScreen(uiState.transportType, setRefreshAction = { refreshAction = it })
         ForecastDialogs(uiState.dialog, viewModel::onEvent)
     }
 }

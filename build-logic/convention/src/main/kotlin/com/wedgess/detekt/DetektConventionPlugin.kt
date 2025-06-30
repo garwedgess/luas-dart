@@ -26,7 +26,7 @@ class DetektConventionPlugin : Plugin<Project> {
             extensions.getByType<DetektExtension>().apply {
                 buildUponDefaultConfig = true // preconfigure defaults.
                 allRules = false // activate all available (even unstable) rules.
-                autoCorrect = false // To enable or disable auto formatting.
+                autoCorrect = true // To enable or disable auto formatting.
                 parallel = true
                 config.setFrom("${project.rootProject.projectDir}/config/detekt/detekt.yml")
                 baseline =

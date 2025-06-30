@@ -14,43 +14,48 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 
 @Composable
-fun ForecastItemRow(
-    dueInMins: Int,
+fun LuasForecastItemRow(
+    dueIn: Int,
     destination: String,
     modifier: Modifier = Modifier,
-    onRowClick: (Int, String) -> Unit
+    onRowClick: (Int, String) -> Unit,
 ) {
     val animatedValue by animateIntAsState(
-        targetValue = dueInMins,
+        targetValue = dueIn,
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-        label = "Animated Number"
+        label = "Animated Number",
     )
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onRowClick(dueInMins, destination) }
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+            .clickable { onRowClick(dueIn, destination) }
+            .padding(vertical = 4.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        AnimatedVisibility(visible = animatedValue != -1) {
+        Text(
+            modifier = Modifier.weight(0.6f),
+            text = destination,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+        )
+        AnimatedVisibility(
+            modifier = Modifier.weight(0.4f),
+            visible = animatedValue != -1,
+        ) {
             Text(
                 text = if (animatedValue == 0) {
-                    stringResource(R.string.label_due_now_to)
+                    stringResource(R.string.now)
                 } else {
-                    stringResource(R.string.label_due_in_mins_placeholder, animatedValue)
+                    pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
                 },
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
-        Text(
-            text = destination,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-        )
     }
 }

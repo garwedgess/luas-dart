@@ -1,22 +1,24 @@
 package com.wedgess.luas.presentation.forecast.luastab
 
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.presentation.forecast.luastab.model.ForecastTabDialogState
-import com.wedgess.luas.presentation.forecast.luastab.model.NotificationState
+import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
+import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationState
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 interface LuasForecastTabContract {
 
     data class UiState(
-        val stops: List<LuasStopEntity> = emptyList(),
+        val stops: ImmutableList<LuasStopEntity> = persistentListOf(),
         val selectedStop: LuasStopEntity = LuasStopEntity.initial(),
-        val forecast: LuasForcastEntity = LuasForcastEntity.initial(),
+        val forecast: LuasForecastEntity = LuasForecastEntity.initial(),
         val refreshProgress: Float = 0f,
         val line: LuasLineEntity = LuasLineEntity.RED,
-        val dialog: ForecastTabDialogState = ForecastTabDialogState.None,
-        val notificationState: NotificationState = NotificationState(),
-        val alarmIsRunning: Boolean = false
+        val dialog: LuasForecastTabDialogState = LuasForecastTabDialogState.None,
+        val luasNotificationState: LuasNotificationState = LuasNotificationState(),
+        val alarmIsRunning: Boolean = false,
     )
 
     sealed interface Event {

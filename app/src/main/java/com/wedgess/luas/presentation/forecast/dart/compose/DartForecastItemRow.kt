@@ -1,6 +1,9 @@
 package com.wedgess.luas.presentation.forecast.dart.compose
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,10 +14,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.wedgess.luas.R
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
@@ -22,10 +29,15 @@ fun DartForecastItemRow(
     destination: String,
     scheduledTime: String,
     eta: String,
-    dueIn: String,
+    dueIn: Int,
     late: Int,
     modifier: Modifier = Modifier,
 ) {
+    val animatedValue by animateIntAsState(
+        targetValue = dueIn,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "Animated Number"
+    )
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
@@ -58,7 +70,11 @@ fun DartForecastItemRow(
         )
         Text(
             modifier = Modifier.weight(0.2f),
-            text = dueIn,
+            text = if (animatedValue == 0) {
+                stringResource(R.string.now)
+            } else {
+                pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
+            },
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -74,7 +90,7 @@ private fun DartForecastItemRowPreview() {
                     destination = "Greystones",
                     scheduledTime = "16:34",
                     eta = "16.35",
-                    dueIn = "3 min",
+                    dueIn = 3,
                     late = 3,
                 )
             }

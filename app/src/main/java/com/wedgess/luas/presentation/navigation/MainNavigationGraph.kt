@@ -13,7 +13,6 @@ import com.wedgess.luas.presentation.news.navigation.newsRoot
 fun MainNavigationGraph(
     navController: NavHostController,
     onUpdateAppbarState: (TopAppBarState) -> Unit,
-    onRefreshProgressChanged: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -21,7 +20,7 @@ fun MainNavigationGraph(
         startDestination = Screens.Forecast,
         modifier = modifier
     ) {
-        forecastRoot(onUpdateAppbarState, onRefreshProgressChanged)
+        forecastRoot(onUpdateAppbarState)
         mapRoot(onUpdateAppbarState)
         newsRoot(onUpdateAppbarState)
     }

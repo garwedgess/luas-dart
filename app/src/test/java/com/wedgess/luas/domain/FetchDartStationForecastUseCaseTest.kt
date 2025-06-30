@@ -3,7 +3,7 @@ package com.wedgess.luas.domain
 import com.wedgess.luas.domain.model.DartDirectionEntity
 import com.wedgess.luas.domain.model.DartLocationTypeEntity
 import com.wedgess.luas.domain.model.DartStationForecastEntity
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.RefreshMode
 import com.wedgess.luas.domain.model.RefreshState
 import com.wedgess.luas.domain.repository.DartRepository
@@ -74,7 +74,7 @@ class FetchDartStationForecastUseCaseTest {
         assertTrue(results.isNotEmpty())
         assertTrue(results.all { it is RefreshState.Success })
         val progressValues =
-            results.filterIsInstance<RefreshState.Success<LuasForcastEntity>>().map { it.progress }
+            results.filterIsInstance<RefreshState.Success<LuasForecastEntity>>().map { it.progress }
         assertTrue(progressValues.first() < progressValues.last())
 
         job.cancel()

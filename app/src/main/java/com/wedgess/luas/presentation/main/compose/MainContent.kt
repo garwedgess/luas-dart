@@ -1,10 +1,7 @@
 package com.wedgess.luas.presentation.main.compose
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -15,7 +12,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.wedgess.luas.presentation.components.MainTopAppbar
-import com.wedgess.luas.presentation.forecast.luastab.compose.components.RefreshProgressIndicator
 import com.wedgess.luas.presentation.main.MainContract
 import com.wedgess.luas.presentation.main.MainViewModel
 import com.wedgess.luas.presentation.navigation.BottomNavigationBar
@@ -35,17 +31,12 @@ fun MainContent(
         Scaffold(
             modifier = modifier.fillMaxSize(),
             topBar = {
-                Column(Modifier.wrapContentHeight()) {
-                    MainTopAppbar(
-                        topAppBarState = uiState.appBarState,
-                        onTransportTypeChange = {
-                            viewModel.onEvent(MainContract.Event.OnTransportTypeChange(it))
-                        },
-                    )
-                    AnimatedVisibility(visible = uiState.appBarState.hasProgress) {
-                        RefreshProgressIndicator(uiState.refreshProgress)
-                    }
-                }
+                MainTopAppbar(
+                    topAppBarState = uiState.appBarState,
+                    onTransportTypeChange = {
+                        viewModel.onEvent(MainContract.Event.OnTransportTypeChange(it))
+                    },
+                )
             },
             bottomBar = {
                 BottomAppBar {
@@ -67,9 +58,6 @@ fun MainContent(
                     .fillMaxSize(),
                 onUpdateAppbarState = {
                     viewModel.onEvent(MainContract.Event.OnUpdateAppBarState(it))
-                },
-                onRefreshProgressChanged = {
-                    viewModel.onEvent(MainContract.Event.OnUpdateRefreshProgress(it))
                 },
             )
         }

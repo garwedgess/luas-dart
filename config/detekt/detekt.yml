@@ -602,6 +602,12 @@ style:
     active: true
     ignoreOverridden: false
     ignoreUsageInGenerics: false
+  FunctionNaming:
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+    ignoreAnnotated: [ 'Composable', 'Test' ]
+    excludeClassPattern: '$^'
   FunctionOnlyReturningConstant:
     active: true
     ignoreOverridableFunction: true

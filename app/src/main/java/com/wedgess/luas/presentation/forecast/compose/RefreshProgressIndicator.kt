@@ -1,4 +1,4 @@
-package com.wedgess.luas.presentation.forecast.luastab.compose.components
+package com.wedgess.luas.presentation.forecast.compose
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -18,7 +18,7 @@ fun RefreshProgressIndicator(
 ) {
     val animatedRefreshProgress by animateFloatAsState(
         targetValue = refreshProgress,
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = tween(durationMillis = 200),
         label = "progress"
     )
     LinearProgressIndicator(

@@ -1,6 +1,6 @@
 package com.wedgess.luas.domain.repository
 
-import com.wedgess.luas.domain.model.LuasForcastEntity
+import com.wedgess.luas.domain.model.LuasForecastEntity
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.model.LocationEntity
@@ -14,5 +14,5 @@ interface LuasRepository {
 
     fun fetchAllStops(): Flow<Result<List<LuasStopEntity>>>
 
-    suspend fun fetchForecast(stopAbv: String): Result<LuasForcastEntity>
+    suspend fun fetchForecast(stopAbv: String): Result<LuasForecastEntity>
 }
