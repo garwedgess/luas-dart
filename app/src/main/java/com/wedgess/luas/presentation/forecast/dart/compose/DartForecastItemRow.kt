@@ -56,7 +56,7 @@ fun DartForecastItemRow(
             Text(
                 modifier = Modifier.weight(0.8f),
                 text = destination,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
             )
             AnimatedVisibility(modifier = Modifier.weight(0.2f), visible = late != 0) {
                 LateWarningBadge(late, modifier = Modifier.size(20.dp))
@@ -127,7 +127,6 @@ private class LuasForecastItemRowPreviewParam : PreviewParameterProvider<Triple<
             Triple(10, 0, "Greystones"),
             Triple(2, 1, "Bray"),
             Triple(3, -2, "Killiney"),
-            Triple(0, 0, "Dalkey"),
+            Triple(0, 0, "Dalkey")
         )
-
 }

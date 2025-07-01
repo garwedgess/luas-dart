@@ -53,7 +53,8 @@ fun LuasForecastTabContent(
         onRefreshAction { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnRefresh) }
     }
     val onStopSelect = remember(luasForecastTabViewModel) {
-        { stop: DropdownItem ->
+        {
+                stop: DropdownItem ->
             luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(stop.text))
         }
     }
@@ -63,7 +64,8 @@ fun LuasForecastTabContent(
         }
     }
     val onTramClick = remember(luasForecastTabViewModel) {
-        { mins: Int, destination: String ->
+        {
+                mins: Int, destination: String ->
             luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination))
         }
     }

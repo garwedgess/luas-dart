@@ -17,12 +17,11 @@ import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
+import com.wedgess.luas.presentation.forecast.luastab.extensions.toDropdownItem
 import com.wedgess.luas.presentation.forecast.luastab.extensions.toEntity
 import com.wedgess.luas.presentation.forecast.luastab.extensions.triggerTimeSeconds
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationState
-import com.wedgess.luas.presentation.forecast.luastab.model.LuasRenderer
-import com.wedgess.luas.presentation.model.DropdownItem
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -63,20 +62,18 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val _uiState = MutableStateFlow(LuasForecastTabContract.UiState())
     private var eventTriggerTime = 0L
     private var notificationTimerJob: Job? = null
-    private var stops: List<LuasStopEntity> = emptyList()
 
     private val stopsAndStationFlow = combine(
         fetchLuasStopsUseCase(luasLine),
         fetchSelectedLuasStopUseCase(luasLine),
         isAlarmRunningUseCase()
-    ) { stopsResult, currentSelectedStop, alarmIsRunning ->
+    ) { stopsResult, currentSelectedStopName, alarmIsRunning ->
         stopsResult.mapCatching { stops ->
-            val selectedStop = if (currentSelectedStop.isBlank()) {
+            val selectedStop = if (currentSelectedStopName.isBlank()) {
                 stops.firstOrNull() ?: LuasStopEntity.initial()
             } else {
-                stops.firstOrNull { it.abbreviation == currentSelectedStop } ?: LuasStopEntity.initial()
+                stops.firstOrNull { it.name == currentSelectedStopName } ?: LuasStopEntity.initial()
             }
-            this.stops = stops
             Triple(stops, selectedStop, alarmIsRunning)
         }
     }
@@ -89,8 +86,8 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                     _uiState.update {
                         it.copy(
                             stops = stops.toImmutableList(),
-                            dropdownOptions = stops.map { LuasRenderer.render(it) }.toImmutableList(),
-                            selectedStop = LuasRenderer.render(selectedStop),
+                            dropdownOptions = stops.map { it.toDropdownItem() }.toImmutableList(),
+                            selectedStop = selectedStop.toDropdownItem(),
                             alarmIsRunning = alarmIsRunning
                         )
                     }
@@ -129,7 +126,8 @@ class LuasForecastTabViewModel @AssistedInject constructor(
 
     fun onEvent(event: LuasForecastTabContract.Event) {
         when (event) {
-            is LuasForecastTabContract.Event.OnStopSelected -> onStopSelected(stops.find { it.name == event.stopAbrv })
+            is LuasForecastTabContract.Event.OnStopSelected -> onStopSelected((event.stopName))
+
             LuasForecastTabContract.Event.OnRefresh -> fetchLuasStopForecastUseCase.refresh(RefreshMode.MANUAL)
             LuasForecastTabContract.Event.OnDismissDialog -> _uiState.update {
                 it.copy(dialog = LuasForecastTabDialogState.None)
@@ -211,10 +209,9 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         }
     }
 
-    private fun onStopSelected(stop: LuasStopEntity?) {
-        requireNotNull(stop)
+    private fun onStopSelected(stopName: String) {
         viewModelScope.launch {
-            updateSelectedLuasStopUseCase(stop.abbreviation, stop.line)
+            updateSelectedLuasStopUseCase(stopName, luasLine)
         }
     }
 }

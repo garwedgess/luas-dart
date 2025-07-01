@@ -14,7 +14,7 @@
     <ID>LambdaParameterInRestartableEffect:LuasForecastTabContent.kt$onProgressChange</ID>
     <ID>LambdaParameterInRestartableEffect:LuasForecastTabContent.kt$onRefreshAction</ID>
     <ID>LongParameterList:ForecastViewModel.kt$ForecastViewModel$( private val isNotificationPermissionIgnoredUseCase: IsNotificationPermissionIgnoredUseCase, private val wasNotificationPermissionRequestedUseCase: WasNotificationPermissionRequestedUseCase, private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase, private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase, fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase )</ID>
-    <ID>LongParameterList:LuasForecastTabContent.kt$( uiState: LuasForecastTabContract.UiState, onShowTravelUpdatesDialog: () -&gt; Unit, onStopSelect: (LuasStopEntity) -&gt; Unit, onTramClick: (Int, String) -&gt; Unit, onProgressChange: (Float) -&gt; Unit, onCancelAlarm: () -&gt; Unit )</ID>
+    <ID>LongParameterList:LuasForecastTabContent.kt$( uiState: LuasForecastTabContract.UiState, onShowTravelUpdatesDialog: () -&gt; Unit, onStopSelect: (DropdownItem) -&gt; Unit, onTramClick: (Int, String) -&gt; Unit, onProgressChange: (Float) -&gt; Unit, onCancelAlarm: () -&gt; Unit )</ID>
     <ID>LongParameterList:LuasForecastTabViewModel.kt$LuasForecastTabViewModel$( @Assisted val luasLine: LuasLineEntity, fetchLuasStopsUseCase: FetchLuasStopsUseCase, private val fetchLuasStopForecastUseCase: FetchLuasStopForecastUseCase, private val updateSelectedLuasStopUseCase: UpdateSelectedLuasStopUseCase, private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase, private val cancelAlarmUseCase: CancelAlarmUseCase, private val scheduleAlarmUseCase: ScheduleAlarmUseCase, private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase, isAlarmRunningUseCase: FetchIsAlarmRunningUseCase, fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase )</ID>
     <ID>LongParameterList:MapViewModel.kt$MapViewModel$( private val fetchCurrentLocationUseCase: FetchCurrentLocationUseCase, fetchAllLuasStopLocationsUseCase: FetchAllLuasStopLocationsUseCase, fetchAllDartStationLocationsUseCase: FetchAllDartStationLocationsUseCase, fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase, private val isLocationPermissionIgnoredUseCase: IsLocationPermissionIgnoredUseCase, private val wasLocationPermissionRequestedUseCase: WasLocationPermissionRequestedUseCase, private val updateLocationPermissionRequestedUseCase: UpdateLocationPermissionRequestedUseCase, private val updateIgnoreLocationPermissionUseCase: UpdateIgnoreLocationPermissionUseCase )</ID>
     <ID>MagicNumber:DartDirectionEntity.kt$DartDirectionEntity.UNKNOWN$3L</ID>
@@ -29,6 +29,7 @@
     <ID>MagicNumber:ListPicker.kt$0.5F</ID>
     <ID>MagicNumber:ListPicker.kt$3</ID>
     <ID>MagicNumber:LocationRepositoryImpl.kt$LocationRepositoryImpl$10f</ID>
+    <ID>MagicNumber:LuasDropdownItem.kt$0xFF4A5DD6</ID>
     <ID>MagicNumber:LuasForecastContent.kt$0xFF66BF63</ID>
     <ID>MagicNumber:LuasForecastContent.kt$0xFFE53935</ID>
     <ID>MagicNumber:LuasForecastHeader.kt$0.4f</ID>
@@ -55,7 +56,7 @@
     <ID>ModifierMissing:DartForecastContent.kt$DartListContent</ID>
     <ID>ModifierMissing:LuasForecastTabContent.kt$LuasTabListContent</ID>
     <ID>ModifierNotUsedAtRoot:ForecastAppBarActions.kt$modifier = modifier</ID>
-    <ID>ModifierNotUsedAtRoot:LuasDirectionHeader.kt$modifier = modifier .fillMaxWidth() .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) .padding(8.dp)</ID>
+    <ID>ModifierNotUsedAtRoot:LuasDirectionHeader.kt$modifier = modifier .fillMaxWidth() .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)) .padding(horizontal = 8.dp, vertical = 12.dp)</ID>
     <ID>ModifierNotUsedAtRoot:LuasForecastContent.kt$modifier = modifier</ID>
     <ID>ParameterNaming:AnimatedTabContainer.kt$onTabSelected</ID>
     <ID>SpreadOperator:UiText.kt$UiText$(id, *formatArgs)</ID>

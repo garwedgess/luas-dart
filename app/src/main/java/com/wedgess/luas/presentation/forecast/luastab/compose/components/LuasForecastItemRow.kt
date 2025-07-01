@@ -86,7 +86,6 @@ private class LuasForecastItemRowPreviewParam : PreviewParameterProvider<Pair<In
     override val values: Sequence<Pair<Int, String>>
         get() = sequenceOf(
             Pair(10, "Brides Glenn"),
-            Pair(0, "Carrickmines"),
+            Pair(0, "Carrickmines")
         )
-
 }

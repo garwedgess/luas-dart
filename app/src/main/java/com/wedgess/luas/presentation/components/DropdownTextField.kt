@@ -1,13 +1,8 @@
 package com.wedgess.luas.presentation.components
 
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Accessible
-import androidx.compose.material.icons.filled.Accessible
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.LocalParking
-import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -26,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import com.wedgess.luas.presentation.model.DropdownItem
+import com.wedgess.luas.presentation.model.DropdownTrailingContent
 import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +49,13 @@ fun DropdownTextField(
                 onValueChange(options.first { valueFormatter(it) == value })
             },
             label = { Text(text = label) },
+            suffix = if (selectedValue is DropdownTrailingContent) {
+                @Composable {
+                    selectedValue.RenderTrailingContent()
+                }
+            } else {
+                null
+            },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
@@ -67,7 +70,7 @@ fun DropdownTextField(
                 DropdownMenuItem(
                     text = { Text(text = valueFormatter(option)) },
                     leadingIcon = if (option == selectedValue) {
-                        {
+                        @Composable {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
@@ -78,12 +81,7 @@ fun DropdownTextField(
                         null
                     },
                     trailingIcon = {
-                        option.icons.takeIf { it.isNotEmpty() }?.let { icons ->
-                            Row {
-                                Icon(imageVector = Icons.Default.LocalParking, contentDescription = "Parking", tint = Color(0xFF4A5DD6))
-                                Icon(imageVector = Icons.Default.PedalBike, contentDescription = "Disabled", tint = Color(0xFF4A5DD6))
-                            }
-                        }
+                        (option as? DropdownTrailingContent)?.RenderTrailingContent()
                     },
                     onClick = {
                         focusManager.clearFocus()

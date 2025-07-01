@@ -16,9 +16,8 @@ import com.wedgess.luas.presentation.components.sectionedlist.model.Section
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionItem
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionedListState
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
+import com.wedgess.luas.presentation.forecast.dart.extensions.toDropdownItem
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
-import com.wedgess.luas.presentation.forecast.dart.model.DartRenderer
-import com.wedgess.luas.presentation.model.DropdownItem
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.PersistentMap
@@ -54,7 +53,7 @@ class DartForecastViewModel @Inject constructor(
             val selectedStation = if (currentSelectedStop.isBlank()) {
                 stations.firstOrNull() ?: DartStationEntity.initial()
             } else {
-                stations.firstOrNull { it.code == currentSelectedStop } ?: DartStationEntity.initial()
+                stations.firstOrNull { it.name == currentSelectedStop } ?: DartStationEntity.initial()
             }
             Pair(stations, selectedStation)
         }
@@ -68,8 +67,8 @@ class DartForecastViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             stations = stops.toImmutableList(),
-                            selectedStation = DartRenderer.render(selectedStop),
-                            dropdownOptions = stops.map { DartRenderer.render(it) }.toImmutableList()
+                            selectedStation = selectedStop.toDropdownItem(),
+                            dropdownOptions = stops.map { it.toDropdownItem() }.toImmutableList()
                         )
                     }
 
@@ -163,7 +162,7 @@ class DartForecastViewModel @Inject constructor(
 
     fun onEvent(event: DartForecastTabContract.Event) {
         when (event) {
-            is DartForecastTabContract.Event.OnStationSelected -> onStopSelected(event.stationCode)
+            is DartForecastTabContract.Event.OnStationSelected -> onStopSelected(event.stationName)
             DartForecastTabContract.Event.OnRefresh -> fetchDartStationForecastUseCase.refresh(RefreshMode.MANUAL)
             is DartForecastTabContract.Event.OnToggleSection -> {
                 _expandedSections.update { currentMap ->
@@ -174,9 +173,9 @@ class DartForecastViewModel @Inject constructor(
         }
     }
 
-    private fun onStopSelected(stopCode: String) {
+    private fun onStopSelected(stationName: String) {
         viewModelScope.launch {
-            updateSelectedDartStationsUseCase(stopCode)
+            updateSelectedDartStationsUseCase(stationName)
         }
     }
 }
