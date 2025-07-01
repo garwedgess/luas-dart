@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,7 +25,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wedgess.luas.R
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
@@ -32,8 +32,8 @@ import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.viewmodel.LuasForecastTabViewModel
 import com.wedgess.luas.presentation.model.Compose
+import com.wedgess.luas.presentation.model.DropdownItem
 import com.wedgess.luas.ui.theme.LuasTheme
-import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun LuasForecastTabContent(
@@ -53,9 +53,8 @@ fun LuasForecastTabContent(
         onRefreshAction { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnRefresh) }
     }
     val onStopSelect = remember(luasForecastTabViewModel) {
-        {
-                stop: LuasStopEntity ->
-            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(stop))
+        { stop: DropdownItem ->
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(stop.text))
         }
     }
     val onShowTravelUpdatesDialog = remember(luasForecastTabViewModel) {
@@ -64,8 +63,7 @@ fun LuasForecastTabContent(
         }
     }
     val onTramClick = remember(luasForecastTabViewModel) {
-        {
-                mins: Int, destination: String ->
+        { mins: Int, destination: String ->
             luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination))
         }
     }
@@ -108,7 +106,7 @@ fun LuasForecastTabContent(
 fun LuasTabListContent(
     uiState: LuasForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
-    onStopSelect: (LuasStopEntity) -> Unit,
+    onStopSelect: (DropdownItem) -> Unit,
     onTramClick: (Int, String) -> Unit,
     onProgressChange: (Float) -> Unit,
     onCancelAlarm: () -> Unit
@@ -127,8 +125,8 @@ fun LuasTabListContent(
             DropdownTextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = "Stop",
-                valueFormatter = { item -> item.name },
-                options = uiState.stops.toImmutableList(),
+                valueFormatter = { item -> item.text },
+                options = uiState.dropdownOptions,
                 selectedValue = uiState.selectedStop,
                 onValueChange = onStopSelect
             )
@@ -168,6 +166,7 @@ fun LuasTabListContent(
 
         item {
             Column {
+                HorizontalDivider()
                 LuasDirectionHeader(
                     title = stringResource(R.string.forecast_title_inbound),
                     noTramsDue = uiState.forecast.inboundTrams.isEmpty()

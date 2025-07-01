@@ -1,6 +1,9 @@
 package com.wedgess.luas.presentation.news.compose
 
 import android.annotation.SuppressLint
+import android.util.Log
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -43,7 +46,7 @@ fun TravelUpdatesWebViewContent(
                             view: WebView?,
                             request: WebResourceRequest?
                         ): Boolean {
-                            return true
+                            return !isLoading
                         }
 
                         override fun onPageFinished(view: WebView?, url: String?) {

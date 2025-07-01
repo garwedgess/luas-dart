@@ -19,7 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 import com.wedgess.luas.ui.theme.LuasTheme
@@ -40,6 +43,7 @@ fun DartForecastItemRow(
     )
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 8.dp)
@@ -52,21 +56,21 @@ fun DartForecastItemRow(
             Text(
                 modifier = Modifier.weight(0.8f),
                 text = destination,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
             )
             AnimatedVisibility(modifier = Modifier.weight(0.2f), visible = late != 0) {
-                LateWarningBadge(late, modifier = Modifier.size(16.dp))
+                LateWarningBadge(late, modifier = Modifier.size(20.dp))
             }
         }
         Text(
             modifier = Modifier.weight(0.2f),
             text = scheduledTime,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyLarge
         )
         Text(
             modifier = Modifier.weight(0.2f),
             text = eta,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyLarge
         )
         Text(
             modifier = Modifier.weight(0.2f),
@@ -96,4 +100,34 @@ private fun DartForecastItemRowPreview() {
             }
         }
     }
+}
+
+@Preview
+@Composable
+private fun DartForecastItemRowPreview(
+    @PreviewParameter(LuasForecastItemRowPreviewParam::class) params: Triple<Int, Int, String>
+) {
+    val (dueIn, late, destination) = params
+    LuasTheme {
+        Surface {
+            DartForecastItemRow(
+                dueIn = dueIn,
+                destination = destination,
+                late = late,
+                scheduledTime = "16:34",
+                eta = "16.35"
+            )
+        }
+    }
+}
+
+private class LuasForecastItemRowPreviewParam : PreviewParameterProvider<Triple<Int, Int, String>> {
+    override val values: Sequence<Triple<Int, Int, String>>
+        get() = sequenceOf(
+            Triple(10, 0, "Greystones"),
+            Triple(2, 1, "Bray"),
+            Triple(3, -2, "Killiney"),
+            Triple(0, 0, "Dalkey"),
+        )
+
 }

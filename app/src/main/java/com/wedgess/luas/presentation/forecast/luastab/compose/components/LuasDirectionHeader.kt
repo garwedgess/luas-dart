@@ -30,9 +30,9 @@ fun LuasDirectionHeader(
             modifier = modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                .padding(8.dp),
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             text = title,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.titleMedium
         )
         AnimatedVisibility(noTramsDue) {

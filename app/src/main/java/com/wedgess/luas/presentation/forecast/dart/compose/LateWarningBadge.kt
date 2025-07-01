@@ -2,6 +2,7 @@ package com.wedgess.luas.presentation.forecast.dart.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,6 +45,6 @@ fun LateWarningBadge(
 @Composable
 private fun LateWarningBadgePreview() {
     Surface {
-        LateWarningBadge(13)
+        LateWarningBadge(modifier = Modifier.size(24.dp), lateMinutes = 13)
     }
 }

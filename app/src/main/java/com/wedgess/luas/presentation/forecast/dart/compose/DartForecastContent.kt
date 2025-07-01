@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
@@ -24,7 +23,7 @@ import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.forecast.dart.viewmodel.DartForecastViewModel
 import com.wedgess.luas.presentation.model.Compose
-import kotlinx.collections.immutable.toImmutableList
+import com.wedgess.luas.presentation.model.DropdownItem
 
 @Composable
 fun DartForecastContent(
@@ -53,7 +52,7 @@ fun DartForecastContent(
                     uiState = uiState,
                     onStopSelect = { stop ->
                         dartForecastViewModel.onEvent(
-                            DartForecastTabContract.Event.OnStationSelected(stop)
+                            DartForecastTabContract.Event.OnStationSelected(stop.text)
                         )
                     },
                     onSectionToggle = { sectionId ->
@@ -73,17 +72,19 @@ fun DartForecastContent(
 fun DartListContent(
     uiState: DartForecastTabContract.UiState,
     onSectionToggle: (Long) -> Unit,
-    onStopSelect: (DartStationEntity) -> Unit
+    onStopSelect: (DropdownItem) -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         DropdownTextField(
             modifier = Modifier.fillMaxWidth(),
             label = "Station",
-            valueFormatter = { item -> item.name },
-            options = uiState.stations.toImmutableList(),
+            valueFormatter = { item -> item.text },
+            options = uiState.dropdownOptions,
             selectedValue = uiState.selectedStation,
             onValueChange = onStopSelect
         )

@@ -1,8 +1,13 @@
 package com.wedgess.luas.presentation.components
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Accessible
+import androidx.compose.material.icons.filled.Accessible
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.LocalParking
+import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -20,16 +25,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import com.wedgess.luas.presentation.model.DropdownItem
 import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> DropdownTextField(
-    selectedValue: T,
-    options: ImmutableList<T>,
+fun DropdownTextField(
+    selectedValue: DropdownItem,
+    options: ImmutableList<DropdownItem>,
     label: String,
-    onValueChange: (T) -> Unit,
-    valueFormatter: (T) -> String,
+    onValueChange: (DropdownItem) -> Unit,
+    valueFormatter: (DropdownItem) -> String,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -70,6 +76,14 @@ fun <T> DropdownTextField(
                         }
                     } else {
                         null
+                    },
+                    trailingIcon = {
+                        option.icons.takeIf { it.isNotEmpty() }?.let { icons ->
+                            Row {
+                                Icon(imageVector = Icons.Default.LocalParking, contentDescription = "Parking", tint = Color(0xFF4A5DD6))
+                                Icon(imageVector = Icons.Default.PedalBike, contentDescription = "Disabled", tint = Color(0xFF4A5DD6))
+                            }
+                        }
                     },
                     onClick = {
                         focusManager.clearFocus()

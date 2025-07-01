@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,8 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
+import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
 fun LuasForecastItemRow(
@@ -42,7 +47,7 @@ fun LuasForecastItemRow(
         Text(
             modifier = Modifier.weight(0.6f),
             text = destination,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
         )
         AnimatedVisibility(
             modifier = Modifier.weight(0.4f),
@@ -58,4 +63,30 @@ fun LuasForecastItemRow(
             )
         }
     }
+}
+
+@Preview
+@Composable
+private fun LuasForecastItemRowPreview(
+    @PreviewParameter(LuasForecastItemRowPreviewParam::class) params: Pair<Int, String>
+) {
+    val (dueIn, destination) = params
+    LuasTheme {
+        Surface {
+            LuasForecastItemRow(
+                dueIn = dueIn,
+                destination = destination,
+                onRowClick = { _, _ -> }
+            )
+        }
+    }
+}
+
+private class LuasForecastItemRowPreviewParam : PreviewParameterProvider<Pair<Int, String>> {
+    override val values: Sequence<Pair<Int, String>>
+        get() = sequenceOf(
+            Pair(10, "Brides Glenn"),
+            Pair(0, "Carrickmines"),
+        )
+
 }

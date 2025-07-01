@@ -41,6 +41,7 @@ fun MainContent(
             bottomBar = {
                 BottomAppBar {
                     BottomNavigationBar(
+                        selectedTransportType = uiState.transportType,
                         selectedItemRoute = backStackEntry.value?.destination?.route,
                         onNavigateTo = { route ->
                             if (route != backStackEntry.value?.destination) {

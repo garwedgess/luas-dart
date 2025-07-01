@@ -17,6 +17,8 @@ import com.wedgess.luas.presentation.components.sectionedlist.model.SectionItem
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionedListState
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
+import com.wedgess.luas.presentation.forecast.dart.model.DartRenderer
+import com.wedgess.luas.presentation.model.DropdownItem
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.PersistentMap
@@ -65,8 +67,9 @@ class DartForecastViewModel @Inject constructor(
                 onSuccess = { (stops, selectedStop) ->
                     _uiState.update {
                         it.copy(
-                            stations = stops,
-                            selectedStation = selectedStop
+                            stations = stops.toImmutableList(),
+                            selectedStation = DartRenderer.render(selectedStop),
+                            dropdownOptions = stops.map { DartRenderer.render(it) }.toImmutableList()
                         )
                     }
 
@@ -160,7 +163,7 @@ class DartForecastViewModel @Inject constructor(
 
     fun onEvent(event: DartForecastTabContract.Event) {
         when (event) {
-            is DartForecastTabContract.Event.OnStationSelected -> onStopSelected((event.station))
+            is DartForecastTabContract.Event.OnStationSelected -> onStopSelected(event.stationCode)
             DartForecastTabContract.Event.OnRefresh -> fetchDartStationForecastUseCase.refresh(RefreshMode.MANUAL)
             is DartForecastTabContract.Event.OnToggleSection -> {
                 _expandedSections.update { currentMap ->
@@ -171,9 +174,9 @@ class DartForecastViewModel @Inject constructor(
         }
     }
 
-    private fun onStopSelected(stop: DartStationEntity) {
+    private fun onStopSelected(stopCode: String) {
         viewModelScope.launch {
-            updateSelectedDartStationsUseCase(stop.code)
+            updateSelectedDartStationsUseCase(stopCode)
         }
     }
 }

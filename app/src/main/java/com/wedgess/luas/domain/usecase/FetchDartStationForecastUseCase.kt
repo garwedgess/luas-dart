@@ -65,7 +65,7 @@ class FetchDartStationForecastUseCase @Inject constructor(private val dartReposi
     }
 
     companion object {
-        private const val REFRESH_INTERVAL = 60_000L
+        private const val REFRESH_INTERVAL = 40_000L
         private const val FULL_PERCENTAGE = 100
     }
 }
