@@ -65,4 +65,34 @@ class DeparturesTest {
     fun `nothing is shown when no fetch ever succeeded`() {
         assertNull(Polled<Departures>(null, Exception("offline")).displayable(fetchedAt))
     }
+
+    @Test
+    fun `restored data is never live and is treated like data after a failed refresh`() {
+        val cached = Polled(departures, isCached = true)
+
+        val shown = cached.displayable(fetchedAt.plusSeconds(120))
+
+        assertEquals(listOf("Future", "Service message"), shown?.items?.map { it.destination })
+    }
+
+    @Test
+    fun `restored data older than the maximum stale age is not shown`() {
+        val cached = Polled(departures, isCached = true)
+
+        assertNull(cached.displayable(fetchedAt.plus(MaxStaleAge).plusSeconds(1)))
+    }
+
+    @Test
+    fun `data fetched in the future is not shown because the clock has moved`() {
+        val cached = Polled(departures.copy(fetchedAt = fetchedAt.plusSeconds(3_600)), isCached = true)
+
+        assertNull(cached.displayable(fetchedAt))
+    }
+
+    @Test
+    fun `data fetched slightly ahead of the clock is tolerated`() {
+        val cached = Polled(departures.copy(fetchedAt = fetchedAt.plusSeconds(60)), isCached = true)
+
+        assertNotNull(cached.displayable(fetchedAt))
+    }
 }

@@ -1,0 +1,46 @@
+-- Durable alarm definitions are the source of truth; AlarmManager registrations are rebuilt from the ACTIVE rows.
+-- Id is a stable identifier (see Alarm.nextDepartureId / Alarm.departureId) so saving the same alarm twice updates it.
+CREATE TABLE Alarm (
+    Id TEXT NOT NULL PRIMARY KEY,
+    Kind TEXT NOT NULL,
+    State TEXT NOT NULL,
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    Direction TEXT,
+    Destination TEXT,
+    NotifyMinutesBefore INTEGER NOT NULL,
+    TripCode TEXT,
+    OperatingDate TEXT,
+    TargetExpectedAtMillis INTEGER,
+    TargetObservedAtMillis INTEGER,
+    CreatedAtMillis INTEGER NOT NULL,
+    UpdatedAtMillis INTEGER NOT NULL
+);
+
+CREATE INDEX AlarmStateIndex ON Alarm(State);
+
+selectById:
+SELECT * FROM Alarm WHERE Id = :id;
+
+selectByState:
+SELECT * FROM Alarm WHERE State = :state ORDER BY CreatedAtMillis, Id;
+
+upsert:
+INSERT OR REPLACE INTO Alarm(
+    Id, Kind, State, Transport, StationCode, StationName, Direction, Destination, NotifyMinutesBefore, TripCode,
+    OperatingDate, TargetExpectedAtMillis, TargetObservedAtMillis, CreatedAtMillis, UpdatedAtMillis
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateState:
+UPDATE Alarm SET State = :newState, UpdatedAtMillis = :updatedAtMillis WHERE Id = :id AND State = :fromState;
+
+updateStateOfAll:
+UPDATE Alarm SET State = :newState, UpdatedAtMillis = :updatedAtMillis WHERE State = :fromState;
+
+deleteFinishedBefore:
+DELETE FROM Alarm WHERE State != :activeState AND UpdatedAtMillis < :updatedBeforeMillis;
+
+changes:
+SELECT changes();

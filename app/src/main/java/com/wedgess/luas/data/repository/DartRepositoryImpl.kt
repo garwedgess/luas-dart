@@ -3,6 +3,8 @@ package com.wedgess.luas.data.repository
 import com.wedgess.luas.data.api.DartStationForecastApiService
 import com.wedgess.luas.data.api.DartStationsApiService
 import com.wedgess.luas.data.db.dao.DartStationDao
+import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
+import com.wedgess.luas.data.db.dao.SnapshotRetention
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toDepartures
 import com.wedgess.luas.data.mapper.toEntity
@@ -11,6 +13,8 @@ import com.wedgess.luas.data.utils.extensions.resultOf
 import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.Departures
 import com.wedgess.luas.domain.model.LocationEntity
+import com.wedgess.luas.domain.model.TransportType
+import com.wedgess.luas.domain.model.isUsableAsStale
 import com.wedgess.luas.domain.repository.DartRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +30,7 @@ class DartRepositoryImpl @Inject constructor(
     private val stationsApi: DartStationsApiService,
     private val forecastApi: DartStationForecastApiService,
     private val stationsDao: DartStationDao,
+    private val snapshotDao: DepartureSnapshotDao,
     private val clock: Clock = Clock.systemUTC(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : DartRepository {
@@ -49,8 +54,24 @@ class DartRepositoryImpl @Inject constructor(
     override suspend fun fetchForecast(stationCode: String): Result<Departures> =
         withContext(ioDispatcher) {
             forecastApi.fetchForecast(stationCode).mapCatching { it.toDepartures(fetchedAt = clock.instant()) }
+                .onSuccess { storeSnapshot(stationCode, it) }
                 .onFailure { Timber.e(it, "Call has failed: ${it.message}") }
         }
+
+    override suspend fun cachedForecast(stopAbv: String): Departures? = withContext(ioDispatcher) {
+        resultOf { snapshotDao.load(TransportType.DART, stopAbv.uppercase()) }
+            .onFailure { Timber.e(it, "Failed to read cached forecast: ${it.message}") }
+            .getOrNull()
+            ?.takeIf { it.isUsableAsStale(clock.instant()) }
+    }
+
+    // A storage failure must never turn a successful live fetch into a failure.
+    private fun storeSnapshot(stationCode: String, departures: Departures) {
+        resultOf {
+            snapshotDao.save(TransportType.DART, stationCode.uppercase(), departures)
+            snapshotDao.deleteFetchedBefore(clock.instant().minus(SnapshotRetention).toEpochMilli())
+        }.onFailure { Timber.e(it, "Failed to store forecast snapshot: ${it.message}") }
+    }
 
     private suspend fun fetchFromRemoteAndStore() = withContext(ioDispatcher) {
         val result = stationsApi.fetchStations()

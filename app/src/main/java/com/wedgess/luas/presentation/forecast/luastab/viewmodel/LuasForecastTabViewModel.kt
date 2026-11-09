@@ -34,7 +34,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -99,8 +101,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                     if (stops.isEmpty()) {
                         flowOf(UiResult.Empty("No stops found"))
                     } else {
-                        pollFlow(LuasForecastTabContract.REFRESH_INTERVAL_MILLIS, refreshTrigger) {
-                            luasRepository.fetchForecast(selectedStop.abbreviation)
+                        flow {
+                            emitAll(
+                                pollFlow(
+                                    intervalMillis = LuasForecastTabContract.REFRESH_INTERVAL_MILLIS,
+                                    refresh = refreshTrigger,
+                                    initial = luasRepository.cachedForecast(selectedStop.abbreviation)
+                                ) { luasRepository.fetchForecast(selectedStop.abbreviation) }
+                            )
                         }.map { polled ->
                             val departures = polled.displayable(clock.instant())
                             if (departures == null) {
@@ -108,7 +116,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                             } else {
                                 UiResult.Success(
                                     _uiState.updateAndGet {
-                                        it.copy(forecast = departures, isStale = polled.error != null)
+                                        it.copy(forecast = departures, isStale = !polled.isLive)
                                     }
                                 )
                             }
@@ -185,6 +193,8 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                     dueInMins = dueInMins,
                     destination = destination,
                     station = it.selectedStop.text,
+                    stationCode = it.stops.firstOrNull { stop -> stop.name == it.selectedStop.text }
+                        ?.abbreviation.orEmpty(),
                     notifyMinutesBefore = dueInMins
                 )
                 Timber.d("Notification State: $luasNotificationState, ${_uiState.value}")

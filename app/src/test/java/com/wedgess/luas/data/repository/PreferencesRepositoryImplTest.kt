@@ -2,14 +2,19 @@ package com.wedgess.luas.data.repository
 
 import androidx.datastore.core.DataStore
 import app.cash.turbine.test
+import com.wedgess.luas.data.db.dao.SelectedStationDao
 import com.wedgess.luas.data.model.UserPreferences
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,12 +26,15 @@ class PreferencesRepositoryImplTest {
 
     @MockK
     private lateinit var preferences: DataStore<UserPreferences>
+    private lateinit var selectedStations: SelectedStationDao
     private lateinit var repository: PreferencesRepositoryImpl
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        repository = PreferencesRepositoryImpl(preferences)
+        selectedStations = mockk(relaxed = true)
+        every { selectedStations.observe(any()) } returns flowOf(null)
+        repository = PreferencesRepositoryImpl(preferences, selectedStations)
     }
 
     @Test
@@ -68,87 +76,62 @@ class PreferencesRepositoryImplTest {
     }
 
     @Test
-    fun `updateSelectedRedLineStation - updates the station successfully`() = runTest {
-        // Given
-        val userPreferencesFlow = MutableStateFlow(
-            UserPreferences.newBuilder()
-                .setSelectedRedLineStation("OLD_RED_STATION")
-                .setSelectedGreenLineStation("GREEN_STATION")
-                .build()
-        )
-        coEvery { preferences.data } returns userPreferencesFlow
-
-        val updateDataLambdaSlot = slot<suspend (UserPreferences) -> UserPreferences>()
-        coEvery { preferences.updateData(capture(updateDataLambdaSlot)) } coAnswers {
-            val lambda = updateDataLambdaSlot.captured
-            userPreferencesFlow.value = lambda(userPreferencesFlow.value)
-            userPreferencesFlow.value
-        }
-
-        // When
+    fun `updateSelectedRedLineStation - stores the selection in its own slot`() = runTest {
         val result = repository.updateSelectedRedLineStation("NEW_RED_STATION")
 
-        // Then
         assertTrue(result.isSuccess)
-        coVerify { preferences.updateData(any()) }
-        assertEquals("NEW_RED_STATION", userPreferencesFlow.value.selectedRedLineStation)
+        verify { selectedStations.save("LUAS_RED", "NEW_RED_STATION") }
+        coVerify(exactly = 0) { preferences.updateData(any()) }
     }
 
     @Test
     fun `updateSelectedRedLineStation - handles failure`() = runTest {
-        // Given
-        val exception = RuntimeException("Update error")
-        coEvery { preferences.updateData(any()) } throws exception
+        val exception = RuntimeException("Test exception")
+        every { selectedStations.save(any(), any()) } throws exception
 
-        // When
         val result = repository.updateSelectedRedLineStation("NEW_RED_STATION")
 
-        // Then
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
-        coVerify { preferences.updateData(any()) }
     }
 
     @Test
-    fun `updateSelectedGreenLineStation - updates the station successfully`() = runTest {
-        // Given
-        val userPreferencesFlow = MutableStateFlow(
-            UserPreferences.newBuilder()
-                .setSelectedRedLineStation("RED_STATION")
-                .setSelectedGreenLineStation("OLD_GREEN_STATION")
-                .build()
-        )
-        coEvery { preferences.data } returns userPreferencesFlow
-
-        val updateDataLambdaSlot = slot<suspend (UserPreferences) -> UserPreferences>()
-        coEvery { preferences.updateData(capture(updateDataLambdaSlot)) } coAnswers {
-            val lambda = updateDataLambdaSlot.captured
-            userPreferencesFlow.value = lambda(userPreferencesFlow.value)
-            userPreferencesFlow.value
-        }
-
-        // When
+    fun `updateSelectedGreenLineStation - stores the selection in its own slot`() = runTest {
         val result = repository.updateSelectedGreenLineStation("NEW_GREEN_STATION")
 
-        // Then
         assertTrue(result.isSuccess)
-        coVerify { preferences.updateData(any()) }
-        assertEquals("NEW_GREEN_STATION", userPreferencesFlow.value.selectedGreenLineStation)
+        verify { selectedStations.save("LUAS_GREEN", "NEW_GREEN_STATION") }
     }
 
     @Test
     fun `updateSelectedGreenLineStation - handles failure`() = runTest {
-        // Given
-        val exception = RuntimeException("Update error")
-        coEvery { preferences.updateData(any()) } throws exception
+        val exception = RuntimeException("Test exception")
+        every { selectedStations.save(any(), any()) } throws exception
 
-        // When
         val result = repository.updateSelectedGreenLineStation("NEW_GREEN_STATION")
 
-        // Then
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
-        coVerify { preferences.updateData(any()) }
+    }
+
+    @Test
+    fun `updateSelectedDartStation - stores the selection in its own slot`() = runTest {
+        val result = repository.updateSelectedDartStation("Dublin Pearse")
+
+        assertTrue(result.isSuccess)
+        verify { selectedStations.save("DART", "Dublin Pearse") }
+    }
+
+    @Test
+    fun `fetchSelectedDartStation - prefers the stored selection over the legacy DataStore value`() = runTest {
+        every { selectedStations.observe("DART") } returns flowOf("Dublin Pearse")
+        coEvery { preferences.data } returns
+            MutableStateFlow(UserPreferences.newBuilder().setSelectedDartStation("Bray").build())
+
+        repository.fetchSelectedDartStation().test {
+            assertEquals("Dublin Pearse", awaitItem())
+            cancelAndConsumeRemainingEvents()
+        }
     }
 
     @Test

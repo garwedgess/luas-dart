@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -22,7 +23,7 @@ class PollingTest {
     private val backoff = listOf(1_000L, 2_000L, 4_000L)
 
     private fun <T> poll(refresh: kotlinx.coroutines.flow.Flow<Unit> = emptyFlow(), fetch: suspend () -> Result<T>) =
-        pollFlow(interval, refresh, backoff, Random(0), fetch)
+        pollFlow(interval, refresh, backoffMillis = backoff, random = Random(0), fetch = fetch)
 
     @Test
     fun `fetches immediately then once per interval`() = runTest {
@@ -128,6 +129,36 @@ class PollingTest {
         }
         advanceTimeBy(interval * 4)
         assertEquals(1, calls)
+    }
+
+    @Test
+    fun `stored data is emitted first as not live, then replaced by the first live result`() = runTest {
+        pollFlow(interval, emptyFlow(), initial = "stored", backoffMillis = backoff, random = Random(0)) {
+            Result.success("live")
+        }.test {
+            val cached = awaitItem()
+            assertEquals("stored", cached.data)
+            assertTrue(cached.isCached)
+            assertFalse(cached.isLive)
+            val live = awaitItem()
+            assertEquals("live", live.data)
+            assertTrue(live.isLive)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `when the first fetch fails the stored data stays and is reported with the error`() = runTest {
+        pollFlow<String>(interval, emptyFlow(), initial = "stored", backoffMillis = backoff, random = Random(0)) {
+            Result.failure(IllegalStateException("down"))
+        }.test {
+            awaitItem() // stored
+            val failed = awaitItem()
+            assertEquals("stored", failed.data)
+            assertEquals("down", failed.error?.message)
+            assertFalse(failed.isLive)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

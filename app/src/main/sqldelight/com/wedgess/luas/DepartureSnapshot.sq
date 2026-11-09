@@ -1,0 +1,55 @@
+-- Latest live result per (transport, station). FetchedAtMillis is the device clock time of the network response and is
+-- never rewritten, so a restored snapshot always reports how old it really is. Freshness is decided when reading.
+CREATE TABLE DepartureSnapshot (
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    FetchedAtMillis INTEGER NOT NULL,
+    PRIMARY KEY (Transport, StationCode)
+);
+
+CREATE TABLE DepartureSnapshotItem (
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    Position INTEGER NOT NULL,
+    Direction TEXT NOT NULL,
+    Destination TEXT NOT NULL,
+    DueMins INTEGER,
+    ExpectedAtMillis INTEGER,
+    ScheduledAtMillis INTEGER,
+    LateMins INTEGER NOT NULL,
+    TripCode TEXT,
+    OperatingDate TEXT,
+    Status TEXT,
+    LastLocation TEXT,
+    PRIMARY KEY (Transport, StationCode, Position)
+);
+
+selectSnapshot:
+SELECT * FROM DepartureSnapshot WHERE Transport = :transport AND StationCode = :stationCode;
+
+selectItems:
+SELECT * FROM DepartureSnapshotItem WHERE Transport = :transport AND StationCode = :stationCode ORDER BY Position;
+
+upsertSnapshot:
+INSERT OR REPLACE INTO DepartureSnapshot(Transport, StationCode, StationName, Message, FetchedAtMillis)
+VALUES (?, ?, ?, ?, ?);
+
+insertItem:
+INSERT OR REPLACE INTO DepartureSnapshotItem(
+    Transport, StationCode, Position, Direction, Destination, DueMins, ExpectedAtMillis, ScheduledAtMillis,
+    LateMins, TripCode, OperatingDate, Status, LastLocation
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteItems:
+DELETE FROM DepartureSnapshotItem WHERE Transport = :transport AND StationCode = :stationCode;
+
+deleteItemsOfSnapshotsFetchedBefore:
+DELETE FROM DepartureSnapshotItem WHERE (Transport, StationCode) IN (
+    SELECT Transport, StationCode FROM DepartureSnapshot WHERE FetchedAtMillis < :fetchedBeforeMillis
+);
+
+deleteSnapshotsFetchedBefore:
+DELETE FROM DepartureSnapshot WHERE FetchedAtMillis < :fetchedBeforeMillis;

@@ -68,12 +68,19 @@ data class Departures(
 /** Data older than this is never shown, even marked as stale, because its times can no longer be trusted. */
 val MaxStaleAge: Duration = Duration.ofMinutes(10)
 
+/** Tolerance for a fetch time that is slightly ahead of the device clock. */
+private val ClockSkewTolerance: Duration = Duration.ofMinutes(2)
+
+/** Whether this result may still be shown, marked as stale. A fetch time in the future means the clock moved. */
+fun Departures.isUsableAsStale(now: Instant) =
+    !fetchedAt.isAfter(now.plus(ClockSkewTolerance)) && !fetchedAt.plus(MaxStaleAge).isBefore(now)
+
 /**
  * The departures that may be shown for this poll outcome, or null when there is nothing trustworthy to show.
- * When the latest attempt failed the data is no longer live, so already-passed departures are dropped.
+ * Data that is not live drops departures whose expected time has already passed, and is hidden once too old.
  */
 fun Polled<Departures>.displayable(now: Instant): Departures? {
     val data = data ?: return null
-    if (error == null) return data
-    return if (data.fetchedAt.plus(MaxStaleAge).isBefore(now)) null else data.withoutPast(now)
+    if (isLive) return data
+    return if (data.isUsableAsStale(now)) data.withoutPast(now) else null
 }

@@ -24,8 +24,10 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -121,6 +123,7 @@ class ForecastTabViewModelTest {
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
     private var forecastResult: Result<Departures> = Result.success(mockForecast)
+    private var cachedForecast: Departures? = null
     private val selectedStationFlow = MutableStateFlow("")
     private val isAlarmRunningFlow = MutableStateFlow(false)
 
@@ -131,6 +134,7 @@ class ForecastTabViewModelTest {
 
         every { luasRepository.fetchStops(any()) } returns stopsFlow
         coEvery { luasRepository.fetchForecast(any()) } answers { forecastResult }
+        coEvery { luasRepository.cachedForecast(any()) } answers { cachedForecast }
         every { preferencesRepository.fetchSelectedGreenLineStation() } returns selectedStationFlow
         every { preferencesRepository.fetchSelectedRedLineStation() } returns selectedStationFlow
         every { isAlarmRunningUseCase() } returns isAlarmRunningFlow
@@ -249,6 +253,42 @@ class ForecastTabViewModelTest {
             val state = (result as UiResult.Success).data
             assertEquals(mockForecast, state.forecast)
             assertFalse(state.isStale)
+        }
+    }
+
+    @Test
+    fun `should show stored data as stale until the first live fetch completes`() = runTest {
+        cachedForecast = mockForecast.copy(fetchedAt = now.minusSeconds(60))
+        val live = mockForecast.copy(message = "live")
+        val gate = CompletableDeferred<Unit>()
+        coEvery { luasRepository.fetchForecast(any()) } coAnswers {
+            gate.await()
+            Result.success(live)
+        }
+
+        viewModel.uiResult.test {
+            val restored = (awaitItem() as UiResult.Success).data
+            assertTrue(restored.isStale)
+            assertEquals(now.minusSeconds(60), restored.forecast.fetchedAt)
+
+            gate.complete(Unit)
+            val fresh = (awaitItem() as UiResult.Success).data
+            assertFalse(fresh.isStale)
+            assertEquals("live", fresh.forecast.message)
+        }
+    }
+
+    @Test
+    fun `should not offer an alarm from stored data before the first live fetch`() = runTest {
+        cachedForecast = mockForecast
+        every { canScheduleExactAlarmsUseCase() } returns true
+        coEvery { luasRepository.fetchForecast(any()) } coAnswers { awaitCancellation() }
+
+        viewModel.uiResult.test {
+            assertTrue((awaitItem() as UiResult.Success).data.isStale)
+            viewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge"))
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

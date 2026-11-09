@@ -27,7 +27,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -80,8 +82,14 @@ class DartForecastViewModel @Inject constructor(
                     if (stops.isEmpty()) {
                         flowOf(UiResult.Empty("No stops found"))
                     } else {
-                        pollFlow(DartForecastTabContract.REFRESH_INTERVAL_MILLIS, refreshTrigger) {
-                            dartRepository.fetchForecast(selectedStop.code)
+                        flow {
+                            emitAll(
+                                pollFlow(
+                                    intervalMillis = DartForecastTabContract.REFRESH_INTERVAL_MILLIS,
+                                    refresh = refreshTrigger,
+                                    initial = dartRepository.cachedForecast(selectedStop.code)
+                                ) { dartRepository.fetchForecast(selectedStop.code) }
+                            )
                         }.combine(_expandedSections) { polled, expandedSections ->
                             val departures = polled.displayable(clock.instant())
                             if (departures == null) {
@@ -90,7 +98,7 @@ class DartForecastViewModel @Inject constructor(
                                 UiResult.Success(
                                     _uiState.updateAndGet {
                                         it.copy(
-                                            isStale = polled.error != null,
+                                            isStale = !polled.isLive,
                                             fetchedAt = departures.fetchedAt,
                                             sectionedListState = departures.toSectionListState(expandedSections)
                                         )

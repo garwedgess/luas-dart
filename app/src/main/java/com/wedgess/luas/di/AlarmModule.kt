@@ -4,6 +4,7 @@ import android.content.Context
 import com.wedgess.luas.data.alarm.AlarmManagerDataSource
 import com.wedgess.luas.data.repository.AlarmRepositoryImpl
 import com.wedgess.luas.domain.navigation.ServiceNavigator
+import com.wedgess.luas.domain.repository.AlarmConfigRepository
 import com.wedgess.luas.domain.repository.AlarmRepository
 import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
@@ -13,6 +14,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -22,9 +24,11 @@ object AlarmModule {
     @Provides
     @Singleton
     fun provideAlarmRepository(
-        alarmManagerDataSource: AlarmManagerDataSource
+        alarmManagerDataSource: AlarmManagerDataSource,
+        alarmConfigRepository: AlarmConfigRepository,
+        clock: Clock
     ): AlarmRepository {
-        return AlarmRepositoryImpl(alarmManagerDataSource)
+        return AlarmRepositoryImpl(alarmManagerDataSource, alarmConfigRepository, clock)
     }
 
     @Provides

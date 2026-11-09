@@ -14,11 +14,12 @@ private const val JITTER_DIVISOR = 5
  * Fetches immediately, then every [intervalMillis]. A failed fetch is retried after the next step of [backoffMillis]
  * (plus up to 20% jitter) and the sequence resets after a success. Anything emitted on [refresh] triggers an
  * immediate fetch. Collection stops when the collector is cancelled, so scoping the collector to the lifecycle
- * scopes the polling.
+ * scopes the polling. [initial] is stored data to emit (as not live) before the first fetch.
  */
 fun <T> pollFlow(
     intervalMillis: Long,
     refresh: Flow<Unit>,
+    initial: T? = null,
     backoffMillis: List<Long> = DefaultBackoffMillis,
     random: Random = Random.Default,
     fetch: suspend () -> Result<T>
@@ -26,8 +27,10 @@ fun <T> pollFlow(
     val manualRefresh = Channel<Unit>(Channel.CONFLATED)
     launch { refresh.collect { manualRefresh.trySend(Unit) } }
 
-    var last: T? = null
+    var last: T? = initial
     var failures = 0
+    // Stored data is shown straight away, but flagged as not live until the first fetch succeeds.
+    initial?.let { send(Polled(it, isCached = true)) }
     while (true) {
         fetch().fold(
             onSuccess = {

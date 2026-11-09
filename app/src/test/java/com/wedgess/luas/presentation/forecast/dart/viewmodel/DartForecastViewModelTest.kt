@@ -16,6 +16,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -108,6 +109,7 @@ class DartForecastViewModelTest {
     private val stationsFlow = MutableStateFlow(Result.success(mockStations))
     private val selectedStationFlow = MutableStateFlow("")
     private var forecastResult: Result<Departures> = Result.success(departures(southbound, northbound))
+    private var cachedForecast: Departures? = null
 
     @Before
     fun setUp() {
@@ -116,6 +118,7 @@ class DartForecastViewModelTest {
 
         every { dartRepository.fetchStations() } returns stationsFlow
         coEvery { dartRepository.fetchForecast(any()) } answers { forecastResult }
+        coEvery { dartRepository.cachedForecast(any()) } answers { cachedForecast }
         every { preferencesRepository.fetchSelectedDartStation() } returns selectedStationFlow
         coEvery { preferencesRepository.updateSelectedDartStation(any()) } returns Result.success(Unit)
 
@@ -216,6 +219,28 @@ class DartForecastViewModelTest {
             val state = awaitState()
             assertFalse(state.isStale)
             assertEquals(now, state.fetchedAt)
+        }
+    }
+
+    @Test
+    fun `should show stored trains as stale with their original fetch time until the first live fetch`() = runTest {
+        val storedAt = now.minusSeconds(90)
+        cachedForecast = departures(southbound, fetchedAt = storedAt)
+        val gate = CompletableDeferred<Unit>()
+        coEvery { dartRepository.fetchForecast(any()) } coAnswers {
+            gate.await()
+            forecastResult
+        }
+
+        viewModel.uiResult.test {
+            val restored = awaitState()
+            assertTrue(restored.isStale)
+            assertEquals(storedAt, restored.fetchedAt)
+
+            gate.complete(Unit)
+            val fresh = awaitState()
+            assertFalse(fresh.isStale)
+            assertEquals(now, fresh.fetchedAt)
         }
     }
 

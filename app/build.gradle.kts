@@ -111,6 +111,8 @@ sqldelight {
         create("LuasDatabase") {
             packageName.set("com.wedgess.luas.data")
             schemaOutputDirectory.set(file("src/main/sqldelight/databases"))
+            // Fails the build if migrating the committed schema snapshots does not reproduce the current schema.
+            verifyMigrations.set(true)
         }
     }
 }

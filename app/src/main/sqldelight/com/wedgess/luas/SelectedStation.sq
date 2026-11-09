@@ -1,0 +1,11 @@
+-- One row per selection slot (LUAS_RED, LUAS_GREEN, DART) so each mode keeps its own selection.
+CREATE TABLE SelectedStation (
+    Slot TEXT NOT NULL PRIMARY KEY,
+    StationName TEXT NOT NULL
+);
+
+selectBySlot:
+SELECT StationName FROM SelectedStation WHERE Slot = :slot;
+
+upsert:
+INSERT OR REPLACE INTO SelectedStation(Slot, StationName) VALUES (?, ?);

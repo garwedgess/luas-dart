@@ -3,6 +3,7 @@ package com.wedgess.luas.data.repository
 import com.wedgess.luas.LuasStop
 import com.wedgess.luas.data.api.LuasForecastApiService
 import com.wedgess.luas.data.api.LuasStopApiService
+import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
 import com.wedgess.luas.data.db.dao.LuasStopDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
@@ -23,6 +24,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -50,6 +52,7 @@ class LuasRepositoryImplTest {
     @RelaxedMockK
     private lateinit var stopsDao: LuasStopDao
 
+    private val snapshotDao: DepartureSnapshotDao = mockk(relaxed = true)
     private val fetchedAt = Instant.parse("2026-11-09T22:00:00Z")
     private val clock = Clock.fixed(fetchedAt, ZoneOffset.UTC)
 
@@ -62,6 +65,7 @@ class LuasRepositoryImplTest {
             stopsApi = stopsApi,
             forecastApi = forecastApi,
             stopsDao = stopsDao,
+            snapshotDao = snapshotDao,
             clock = clock
         )
     }

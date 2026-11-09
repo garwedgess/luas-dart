@@ -65,7 +65,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 alarmId
             )
             notificationManager.notify(NOTIFICATION_ID, notification)
-            alarmRepository.cancelAlarm()
+            alarmRepository.alarmFired()
         }
     }
 

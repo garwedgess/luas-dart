@@ -4,6 +4,7 @@ import com.wedgess.luas.DartStation
 import com.wedgess.luas.data.api.DartStationForecastApiService
 import com.wedgess.luas.data.api.DartStationsApiService
 import com.wedgess.luas.data.db.dao.DartStationDao
+import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
 import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toDepartures
 import com.wedgess.luas.data.mapper.toEntity
@@ -23,6 +24,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -49,6 +51,7 @@ class DartRepositoryImplTest {
     @RelaxedMockK
     private lateinit var stationsDao: DartStationDao
 
+    private val snapshotDao: DepartureSnapshotDao = mockk(relaxed = true)
     private val fetchedAt = Instant.parse("2026-11-09T22:00:00Z")
     private val clock = Clock.fixed(fetchedAt, ZoneOffset.UTC)
 
@@ -61,6 +64,7 @@ class DartRepositoryImplTest {
             stationsApi = stationsApi,
             forecastApi = forecastApi,
             stationsDao = stationsDao,
+            snapshotDao = snapshotDao,
             clock = clock
         )
     }

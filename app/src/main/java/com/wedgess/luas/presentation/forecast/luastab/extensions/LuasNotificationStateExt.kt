@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit
 fun LuasNotificationState.toEntity() = LuasNotificationEntity(
     dueInMins = dueInMins,
     station = station,
+    stationCode = stationCode,
     notifyMinutesBefore = notifyMinutesBefore,
     destination = destination
 )

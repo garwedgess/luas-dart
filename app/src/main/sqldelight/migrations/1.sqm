@@ -1,0 +1,50 @@
+CREATE TABLE DepartureSnapshot (
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    FetchedAtMillis INTEGER NOT NULL,
+    PRIMARY KEY (Transport, StationCode)
+);
+
+CREATE TABLE DepartureSnapshotItem (
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    Position INTEGER NOT NULL,
+    Direction TEXT NOT NULL,
+    Destination TEXT NOT NULL,
+    DueMins INTEGER,
+    ExpectedAtMillis INTEGER,
+    ScheduledAtMillis INTEGER,
+    LateMins INTEGER NOT NULL,
+    TripCode TEXT,
+    OperatingDate TEXT,
+    Status TEXT,
+    LastLocation TEXT,
+    PRIMARY KEY (Transport, StationCode, Position)
+);
+
+CREATE TABLE Alarm (
+    Id TEXT NOT NULL PRIMARY KEY,
+    Kind TEXT NOT NULL,
+    State TEXT NOT NULL,
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    Direction TEXT,
+    Destination TEXT,
+    NotifyMinutesBefore INTEGER NOT NULL,
+    TripCode TEXT,
+    OperatingDate TEXT,
+    TargetExpectedAtMillis INTEGER,
+    TargetObservedAtMillis INTEGER,
+    CreatedAtMillis INTEGER NOT NULL,
+    UpdatedAtMillis INTEGER NOT NULL
+);
+
+CREATE INDEX AlarmStateIndex ON Alarm(State);
+
+CREATE TABLE SelectedStation (
+    Slot TEXT NOT NULL PRIMARY KEY,
+    StationName TEXT NOT NULL
+);

@@ -5,8 +5,11 @@ import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.wedgess.luas.DartStation
 import com.wedgess.luas.LuasStop
 import com.wedgess.luas.data.LuasDatabase
+import com.wedgess.luas.data.db.dao.AlarmDao
 import com.wedgess.luas.data.db.dao.DartStationDao
+import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
 import com.wedgess.luas.data.db.dao.LuasStopDao
+import com.wedgess.luas.data.db.dao.SelectedStationDao
 import com.wedgess.luas.data.db.utils.doubleAdapter
 import com.wedgess.luas.data.db.utils.luasLineAdapter
 import com.wedgess.luas.data.db.utils.uuidAdapter
@@ -51,4 +54,16 @@ object DatabaseModule {
     @Singleton
     @Provides
     fun provideDartStationDao(db: LuasDatabase) = DartStationDao(db)
+
+    @Singleton
+    @Provides
+    fun provideDepartureSnapshotDao(db: LuasDatabase) = DepartureSnapshotDao(db)
+
+    @Singleton
+    @Provides
+    fun provideAlarmDao(db: LuasDatabase) = AlarmDao(db)
+
+    @Singleton
+    @Provides
+    fun provideSelectedStationDao(db: LuasDatabase) = SelectedStationDao(db)
 }
