@@ -18,6 +18,7 @@ fun MapScreen(uiResult: UiResult<MapContract.UiState>, onEvent: (MapContract.Eve
     uiResult.Compose(
         onLoading = { LoadingContent(title = "Loading map info...") },
         onError = { ErrorContent(title = "Failed to load map info: $it") },
+        onOffline = { ErrorContent(title = "Failed to load map info: $it") },
         onEmpty = { EmptyContent(title = "No map info...") },
         onSuccess = { uiState ->
             when (uiState.transportType) {

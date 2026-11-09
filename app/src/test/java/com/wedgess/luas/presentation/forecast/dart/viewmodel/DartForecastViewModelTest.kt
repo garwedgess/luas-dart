@@ -530,4 +530,13 @@ class DartForecastViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `a network failure with nothing to show is reported as offline, not as an error`() = runTest {
+        forecastResult = Result.failure(Exception("Network error occurred", java.io.IOException("no route")))
+
+        viewModel.uiResult.test {
+            assertEquals("Network error occurred", (awaitItem() as UiResult.Offline).message)
+        }
+    }
 }

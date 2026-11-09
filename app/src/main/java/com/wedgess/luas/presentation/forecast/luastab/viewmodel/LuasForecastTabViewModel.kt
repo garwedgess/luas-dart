@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
+import com.wedgess.luas.domain.isOffline
 import com.wedgess.luas.domain.model.AlarmKind
 import com.wedgess.luas.domain.model.AlarmRequest
 import com.wedgess.luas.domain.model.LuasLineEntity
@@ -101,7 +102,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                         }.map { polled ->
                             val departures = polled.displayable(clock.instant())
                             if (departures == null) {
-                                UiResult.Error(polled.error?.message ?: "Failed to fetch forecast")
+                                polled.error.toErrorResult()
                             } else {
                                 _uiState.update { it.copy(forecast = departures, isStale = !polled.isLive) }
                                 UiResult.Success(Unit)
@@ -129,6 +130,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             is UiResult.Success -> UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
             is UiResult.Error -> result
             is UiResult.Empty -> result
+            is UiResult.Offline -> result
             UiResult.Loading -> UiResult.Loading
         }
     }.stateIn(
@@ -235,4 +237,9 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         LuasLineEntity.RED -> preferencesRepository.fetchSelectedRedLineStation()
         LuasLineEntity.GREEN -> preferencesRepository.fetchSelectedGreenLineStation()
     }
+}
+
+private fun Throwable?.toErrorResult(): UiResult<Nothing> {
+    val message = this?.message ?: "Failed to fetch forecast"
+    return if (this?.isOffline() == true) UiResult.Offline(message) else UiResult.Error(message)
 }

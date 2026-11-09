@@ -17,6 +17,7 @@ import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
+import com.wedgess.luas.presentation.components.OfflineContent
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
@@ -46,6 +47,9 @@ fun DartForecastContent(
         },
         onError = {
             ErrorContent("Failed to load forecast", subTitle = it)
+        },
+        onOffline = {
+            OfflineContent(onRetry = { dartForecastViewModel.onEvent(DartForecastTabContract.Event.OnRefresh) })
         },
         onEmpty = {
             EmptyContent(it)

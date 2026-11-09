@@ -43,4 +43,7 @@
     <string name="station_all">All stations</string>
     <string name="station_add_favourite">Add %1$s to favourites</string>
     <string name="station_remove_favourite">Remove %1$s from favourites</string>
+    <string name="offline_title">You\'re offline</string>
+    <string name="offline_message">Live times need a connection. Departures will appear when you\'re back online.</string>
+    <string name="retry">Retry</string>
 </resources>

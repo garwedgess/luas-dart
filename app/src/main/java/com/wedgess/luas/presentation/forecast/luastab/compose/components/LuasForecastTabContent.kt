@@ -29,6 +29,7 @@ import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
+import com.wedgess.luas.presentation.components.OfflineContent
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
 import com.wedgess.luas.presentation.extensions.toClockTime
@@ -92,6 +93,9 @@ fun LuasForecastTabContent(
         },
         onError = {
             ErrorContent("Failed to load forecast", subTitle = it)
+        },
+        onOffline = {
+            OfflineContent(onRetry = { luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnRefresh) })
         },
         onEmpty = {
             EmptyContent(it)

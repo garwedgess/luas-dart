@@ -3,6 +3,7 @@ package com.wedgess.luas.presentation.forecast.dart.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
+import com.wedgess.luas.domain.isOffline
 import com.wedgess.luas.domain.model.AlarmKind
 import com.wedgess.luas.domain.model.AlarmRequest
 import com.wedgess.luas.domain.model.DartStationEntity
@@ -101,7 +102,7 @@ class DartForecastViewModel @Inject constructor(
                         }.combine(_expandedSections) { polled, expandedSections ->
                             val departures = polled.displayable(clock.instant())
                             if (departures == null) {
-                                UiResult.Error(polled.error?.message ?: "Failed to fetch forecast")
+                                polled.error.toErrorResult()
                             } else {
                                 UiResult.Success(
                                     _uiState.updateAndGet {
@@ -271,3 +272,8 @@ class DartForecastViewModel @Inject constructor(
 private val DART_DIRECTIONS = listOf(DepartureDirection.NORTHBOUND, DepartureDirection.SOUTHBOUND)
 
 private const val SECONDS_PER_MINUTE = 60L
+
+private fun Throwable?.toErrorResult(): UiResult<Nothing> {
+    val message = this?.message ?: "Failed to fetch forecast"
+    return if (this?.isOffline() == true) UiResult.Offline(message) else UiResult.Error(message)
+}
