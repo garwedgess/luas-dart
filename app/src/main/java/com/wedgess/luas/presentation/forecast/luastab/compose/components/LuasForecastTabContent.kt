@@ -30,6 +30,7 @@ import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
+import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.extensions.toClockTime
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
@@ -166,6 +167,17 @@ private fun LuasTramList(
         items(uiState.activeAlarms, key = { it.id }) { alarm ->
             LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)
         }
+        uiState.forecast.items.filter { it.dueMins != null && it.expectedAt != null }
+            .minByOrNull { requireNotNull(it.dueMins) }?.let { next ->
+                item {
+                    NextDepartureHeader(
+                        destination = next.destination,
+                        dueMins = requireNotNull(next.dueMins),
+                        expectedTime = requireNotNull(next.expectedAt).toClockTime(),
+                        stale = uiState.isStale
+                    )
+                }
+            }
         item {
             LuasForecastStatusMessage(
                 message = uiState.forecast.message,

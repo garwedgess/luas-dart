@@ -2,9 +2,13 @@ package com.wedgess.luas.presentation.forecast.dart.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wedgess.luas.domain.alarm.AlarmCoordinator
+import com.wedgess.luas.domain.model.AlarmKind
+import com.wedgess.luas.domain.model.AlarmRequest
 import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.Departures
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.model.displayable
 import com.wedgess.luas.domain.pollFlow
 import com.wedgess.luas.domain.repository.DartRepository
@@ -37,12 +41,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class DartForecastViewModel @Inject constructor(
     private val dartRepository: DartRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val alarmCoordinator: AlarmCoordinator,
     private val clock: Clock
 ) : ViewModel() {
 
@@ -67,7 +73,7 @@ class DartForecastViewModel @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiResult = stopsAndStationFlow
+    private val forecastResult = stopsAndStationFlow
         .flatMapLatest { stopsResult: Result<Pair<List<DartStationEntity>, DartStationEntity>> ->
             stopsResult.fold(
                 onSuccess = { (stops, selectedStop) ->
@@ -113,6 +119,14 @@ class DartForecastViewModel @Inject constructor(
                 }
             )
         }
+
+    private val activeDartAlarms = alarmCoordinator.observeActive()
+        .map { alarms -> alarms.filter { it.transport == TransportType.DART }.toImmutableList() }
+
+    // Dialog and alarm changes re-emit immediately; they must not wait for the next poll.
+    val uiResult = combine(forecastResult, _uiState, activeDartAlarms) { result, state, alarms ->
+        if (result is UiResult.Success) UiResult.Success(state.copy(activeAlarms = alarms)) else result
+    }
         .stateIn(
             viewModelScope,
             // Drop the cached value once unsubscribed so a resumed screen never shows old data as live.
@@ -146,7 +160,8 @@ class DartForecastViewModel @Inject constructor(
                             lastLocation = departure.lastLocation,
                             late = departure.lateMins,
                             expectedAt = departure.expectedAt?.toClockTime().orEmpty(),
-                            direction = departure.direction
+                            direction = departure.direction,
+                            operatingDate = departure.operatingDate
                         )
                     )
                 }.toImmutableList()
@@ -163,12 +178,71 @@ class DartForecastViewModel @Inject constructor(
         when (event) {
             is DartForecastTabContract.Event.OnStationSelected -> onStopSelected(event.stationName)
             DartForecastTabContract.Event.OnRefresh -> refreshTrigger.tryEmit(Unit)
+            is DartForecastTabContract.Event.OnShowAlarmDialog -> showAlarmDialog(event)
+            is DartForecastTabContract.Event.OnAlarmMinutesChanged -> _uiState.update { state ->
+                state.copy(alarmDraft = state.alarmDraft?.copy(notifyMinutesBefore = event.minutes))
+            }
+            is DartForecastTabContract.Event.OnStartAlarm -> startAlarm(event.minutes)
+            is DartForecastTabContract.Event.OnCancelAlarm -> viewModelScope.launch {
+                alarmCoordinator.cancel(event.alarmId)
+            }
+            DartForecastTabContract.Event.OnDismissAlarmDialog -> _uiState.update { it.copy(alarmDraft = null) }
+            DartForecastTabContract.Event.OnOpenExactAlarmSettings -> alarmCoordinator.openExactAlarmSettings()
             is DartForecastTabContract.Event.OnToggleSection -> {
                 _expandedSections.update { currentMap ->
                     val currentState = currentMap[event.id] ?: true
                     currentMap.put(event.id, !currentState)
                 }
             }
+        }
+    }
+
+    private fun showAlarmDialog(event: DartForecastTabContract.Event.OnShowAlarmDialog) {
+        val state = _uiState.value
+        // An alarm must never be derived from a countdown that is no longer live.
+        if (event.dueInMins <= 0 || state.isStale || event.tripCode.isBlank()) return
+        val station = state.stations.firstOrNull { it.name == state.selectedStation.text } ?: return
+        _uiState.update {
+            it.copy(
+                alarmDraft = DartForecastTabContract.AlarmDraft(
+                    requestId = UUID.randomUUID().toString(),
+                    tripCode = event.tripCode,
+                    operatingDate = event.operatingDate,
+                    destination = event.destination,
+                    direction = event.direction,
+                    stationName = station.name,
+                    stationCode = station.code,
+                    dueInMins = event.dueInMins,
+                    // The live result's time plus its minutes, not a countdown from whenever the dialog opened.
+                    expectedAt = it.fetchedAt.plusSeconds(event.dueInMins * SECONDS_PER_MINUTE),
+                    observedAt = it.fetchedAt,
+                    notifyMinutesBefore = event.dueInMins
+                ),
+                alarmCapabilities = alarmCoordinator.capabilities
+            )
+        }
+    }
+
+    private fun startAlarm(minutes: Int) {
+        val draft = _uiState.value.alarmDraft ?: return
+        _uiState.update { it.copy(alarmDraft = null) }
+        viewModelScope.launch {
+            alarmCoordinator.create(
+                AlarmRequest(
+                    requestId = draft.requestId,
+                    kind = AlarmKind.SPECIFIC_DEPARTURE,
+                    transport = TransportType.DART,
+                    stationCode = draft.stationCode,
+                    stationName = draft.stationName,
+                    direction = draft.direction,
+                    destination = draft.destination,
+                    notifyMinutesBefore = minutes,
+                    tripCode = draft.tripCode,
+                    operatingDate = draft.operatingDate,
+                    expectedAt = draft.expectedAt,
+                    observedAt = draft.observedAt
+                )
+            )
         }
     }
 
@@ -180,3 +254,5 @@ class DartForecastViewModel @Inject constructor(
 }
 
 private val DART_DIRECTIONS = listOf(DepartureDirection.NORTHBOUND, DepartureDirection.SOUTHBOUND)
+
+private const val SECONDS_PER_MINUTE = 60L

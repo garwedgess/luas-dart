@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,7 +36,8 @@ fun DartForecastItemRow(
     dueIn: Int,
     late: Int,
     modifier: Modifier = Modifier,
-    showCountdown: Boolean = true
+    showCountdown: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
     val animatedValue by animateIntAsState(
         targetValue = dueIn,
@@ -47,6 +49,9 @@ fun DartForecastItemRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (onClick != null) Modifier.clickable(onClickLabel = "Set reminder", onClick = onClick) else Modifier
+            )
             .padding(horizontal = 4.dp, vertical = 8.dp)
     ) {
         Row(

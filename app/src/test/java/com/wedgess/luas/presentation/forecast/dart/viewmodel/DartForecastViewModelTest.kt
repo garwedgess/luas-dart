@@ -2,6 +2,11 @@ package com.wedgess.luas.presentation.forecast.dart.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import com.wedgess.luas.domain.alarm.AlarmCoordinator
+import com.wedgess.luas.domain.model.Alarm
+import com.wedgess.luas.domain.model.AlarmCapabilities
+import com.wedgess.luas.domain.model.AlarmKind
+import com.wedgess.luas.domain.model.AlarmRequest
 import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.Departure
 import com.wedgess.luas.domain.model.DepartureDirection
@@ -16,6 +21,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,6 +58,11 @@ class DartForecastViewModelTest {
 
     @MockK
     private lateinit var preferencesRepository: PreferencesRepository
+
+    @MockK
+    private lateinit var alarmCoordinator: AlarmCoordinator
+
+    private val activeAlarms = MutableStateFlow<List<Alarm>>(emptyList())
 
     private lateinit var viewModel: DartForecastViewModel
 
@@ -122,9 +134,16 @@ class DartForecastViewModelTest {
         every { preferencesRepository.fetchSelectedDartStation() } returns selectedStationFlow
         coEvery { preferencesRepository.updateSelectedDartStation(any()) } returns Result.success(Unit)
 
+        every { alarmCoordinator.observeActive() } returns activeAlarms
+        every { alarmCoordinator.capabilities } returns AlarmCapabilities(exactAlarms = true, notifications = true)
+        every { alarmCoordinator.openExactAlarmSettings() } returns Unit
+        coEvery { alarmCoordinator.cancel(any()) } returns Result.success(true)
+        coEvery { alarmCoordinator.create(any()) } returns Result.success(mockk(relaxed = true))
+
         viewModel = DartForecastViewModel(
             dartRepository = dartRepository,
             preferencesRepository = preferencesRepository,
+            alarmCoordinator = alarmCoordinator,
             clock = clock
         )
     }
@@ -408,5 +427,70 @@ class DartForecastViewModelTest {
             assertEquals("22:05", row.expectedAt)
             assertEquals("22:03", row.scheduledAt)
         }
+    }
+
+    private val show = DartForecastTabContract.Event.OnShowAlarmDialog(
+        tripCode = "D123",
+        operatingDate = LocalDate.of(2026, 11, 9),
+        dueInMins = 8,
+        destination = "Bray",
+        direction = DepartureDirection.SOUTHBOUND
+    )
+
+    @Test
+    fun `starting an alarm sends the train code, operating date and live expected time`() = runTest {
+        val request = slot<AlarmRequest>()
+        coEvery { alarmCoordinator.create(capture(request)) } returns Result.success(mockk(relaxed = true))
+
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(show)
+            val draft = awaitState().alarmDraft!!
+            assertEquals("D123", draft.tripCode)
+            assertEquals(now.plusSeconds(480), draft.expectedAt)
+            viewModel.onEvent(DartForecastTabContract.Event.OnStartAlarm(3))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        with(request.captured) {
+            assertEquals(AlarmKind.SPECIFIC_DEPARTURE, kind)
+            assertEquals(TransportType.DART, transport)
+            assertEquals("CNLLY", stationCode)
+            assertEquals("D123", tripCode)
+            assertEquals(LocalDate.of(2026, 11, 9), operatingDate)
+            assertEquals(3, notifyMinutesBefore)
+            assertEquals(now.plusSeconds(480), expectedAt)
+        }
+    }
+
+    @Test
+    fun `no alarm dialog from stale data or a train that is already due`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(show.copy(dueInMins = 0))
+            forecastResult = Result.failure(Exception("offline"))
+            viewModel.onEvent(DartForecastTabContract.Event.OnRefresh)
+            assertTrue(awaitState().isStale)
+            viewModel.onEvent(show)
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `only DART alarms are listed and cancelling goes through the coordinator`() = runTest {
+        val dartAlarm = mockk<Alarm>(relaxed = true) {
+            every { transport } returns TransportType.DART
+            every { id } returns "d"
+        }
+        val luasAlarm = mockk<Alarm>(relaxed = true) { every { transport } returns TransportType.LUAS }
+        activeAlarms.value = listOf(dartAlarm, luasAlarm)
+
+        viewModel.uiResult.test {
+            assertEquals(listOf("d"), awaitState().activeAlarms.map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+        viewModel.onEvent(DartForecastTabContract.Event.OnCancelAlarm("d"))
+        coVerify { alarmCoordinator.cancel("d") }
     }
 }

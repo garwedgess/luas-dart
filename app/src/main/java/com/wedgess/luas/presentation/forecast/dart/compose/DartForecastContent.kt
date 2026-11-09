@@ -18,11 +18,15 @@ import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
+import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
+import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
 import com.wedgess.luas.presentation.forecast.dart.viewmodel.DartForecastViewModel
+import com.wedgess.luas.presentation.forecast.luastab.compose.components.LuasForecastAlarmRow
+import com.wedgess.luas.presentation.forecast.luastab.compose.dialogs.NotificationTimeDialog
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.presentation.model.DropdownItem
 
@@ -60,6 +64,19 @@ fun DartForecastContent(
                             DartForecastTabContract.Event.OnStationSelected(stop.text)
                         )
                     },
+                    onRowClick = { row ->
+                        dartForecastViewModel.onEvent(
+                            DartForecastTabContract.Event.OnShowAlarmDialog(
+                                tripCode = row.trainCode,
+                                operatingDate = row.operatingDate,
+                                dueInMins = row.dueIn,
+                                destination = row.destination,
+                                direction = row.direction
+                            )
+                        )
+                    },
+                    onCancelAlarm = { dartForecastViewModel.onEvent(DartForecastTabContract.Event.OnCancelAlarm(it)) },
+                    onEvent = dartForecastViewModel::onEvent,
                     onSectionToggle = { sectionId ->
                         dartForecastViewModel.onEvent(
                             DartForecastTabContract.Event.OnToggleSection(sectionId)
@@ -72,13 +89,29 @@ fun DartForecastContent(
 }
 
 @SuppressLint("ComposeModifierMissing")
+@Suppress("LongParameterList") // Stateless list: one callback per user action.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DartListContent(
     uiState: DartForecastTabContract.UiState,
     onSectionToggle: (Long) -> Unit,
-    onStopSelect: (DropdownItem) -> Unit
+    onStopSelect: (DropdownItem) -> Unit,
+    onRowClick: (DartForecastSectionRowData) -> Unit,
+    onCancelAlarm: (String) -> Unit,
+    onEvent: (DartForecastTabContract.Event) -> Unit
 ) {
+    uiState.alarmDraft?.let { draft ->
+        NotificationTimeDialog(
+            currentMinutes = draft.notifyMinutesBefore,
+            dueInMinutes = draft.dueInMins,
+            onMinutesChange = { onEvent(DartForecastTabContract.Event.OnAlarmMinutesChanged(it)) },
+            onConfirm = { onEvent(DartForecastTabContract.Event.OnStartAlarm(it)) },
+            onDismiss = { onEvent(DartForecastTabContract.Event.OnDismissAlarmDialog) },
+            exactAlarmsAllowed = uiState.alarmCapabilities.exactAlarms,
+            notificationsAllowed = uiState.alarmCapabilities.notifications,
+            onOpenSettings = { onEvent(DartForecastTabContract.Event.OnOpenExactAlarmSettings) }
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -96,6 +129,18 @@ fun DartListContent(
             selectedValue = uiState.selectedStation,
             onValueChange = onStopSelect
         )
+        uiState.activeAlarms.forEach { alarm ->
+            LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)
+        }
+        uiState.sectionedListState.sections.flatMap { it.items }.map { it.content }
+            .minByOrNull { it.dueIn }?.let { next ->
+                NextDepartureHeader(
+                    destination = next.destination,
+                    dueMins = next.dueIn,
+                    expectedTime = next.expectedAt,
+                    stale = uiState.isStale
+                )
+            }
         SectionedList(
             modifier = Modifier.fillMaxSize(),
             sectionHeader = { DartForecastHeader() },
@@ -108,7 +153,8 @@ fun DartListContent(
                 dueIn = rowData.dueIn,
                 scheduledTime = rowData.scheduledAt,
                 late = rowData.late,
-                showCountdown = !uiState.isStale
+                showCountdown = !uiState.isStale,
+                onClick = if (uiState.isStale) null else ({ onRowClick(rowData) })
             )
         }
     }
