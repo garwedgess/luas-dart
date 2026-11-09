@@ -2,16 +2,13 @@ package com.wedgess.luas.presentation.forecast.dart.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
-import com.wedgess.luas.domain.model.DartDirectionEntity
-import com.wedgess.luas.domain.model.DartLocationTypeEntity
 import com.wedgess.luas.domain.model.DartStationEntity
-import com.wedgess.luas.domain.model.DartStationForecastEntity
-import com.wedgess.luas.domain.model.RefreshMode
-import com.wedgess.luas.domain.model.RefreshState
-import com.wedgess.luas.domain.usecase.FetchAllDartStationsUseCase
-import com.wedgess.luas.domain.usecase.FetchDartStationForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedDartStationUseCase
-import com.wedgess.luas.domain.usecase.UpdateSelectedDartStationUseCase
+import com.wedgess.luas.domain.model.Departure
+import com.wedgess.luas.domain.model.DepartureDirection
+import com.wedgess.luas.domain.model.Departures
+import com.wedgess.luas.domain.model.TransportType
+import com.wedgess.luas.domain.repository.DartRepository
+import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.model.UiResult
 import io.mockk.MockKAnnotations
@@ -19,20 +16,26 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @ExperimentalCoroutinesApi
 class DartForecastViewModelTest {
@@ -43,18 +46,15 @@ class DartForecastViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @MockK
-    private lateinit var fetchAllDartStationsUseCase: FetchAllDartStationsUseCase
+    private lateinit var dartRepository: DartRepository
 
     @MockK
-    private lateinit var fetchDartStationForecastUseCase: FetchDartStationForecastUseCase
-
-    @MockK
-    private lateinit var updateSelectedDartStationsUseCase: UpdateSelectedDartStationUseCase
-
-    @MockK
-    private lateinit var fetchSelectedDartStationsUseCase: FetchSelectedDartStationUseCase
+    private lateinit var preferencesRepository: PreferencesRepository
 
     private lateinit var viewModel: DartForecastViewModel
+
+    private val now = Instant.parse("2026-11-09T22:00:00Z")
+    private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
     private val mockStations = listOf(
         DartStationEntity(
@@ -75,76 +75,54 @@ class DartForecastViewModelTest {
         )
     )
 
-    private val mockForecasts = listOf(
-        DartStationForecastEntity(
-            serverTime = "2025-06-26T21:35:15.323",
-            trainCode = "D123",
-            stationFullName = "Dublin Connolly",
-            stationCode = "CNLLY",
-            queryTime = "21:35:15",
-            trainDate = "02 Dec 2024",
-            origin = "Howth",
-            destination = "Bray",
-            originTime = "10:00",
-            destinationTime = "11:00",
-            status = "On Time",
-            lastLocation = "Howth Junction",
-            dueIn = 5,
-            late = 0,
-            expArrival = "10:30",
-            expDepart = "10:31",
-            schArrival = "10:30",
-            schDepart = "10:31",
-            trainType = "DART",
-            direction = DartDirectionEntity.SOUTHBOUND,
-            locationType = DartLocationTypeEntity.STOP
-        ),
-        DartStationForecastEntity(
-            serverTime = "2025-06-26T21:35:15.323",
-            trainCode = "D456",
-            stationFullName = "Dublin Connolly",
-            stationCode = "CNLLY",
-            queryTime = "21:35:15",
-            trainDate = "02 Dec 2024",
-            origin = "Bray",
-            destination = "Howth",
-            originTime = "10:15",
-            destinationTime = "11:15",
-            status = "On Time",
-            lastLocation = "Tara Street",
-            dueIn = 8,
-            late = 0,
-            expArrival = "10:45",
-            expDepart = "10:46",
-            schArrival = "10:45",
-            schDepart = "10:46",
-            trainType = "DART",
-            direction = DartDirectionEntity.NORTHBOUND,
-            locationType = DartLocationTypeEntity.STOP
-        )
+    private fun departure(
+        tripCode: String,
+        direction: DepartureDirection,
+        dueMins: Int = 5,
+        lateMins: Int = 0
+    ) = Departure(
+        transport = TransportType.DART,
+        direction = direction,
+        destination = "Bray",
+        dueMins = dueMins,
+        expectedAt = now.plusSeconds(dueMins * 60L),
+        scheduledAt = now.plusSeconds((dueMins - lateMins) * 60L),
+        lateMins = lateMins,
+        tripCode = tripCode,
+        operatingDate = LocalDate.of(2026, 11, 9),
+        status = "On Time",
+        lastLocation = "Howth Junction"
     )
 
-    private val stationsFlow = MutableStateFlow(Result.success(mockStations))
-    private val forecastFlow = MutableStateFlow<RefreshState<List<DartStationForecastEntity>>>(
-        RefreshState.Success(mockForecasts, 0f)
+    private fun departures(vararg items: Departure, fetchedAt: Instant = now) = Departures(
+        stationCode = "CNLLY",
+        stationName = "Dublin Connolly",
+        fetchedAt = fetchedAt,
+        message = "",
+        items = items.toList()
     )
+
+    private val southbound = departure("D123", DepartureDirection.SOUTHBOUND)
+    private val northbound = departure("D456", DepartureDirection.NORTHBOUND, dueMins = 8)
+
+    private val stationsFlow = MutableStateFlow(Result.success(mockStations))
     private val selectedStationFlow = MutableStateFlow("")
+    private var forecastResult: Result<Departures> = Result.success(departures(southbound, northbound))
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
 
-        every { fetchAllDartStationsUseCase() } returns stationsFlow
-        every { fetchDartStationForecastUseCase(any()) } returns forecastFlow
-        every { fetchSelectedDartStationsUseCase() } returns selectedStationFlow
-        coEvery { updateSelectedDartStationsUseCase(any()) } returns Result.success(Unit)
+        every { dartRepository.fetchStations() } returns stationsFlow
+        coEvery { dartRepository.fetchForecast(any()) } answers { forecastResult }
+        every { preferencesRepository.fetchSelectedDartStation() } returns selectedStationFlow
+        coEvery { preferencesRepository.updateSelectedDartStation(any()) } returns Result.success(Unit)
 
         viewModel = DartForecastViewModel(
-            fetchAllDartStationsUseCase = fetchAllDartStationsUseCase,
-            fetchDartStationForecastUseCase = fetchDartStationForecastUseCase,
-            updateSelectedDartStationsUseCase = updateSelectedDartStationsUseCase,
-            fetchSelectedDartStationsUseCase = fetchSelectedDartStationsUseCase
+            dartRepository = dartRepository,
+            preferencesRepository = preferencesRepository,
+            clock = clock
         )
     }
 
@@ -153,56 +131,42 @@ class DartForecastViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private suspend fun app.cash.turbine.ReceiveTurbine<UiResult<DartForecastTabContract.UiState>>.awaitState() =
+        (awaitItem() as UiResult.Success).data
+
     @Test
     fun `should select first station when no selected station is available`() = runTest {
-        // Given
         selectedStationFlow.value = ""
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            assertEquals(mockStations.first().code, state.selectedStation.code)
+            assertEquals(mockStations.first().name, awaitState().selectedStation.text)
         }
+        coVerify { dartRepository.fetchForecast("CNLLY") }
     }
 
     @Test
-    fun `should find and select matching station from selected station code`() = runTest {
-        // Given
-        selectedStationFlow.value = "PERSE"
+    fun `should find and select matching station from selected station name`() = runTest {
+        selectedStationFlow.value = "Dublin Pearse"
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            assertEquals("PERSE", state.selectedStation.code)
-            assertEquals("Dublin Pearse", state.selectedStation.name)
+            assertEquals("Dublin Pearse", awaitState().selectedStation.text)
         }
+        coVerify { dartRepository.fetchForecast("PERSE") }
     }
 
     @Test
     fun `should use initial station when selected station not found in stations list`() = runTest {
-        // Given
         selectedStationFlow.value = "NON_EXISTENT"
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            // Should default to DartStationEntity.initial()
-            assertEquals("", state.selectedStation.code)
+            assertEquals("", awaitState().selectedStation.text)
         }
     }
 
     @Test
     fun `should handle empty stations list gracefully`() = runTest {
-        // Given
         stationsFlow.value = Result.success(emptyList())
 
-        // Then
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Empty)
@@ -212,287 +176,212 @@ class DartForecastViewModelTest {
 
     @Test
     fun `should handle error when fetching stations`() = runTest {
-        // Given
-        val errorMsg = "Network error"
-        stationsFlow.value = Result.failure(Exception(errorMsg))
+        stationsFlow.value = Result.failure(Exception("Network error"))
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Error)
-            assertEquals(errorMsg, (result as UiResult.Error).message)
+            assertEquals("Network error", (awaitItem() as UiResult.Error).message)
         }
     }
 
     @Test
-    fun `should pass error from forecast to UI state`() = runTest {
-        // Given
-        val errorMsg = "Forecast error"
-        forecastFlow.value = RefreshState.Error(Exception(errorMsg))
+    fun `should handle null error message from stations exception`() = runTest {
+        stationsFlow.value = Result.failure(Exception())
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Error)
-            assertEquals(errorMsg, (result as UiResult.Error).message)
+            assertEquals("Failed to fetch stations", (awaitItem() as UiResult.Error).message)
         }
     }
 
     @Test
-    fun `should update progress in UI state when forecast refresh is in progress`() = runTest {
-        // Given
-        forecastFlow.value = RefreshState.Success(mockForecasts, 0.5f)
+    fun `should pass error from forecast to UI state when there is nothing to show`() = runTest {
+        forecastResult = Result.failure(Exception("Forecast error"))
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(0.5f, (result as UiResult.Success).data.refreshProgress)
+            assertEquals("Forecast error", (awaitItem() as UiResult.Error).message)
+        }
+    }
+
+    @Test
+    fun `should handle null error message from forecast exception`() = runTest {
+        forecastResult = Result.failure(Exception())
+
+        viewModel.uiResult.test {
+            assertEquals("Failed to fetch forecast", (awaitItem() as UiResult.Error).message)
+        }
+    }
+
+    @Test
+    fun `should expose the fetch time and a live state after a successful fetch`() = runTest {
+        viewModel.uiResult.test {
+            val state = awaitState()
+            assertFalse(state.isStale)
+            assertEquals(now, state.fetchedAt)
+        }
+    }
+
+    @Test
+    fun `should keep last data marked stale when a refresh fails`() = runTest {
+        viewModel.uiResult.test {
+            assertFalse(awaitState().isStale)
+
+            forecastResult = Result.failure(Exception("offline"))
+            viewModel.onEvent(DartForecastTabContract.Event.OnRefresh)
+
+            val stale = awaitState()
+            assertTrue(stale.isStale)
+            assertEquals(2, stale.sectionedListState.sections.sumOf { it.items.size })
+        }
+    }
+
+    @Test
+    fun `should drop trains already past and show an error once stale data is too old`() = runTest {
+        forecastResult = Result.success(departures(southbound, fetchedAt = now.minusSeconds(11 * 60L)))
+
+        viewModel.uiResult.test {
+            assertTrue(awaitItem() is UiResult.Success)
+
+            forecastResult = Result.failure(Exception("offline"))
+            viewModel.onEvent(DartForecastTabContract.Event.OnRefresh)
+
+            assertEquals("offline", (awaitItem() as UiResult.Error).message)
         }
     }
 
     @Test
     fun `should update selected station when OnStationSelected event is received`() = runTest {
-        // Given
-        val selectedStation = mockStations[1] // Dublin Pearse
+        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected(mockStations[1].name))
 
-        // When
-        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected(selectedStation))
-
-        // Then
-        coVerify { updateSelectedDartStationsUseCase(selectedStation.code) }
+        coVerify { preferencesRepository.updateSelectedDartStation("Dublin Pearse") }
     }
 
     @Test
-    fun `should trigger manual refresh when OnRefresh event is received`() = runTest {
-        every { fetchDartStationForecastUseCase.refresh(any()) } returns Unit
+    fun `should handle update of selected station failure gracefully`() = runTest {
+        coEvery { preferencesRepository.updateSelectedDartStation(any()) } returns
+            Result.failure(Exception("Database error"))
 
-        // When
-        viewModel.onEvent(DartForecastTabContract.Event.OnRefresh)
+        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected(mockStations[1].name))
+    }
 
-        // Then
-        verify { fetchDartStationForecastUseCase.refresh(RefreshMode.MANUAL) }
+    @Test
+    fun `should fetch again immediately when OnRefresh event is received`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(DartForecastTabContract.Event.OnRefresh)
+            runCurrent()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify(exactly = 2) { dartRepository.fetchForecast("CNLLY") }
+    }
+
+    @Test
+    fun `should poll every 40 seconds while observed`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            advanceTimeBy(DartForecastTabContract.REFRESH_INTERVAL_MILLIS + 1)
+            runCurrent()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify(exactly = 2) { dartRepository.fetchForecast("CNLLY") }
     }
 
     @Test
     fun `should create sections for all directions even when no forecasts exist`() = runTest {
-        // Given
-        forecastFlow.value = RefreshState.Success(emptyList(), 0f)
+        forecastResult = Result.success(departures())
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val sections = state.sectionedListState.sections
-
-            assertTrue(sections.any { it.title == DartDirectionEntity.NORTHBOUND.key })
-            assertTrue(sections.any { it.title == DartDirectionEntity.SOUTHBOUND.key })
+            val titles = awaitState().sectionedListState.sections.map { it.title }
+            assertEquals(listOf("Northbound", "Southbound"), titles)
         }
     }
 
     @Test
     fun `should group forecasts by direction correctly`() = runTest {
-        // Given
-        forecastFlow.value = RefreshState.Success(mockForecasts, 0f)
-
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val sections = state.sectionedListState.sections
+            val sections = awaitState().sectionedListState.sections
+            val northbound = sections.first { it.title == DepartureDirection.NORTHBOUND.key }
+            val southbound = sections.first { it.title == DepartureDirection.SOUTHBOUND.key }
 
-            val northboundSection = sections.first { it.title == DartDirectionEntity.NORTHBOUND.key }
-            val southboundSection = sections.first { it.title == DartDirectionEntity.SOUTHBOUND.key }
-
-            assertEquals(1, northboundSection.items.size)
-            assertEquals(1, southboundSection.items.size)
-            assertEquals("1 train", northboundSection.subTitle)
-            assertEquals("1 train", southboundSection.subTitle)
+            assertEquals(1, northbound.items.size)
+            assertEquals(1, southbound.items.size)
+            assertEquals("1 train", northbound.subTitle)
+            assertEquals("1 train", southbound.subTitle)
         }
     }
 
     @Test
     fun `should show correct subtitle for multiple trains`() = runTest {
-        // Given
-        val multipleTrains = mockForecasts + listOf(
-            mockForecasts[0].copy(trainCode = "D789", dueIn = 12),
-            mockForecasts[0].copy(trainCode = "D999", dueIn = 15)
+        forecastResult = Result.success(
+            departures(
+                southbound,
+                departure("D789", DepartureDirection.SOUTHBOUND, dueMins = 12),
+                departure("D999", DepartureDirection.SOUTHBOUND, dueMins = 15)
+            )
         )
-        forecastFlow.value = RefreshState.Success(multipleTrains, 0f)
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val sections = state.sectionedListState.sections
-
-            val southboundSection = sections.first { it.title == DartDirectionEntity.SOUTHBOUND.key }
+            val southboundSection = awaitState().sectionedListState.sections
+                .first { it.title == DepartureDirection.SOUTHBOUND.key }
             assertEquals("3 trains", southboundSection.subTitle)
         }
     }
 
     @Test
     fun `should show 'No trains' subtitle when direction has no forecasts`() = runTest {
-        // Given - only southbound trains
-        val southboundOnly = listOf(mockForecasts[0])
-        forecastFlow.value = RefreshState.Success(southboundOnly, 0f)
+        forecastResult = Result.success(departures(southbound))
 
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val sections = state.sectionedListState.sections
-
-            val northboundSection = sections.first { it.title == DartDirectionEntity.NORTHBOUND.key }
+            val northboundSection = awaitState().sectionedListState.sections
+                .first { it.title == DepartureDirection.NORTHBOUND.key }
             assertEquals("No trains", northboundSection.subTitle)
         }
     }
 
     @Test
+    fun `should ignore trains with an unknown direction`() = runTest {
+        forecastResult = Result.success(departures(departure("G1", DepartureDirection.UNKNOWN)))
+
+        viewModel.uiResult.test {
+            assertEquals(0, awaitState().sectionedListState.sections.sumOf { it.items.size })
+        }
+    }
+
+    @Test
     fun `should toggle section expansion state when OnToggleSection event is received`() = runTest {
-        // Given
-        val sectionId = DartDirectionEntity.NORTHBOUND.id
+        val sectionId = DepartureDirection.NORTHBOUND.id
 
-        // When - toggle section
         viewModel.onEvent(DartForecastTabContract.Event.OnToggleSection(sectionId))
-
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val expandedSections = state.sectionedListState.expandedSections
-
-            // Should be false (collapsed) since default is true
-            assertEquals(false, expandedSections[sectionId])
+            // Sections default to expanded, so the first toggle collapses.
+            assertEquals(false, awaitState().sectionedListState.expandedSections[sectionId])
         }
 
-        // When - toggle again
         viewModel.onEvent(DartForecastTabContract.Event.OnToggleSection(sectionId))
-
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val expandedSections = state.sectionedListState.expandedSections
-
-            // Should be true (expanded) again
-            assertEquals(true, expandedSections[sectionId])
+            assertEquals(true, awaitState().sectionedListState.expandedSections[sectionId])
         }
     }
 
     @Test
-    fun `should handle non-existent station when OnStationSelected is called`() = runTest {
-        // Given a station that's not in the list
-        val nonExistentStation = DartStationEntity(
-            id = 999,
-            name = "Non-existent Station",
-            alias = "NonExistent",
-            latitude = 0.0,
-            longitude = 0.0,
-            code = "NON"
-        )
+    fun `should map departure data correctly to section row data`() = runTest {
+        val late = departure("D123", DepartureDirection.SOUTHBOUND, dueMins = 5, lateMins = 2)
+        forecastResult = Result.success(departures(late))
 
-        // When
-        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected(nonExistentStation))
-
-        // Then should still attempt to update the selected station
-        coVerify { updateSelectedDartStationsUseCase(nonExistentStation.code) }
-    }
-
-    @Test
-    fun `should handle update of selected station failure gracefully`() = runTest {
-        // Given
-        coEvery { updateSelectedDartStationsUseCase(any()) } returns Result.failure(Exception("Database error"))
-
-        // When - should not crash
-        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected(mockStations[1]))
-
-        // Then - test should complete without exceptions
-    }
-
-    @Test
-    fun `should handle null error message from forecast exception`() = runTest {
-        // Given
-        forecastFlow.value = RefreshState.Error(Exception()) // No message
-
-        // Then
         viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Error)
-            assertEquals("Failed to fetch forecast", (result as UiResult.Error).message)
-        }
-    }
+            val row = awaitState().sectionedListState.sections
+                .first { it.title == DepartureDirection.SOUTHBOUND.key }.items.first().content
 
-    @Test
-    fun `should handle null error message from stations exception`() = runTest {
-        // Given
-        stationsFlow.value = Result.failure(Exception()) // No message
-
-        // Then
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Error)
-            assertEquals("Failed to fetch stations", (result as UiResult.Error).message)
-        }
-    }
-
-    @Test
-    fun `should map forecast data correctly to section row data`() = runTest {
-        // Given
-        val forecast = mockForecasts[0]
-        forecastFlow.value = RefreshState.Success(listOf(forecast), 0f)
-
-        // Then
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val sections = state.sectionedListState.sections
-
-            val southboundSection = sections.first { it.title == DartDirectionEntity.SOUTHBOUND.key }
-            val firstItem = southboundSection.items.first()
-
-            assertEquals(forecast.trainCode, firstItem.content.trainCode)
-            assertEquals(forecast.dueIn, firstItem.content.dueIn)
-            assertEquals(forecast.destination, firstItem.content.destination)
-            assertEquals(forecast.status, firstItem.content.status)
-            assertEquals(forecast.lastLocation, firstItem.content.lastLocation)
-            assertEquals(forecast.late, firstItem.content.late)
-            assertEquals(forecast.direction, firstItem.content.direction)
-        }
-    }
-
-    @Test
-    fun `should use correct scheduled and expected times based on location type`() = runTest {
-        // Given - Origin location type
-        val originForecast = mockForecasts[0].copy(
-            locationType = DartLocationTypeEntity.ORIGIN,
-            schArrival = "10:00",
-            schDepart = "10:01",
-            expArrival = "10:02",
-            expDepart = "10:03"
-        )
-        forecastFlow.value = RefreshState.Success(listOf(originForecast), 0f)
-
-        // Then
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            val state = (result as UiResult.Success).data
-            val sections = state.sectionedListState.sections
-
-            val southboundSection = sections.first { it.title == DartDirectionEntity.SOUTHBOUND.key }
-            val firstItem = southboundSection.items.first()
-
-            // For ORIGIN, should use departure times
-            assertEquals("10:01", firstItem.content.scheduledAt)
-            assertEquals("10:03", firstItem.content.expectedAt)
+            assertEquals("D123", row.trainCode)
+            assertEquals(5, row.dueIn)
+            assertEquals("Bray", row.destination)
+            assertEquals("On Time", row.status)
+            assertEquals("Howth Junction", row.lastLocation)
+            assertEquals(2, row.late)
+            assertEquals(DepartureDirection.SOUTHBOUND, row.direction)
+            // 22:00Z is 22:00 in Dublin in November (GMT); expected is 5 min later and scheduled 2 min earlier.
+            assertEquals("22:05", row.expectedAt)
+            assertEquals("22:03", row.scheduledAt)
         }
     }
 }

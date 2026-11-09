@@ -16,7 +16,7 @@ class LuasForecastApiServiceImpl @Inject constructor(val client: HttpClient) : L
             url {
                 host = "luasforecasts.rpa.ie"
                 encodedPath = "xml/get.ashx"
-                protocol = URLProtocol.HTTP
+                protocol = URLProtocol.HTTPS
                 parameters["action"] = "forecast"
                 parameters["stop"] = stopAbrv
                 parameters["encrypt"] = false.toString()

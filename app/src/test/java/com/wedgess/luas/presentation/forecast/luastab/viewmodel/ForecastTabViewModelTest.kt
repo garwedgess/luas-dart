@@ -2,20 +2,19 @@ package com.wedgess.luas.presentation.forecast.luastab.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
-import com.wedgess.luas.domain.model.LuasForecastEntity
+import com.wedgess.luas.domain.model.Departure
+import com.wedgess.luas.domain.model.DepartureDirection
+import com.wedgess.luas.domain.model.Departures
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.domain.model.RefreshMode
-import com.wedgess.luas.domain.model.RefreshState
+import com.wedgess.luas.domain.model.TransportType
+import com.wedgess.luas.domain.repository.LuasRepository
+import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
 import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
 import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopsUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
 import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
-import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
 import com.wedgess.luas.presentation.model.UiResult
@@ -36,10 +35,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.UUID
 
 @ExperimentalCoroutinesApi
@@ -52,16 +55,10 @@ class ForecastTabViewModelTest {
     private val luasLine = LuasLineEntity.GREEN
 
     @MockK
-    private lateinit var fetchLuasStopsUseCase: FetchLuasStopsUseCase
+    private lateinit var luasRepository: LuasRepository
 
     @MockK
-    private lateinit var fetchLuasStopForecastUseCase: FetchLuasStopForecastUseCase
-
-    @MockK
-    private lateinit var updateSelectedLuasStopUseCase: UpdateSelectedLuasStopUseCase
-
-    @MockK
-    private lateinit var fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase
+    private lateinit var preferencesRepository: PreferencesRepository
 
     @MockK
     private lateinit var canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase
@@ -103,18 +100,27 @@ class ForecastTabViewModelTest {
         )
     )
 
-    private val mockForecast = LuasForecastEntity(
+    private val now = Instant.parse("2026-11-09T22:00:00Z")
+    private val clock = Clock.fixed(now, ZoneOffset.UTC)
+
+    private val mockForecast = Departures(
+        stationCode = "STA",
+        stationName = "St. Stephens Green",
+        fetchedAt = now,
         message = "Trams operating normally",
-        stop = "St. Stephens Green",
-        createdAt = "2025-03-02T21:48:50",
-        inboundTrams = emptyList(),
-        outboundTrams = emptyList(),
-        stopAbv = "STS"
+        items = listOf(
+            Departure(
+                transport = TransportType.LUAS,
+                direction = DepartureDirection.INBOUND,
+                destination = "Broombridge",
+                dueMins = 2,
+                expectedAt = now.plusSeconds(120)
+            )
+        )
     )
 
     private val stopsFlow = MutableStateFlow(Result.success(mockStops))
-    private val forecastFlow =
-        MutableStateFlow<RefreshState<LuasForecastEntity>>(RefreshState.Success(mockForecast, 0f))
+    private var forecastResult: Result<Departures> = Result.success(mockForecast)
     private val selectedStationFlow = MutableStateFlow("")
     private val isAlarmRunningFlow = MutableStateFlow(false)
 
@@ -123,25 +129,25 @@ class ForecastTabViewModelTest {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
 
-        every { fetchLuasStopsUseCase(any()) } returns stopsFlow
-        every { fetchLuasStopForecastUseCase(any()) } returns forecastFlow
-        every { fetchSelectedLuasStopUseCase(any()) } returns selectedStationFlow
+        every { luasRepository.fetchStops(any()) } returns stopsFlow
+        coEvery { luasRepository.fetchForecast(any()) } answers { forecastResult }
+        every { preferencesRepository.fetchSelectedGreenLineStation() } returns selectedStationFlow
+        every { preferencesRepository.fetchSelectedRedLineStation() } returns selectedStationFlow
         every { isAlarmRunningUseCase() } returns isAlarmRunningFlow
-        coEvery { updateSelectedLuasStopUseCase(any(), any()) } returns Result.success(Unit)
+        coEvery { preferencesRepository.updateSelectedGreenLineStation(any()) } returns Result.success(Unit)
         every { canScheduleExactAlarmsUseCase() } returns false
         every { cancelAlarmUseCase() } returns Unit
         coEvery { scheduleAlarmUseCase(any(), any()) } returns Result.success(0L)
 
         viewModel = LuasForecastTabViewModel(
             luasLine = luasLine,
-            fetchLuasStopsUseCase = fetchLuasStopsUseCase,
-            fetchLuasStopForecastUseCase = fetchLuasStopForecastUseCase,
-            updateSelectedLuasStopUseCase = updateSelectedLuasStopUseCase,
+            luasRepository = luasRepository,
+            preferencesRepository = preferencesRepository,
+            clock = clock,
             canScheduleExactAlarmsUseCase = canScheduleExactAlarmsUseCase,
             cancelAlarmUseCase = cancelAlarmUseCase,
             scheduleAlarmUseCase = scheduleAlarmUseCase,
             isAlarmRunningUseCase = isAlarmRunningUseCase,
-            fetchSelectedLuasStopUseCase = fetchSelectedLuasStopUseCase,
             requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase
         )
     }
@@ -161,22 +167,21 @@ class ForecastTabViewModelTest {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
             val state = (result as UiResult.Success).data
-            assertEquals(mockStops.first().abbreviation, state.selectedStop.abbreviation)
+            assertEquals(mockStops.first().name, state.selectedStop.text)
         }
     }
 
     @Test
     fun `should find and select matching stop from selected station abbreviation`() = runTest {
         // Given
-        selectedStationFlow.value = "HAR"
+        selectedStationFlow.value = "Harcourt"
 
         // Then
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
             val state = (result as UiResult.Success).data
-            assertEquals("HAR", state.selectedStop.abbreviation)
-            assertEquals("Harcourt", state.selectedStop.name)
+            assertEquals("Harcourt", state.selectedStop.text)
         }
     }
 
@@ -191,7 +196,7 @@ class ForecastTabViewModelTest {
             assertTrue(result is UiResult.Success)
             val state = (result as UiResult.Success).data
             // Should default to StopEntity.initial()
-            assertEquals("", state.selectedStop.abbreviation)
+            assertEquals("", state.selectedStop.text)
         }
     }
 
@@ -226,7 +231,7 @@ class ForecastTabViewModelTest {
     fun `should pass error from forecast to UI state`() = runTest {
         // Given
         val errorMsg = "Forecast error"
-        forecastFlow.value = RefreshState.Error(Exception(errorMsg))
+        forecastResult = Result.failure(Exception(errorMsg))
 
         // Then
         viewModel.uiResult.test {
@@ -237,16 +242,64 @@ class ForecastTabViewModelTest {
     }
 
     @Test
-    fun `should update progress in UI state when forecast refresh is in progress`() = runTest {
-        // Given
-        forecastFlow.value = RefreshState.Success(mockForecast, 0.5f)
-
-        // Then
+    fun `should expose departures from the latest live fetch`() = runTest {
         viewModel.uiResult.test {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
-            assertEquals(0.5f, (result as UiResult.Success).data.refreshProgress)
+            val state = (result as UiResult.Success).data
+            assertEquals(mockForecast, state.forecast)
+            assertFalse(state.isStale)
         }
+    }
+
+    @Test
+    fun `should keep last data marked stale when a refresh fails and drop departures already past`() = runTest {
+        val pastDeparture = mockForecast.items.first().copy(destination = "Past", expectedAt = now.minusSeconds(30))
+        forecastResult = Result.success(mockForecast.copy(items = mockForecast.items + pastDeparture))
+
+        viewModel.uiResult.test {
+            assertFalse((awaitItem() as UiResult.Success).data.isStale)
+
+            forecastResult = Result.failure(Exception("offline"))
+            viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
+
+            val stale = (awaitItem() as UiResult.Success).data
+            assertTrue(stale.isStale)
+            assertEquals(listOf("Broombridge"), stale.forecast.items.map { it.destination })
+        }
+    }
+
+    @Test
+    fun `should show an error once stale data is older than the maximum age`() = runTest {
+        forecastResult = Result.success(mockForecast.copy(fetchedAt = now.minusSeconds(11 * 60L)))
+
+        viewModel.uiResult.test {
+            assertTrue(awaitItem() is UiResult.Success)
+
+            forecastResult = Result.failure(Exception("offline"))
+            viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
+
+            assertEquals("offline", (awaitItem() as UiResult.Error).message)
+        }
+    }
+
+    @Test
+    fun `should not offer an alarm from stale data`() = runTest {
+        every { canScheduleExactAlarmsUseCase() } returns true
+
+        viewModel.uiResult.test {
+            awaitItem()
+            forecastResult = Result.failure(Exception("offline"))
+            viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
+            assertTrue((awaitItem() as UiResult.Success).data.isStale)
+
+            viewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge"))
+            expectNoEvents()
+        }
+        assertEquals(
+            LuasForecastTabDialogState.None,
+            viewModel.uiResult.value.let { (it as UiResult.Success).data.dialog }
+        )
     }
 
     @Test
@@ -255,10 +308,10 @@ class ForecastTabViewModelTest {
         val selectedStop = mockStops[1] // Harcourt
 
         // When
-        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(selectedStop))
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(selectedStop.name))
 
         // Then
-        coVerify { updateSelectedLuasStopUseCase(selectedStop.abbreviation, selectedStop.line) }
+        coVerify { preferencesRepository.updateSelectedGreenLineStation(selectedStop.name) }
     }
 
     @Test
@@ -275,13 +328,27 @@ class ForecastTabViewModelTest {
     }
 
     @Test
-    fun `should trigger manual refresh when OnRefresh event is received`() = runTest {
-        every { fetchLuasStopForecastUseCase.refresh(any()) } returns Unit
-        // When
-        viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
+    fun `should fetch again immediately when OnRefresh event is received`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
+            runCurrent()
+            cancelAndIgnoreRemainingEvents()
+        }
 
-        // Then
-        verify { fetchLuasStopForecastUseCase.refresh(RefreshMode.MANUAL) }
+        coVerify(exactly = 2) { luasRepository.fetchForecast("STA") }
+    }
+
+    @Test
+    fun `should poll every 15 seconds while observed`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            advanceTimeBy(LuasForecastTabContract.REFRESH_INTERVAL_MILLIS + 1)
+            runCurrent()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify(exactly = 2) { luasRepository.fetchForecast("STA") }
     }
 
     @Test
@@ -370,10 +437,10 @@ class ForecastTabViewModelTest {
         )
 
         // When
-        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(nonExistentStop))
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(nonExistentStop.name))
 
         // Then should still attempt to update the selected station
-        coVerify { updateSelectedLuasStopUseCase(nonExistentStop.abbreviation, nonExistentStop.line) }
+        coVerify { preferencesRepository.updateSelectedGreenLineStation(nonExistentStop.name) }
     }
 
     @Test
@@ -412,10 +479,12 @@ class ForecastTabViewModelTest {
     @Test
     fun `should handle update of selected station failure gracefully`() = runTest {
         // Given
-        coEvery { updateSelectedLuasStopUseCase(any(), any()) } returns Result.failure(Exception("Database error"))
+        coEvery {
+            preferencesRepository.updateSelectedGreenLineStation(any())
+        } returns Result.failure(Exception("Database error"))
 
         // When - should not crash
-        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(mockStops[1]))
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(mockStops[1].name))
 
         // Then - test should complete without exceptions
     }
@@ -460,7 +529,7 @@ class ForecastTabViewModelTest {
     @Test
     fun `should handle null error message from forecast exception`() = runTest {
         // Given
-        forecastFlow.value = RefreshState.Error(Exception()) // No message
+        forecastResult = Result.failure(Exception()) // No message
 
         // Then
         viewModel.uiResult.test {

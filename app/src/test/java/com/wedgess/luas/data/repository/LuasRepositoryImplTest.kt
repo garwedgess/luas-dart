@@ -6,6 +6,7 @@ import com.wedgess.luas.data.api.LuasStopApiService
 import com.wedgess.luas.data.db.dao.LuasStopDao
 import com.wedgess.luas.data.mapper.fromEntity
 import com.wedgess.luas.data.mapper.toDao
+import com.wedgess.luas.data.mapper.toDepartures
 import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.model.LuasDirectionKeyData
 import com.wedgess.luas.data.model.LuasLineData
@@ -32,6 +33,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.UUID
 
 @ExperimentalCoroutinesApi
@@ -46,6 +50,9 @@ class LuasRepositoryImplTest {
     @RelaxedMockK
     private lateinit var stopsDao: LuasStopDao
 
+    private val fetchedAt = Instant.parse("2026-11-09T22:00:00Z")
+    private val clock = Clock.fixed(fetchedAt, ZoneOffset.UTC)
+
     private lateinit var repository: LuasRepositoryImpl
 
     @Before
@@ -54,7 +61,8 @@ class LuasRepositoryImplTest {
         repository = LuasRepositoryImpl(
             stopsApi = stopsApi,
             forecastApi = forecastApi,
-            stopsDao = stopsDao
+            stopsDao = stopsDao,
+            clock = clock
         )
     }
 
@@ -218,7 +226,7 @@ class LuasRepositoryImplTest {
                 )
             )
         )
-        val expectedForecast = forecastResponse.toEntity()
+        val expectedForecast = forecastResponse.toDepartures(fetchedAt)
         coEvery { forecastApi.fetchForecast(stopAbv) } returns Result.success(forecastResponse)
 
         val result = repository.fetchForecast(stopAbv)

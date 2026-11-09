@@ -7,6 +7,7 @@ import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowD
 import com.wedgess.luas.presentation.model.DropdownItem
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import java.time.Instant
 
 interface DartForecastTabContract {
 
@@ -16,7 +17,9 @@ interface DartForecastTabContract {
         ),
         val stations: ImmutableList<DartStationEntity> = persistentListOf(),
         val selectedStation: DropdownItem = DartDropdownItem.default,
-        val refreshProgress: Float = 0f,
+        /** True when the latest refresh failed, so the rows are the last live result and show no countdown. */
+        val isStale: Boolean = false,
+        val fetchedAt: Instant = Instant.EPOCH,
         val dropdownOptions: ImmutableList<DropdownItem> = persistentListOf()
     )
 
@@ -24,5 +27,9 @@ interface DartForecastTabContract {
         data class OnStationSelected(val stationName: String) : Event
         data object OnRefresh : Event
         data class OnToggleSection(val id: Long) : Event
+    }
+
+    companion object {
+        const val REFRESH_INTERVAL_MILLIS = 40_000L
     }
 }

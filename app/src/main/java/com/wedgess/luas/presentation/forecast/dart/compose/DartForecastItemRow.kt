@@ -34,7 +34,8 @@ fun DartForecastItemRow(
     eta: String,
     dueIn: Int,
     late: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showCountdown: Boolean = true
 ) {
     val animatedValue by animateIntAsState(
         targetValue = dueIn,
@@ -74,10 +75,10 @@ fun DartForecastItemRow(
         )
         Text(
             modifier = Modifier.weight(0.2f),
-            text = if (animatedValue == 0) {
-                stringResource(R.string.now)
-            } else {
-                pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
+            text = when {
+                !showCountdown -> ""
+                animatedValue == 0 -> stringResource(R.string.now)
+                else -> pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
             },
             style = MaterialTheme.typography.bodyMedium
         )

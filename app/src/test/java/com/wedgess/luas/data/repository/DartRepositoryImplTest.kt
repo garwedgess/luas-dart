@@ -5,6 +5,7 @@ import com.wedgess.luas.data.api.DartStationForecastApiService
 import com.wedgess.luas.data.api.DartStationsApiService
 import com.wedgess.luas.data.db.dao.DartStationDao
 import com.wedgess.luas.data.mapper.toDao
+import com.wedgess.luas.data.mapper.toDepartures
 import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.model.DartDirectionData
 import com.wedgess.luas.data.model.DartLocationTypeData
@@ -32,6 +33,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 @ExperimentalCoroutinesApi
 class DartRepositoryImplTest {
@@ -45,6 +49,9 @@ class DartRepositoryImplTest {
     @RelaxedMockK
     private lateinit var stationsDao: DartStationDao
 
+    private val fetchedAt = Instant.parse("2026-11-09T22:00:00Z")
+    private val clock = Clock.fixed(fetchedAt, ZoneOffset.UTC)
+
     private lateinit var repository: DartRepository
 
     @Before
@@ -53,7 +60,8 @@ class DartRepositoryImplTest {
         repository = DartRepositoryImpl(
             stationsApi = stationsApi,
             forecastApi = forecastApi,
-            stationsDao = stationsDao
+            stationsDao = stationsDao,
+            clock = clock
         )
     }
 
@@ -230,7 +238,7 @@ class DartRepositoryImplTest {
                 )
             )
         )
-        val expectedForecast = forecastResponse.toEntity()
+        val expectedForecast = forecastResponse.toDepartures(fetchedAt)
         coEvery { forecastApi.fetchForecast(stopAbv) } returns Result.success(forecastResponse)
 
         val result = repository.fetchForecast(stopAbv)

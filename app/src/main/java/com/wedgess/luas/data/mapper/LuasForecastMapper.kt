@@ -2,33 +2,49 @@ package com.wedgess.luas.data.mapper
 
 import com.wedgess.luas.data.model.LuasDirectionKeyData
 import com.wedgess.luas.data.model.LuasStopForcastResponseData
-import com.wedgess.luas.domain.model.LuasForecastEntity
+import com.wedgess.luas.domain.model.Departure
+import com.wedgess.luas.domain.model.DepartureDirection
+import com.wedgess.luas.domain.model.Departures
+import com.wedgess.luas.domain.model.TransportType
+import java.time.Instant
 
 private const val NO_TRAMS_NEWS_MSG = "See news for information"
 private const val NO_TRAMS_MSG = "No trams forecast"
+private const val SECONDS_PER_MINUTE = 60L
 
-fun LuasStopForcastResponseData.toEntity() = LuasForecastEntity(
-    createdAt = this.created,
-    stop = this.stop,
-    stopAbv = this.stopAbv,
-    message = this.message,
-    inboundTrams = this.direction.filter { it.name == LuasDirectionKeyData.INBOUND }
-        .flatMap { data -> data.tram.map { tram -> tram.toEntity() } }
-        .filterNot { tram ->
-            tram.destination == NO_TRAMS_MSG || tram.destination == NO_TRAMS_NEWS_MSG
-        },
-    outboundTrams = this.direction.filter { it.name == LuasDirectionKeyData.OUTBOUND }
-        .flatMap { data -> data.tram.map { tram -> tram.toEntity() } }
-        .filterNot { tram ->
-            tram.destination == NO_TRAMS_MSG || tram.destination == NO_TRAMS_NEWS_MSG
-        }
+fun LuasStopForcastResponseData.toDepartures(fetchedAt: Instant) = Departures(
+    stationCode = stopAbv,
+    stationName = stop,
+    fetchedAt = fetchedAt,
+    message = message,
+    items = direction.flatMap { directionData ->
+        val departureDirection = directionData.name.toDirection()
+        directionData.tram
+            .filterNot { it.destination == NO_TRAMS_MSG || it.destination == NO_TRAMS_NEWS_MSG }
+            .map { it.toDeparture(departureDirection, fetchedAt) }
+    }
 )
 
-fun LuasStopForcastResponseData.DirectionData.TramData.toEntity() = LuasForecastEntity.TramEntity(
-    dueMins = if (this.destination.contains(" service", ignoreCase = true)) {
-        -1
+private fun LuasDirectionKeyData.toDirection() = when (this) {
+    LuasDirectionKeyData.INBOUND -> DepartureDirection.INBOUND
+    LuasDirectionKeyData.OUTBOUND -> DepartureDirection.OUTBOUND
+}
+
+private fun LuasStopForcastResponseData.DirectionData.TramData.toDeparture(
+    direction: DepartureDirection,
+    fetchedAt: Instant
+): Departure {
+    // Service messages ("... service ...") are shown in the tram list but carry no countdown.
+    val dueMins = if (destination.contains(" service", ignoreCase = true)) {
+        null
     } else {
-        this.dueMins.toIntOrNull() ?: 0
-    },
-    destination = this.destination
-)
+        dueMins.toIntOrNull() ?: 0
+    }
+    return Departure(
+        transport = TransportType.LUAS,
+        direction = direction,
+        destination = destination,
+        dueMins = dueMins,
+        expectedAt = dueMins?.let { fetchedAt.plusSeconds(it * SECONDS_PER_MINUTE) }
+    )
+}

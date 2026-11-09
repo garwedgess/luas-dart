@@ -19,7 +19,7 @@ class DartStationForecastApiServiceImpl @Inject constructor(val client: HttpClie
             url {
                 host = "api.irishrail.ie"
                 encodedPath = "realtime/realtime.asmx/getStationDataByCodeXML_WithNumMins"
-                protocol = URLProtocol.HTTP
+                protocol = URLProtocol.HTTPS
                 parameters["StationCode"] = stationCode
                 parameters["NumMins"] = numMinutes.toString()
             }

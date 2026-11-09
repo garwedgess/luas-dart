@@ -18,6 +18,7 @@ import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
+import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
@@ -27,8 +28,9 @@ import com.wedgess.luas.presentation.model.DropdownItem
 
 @Composable
 fun DartForecastContent(
-    dartForecastViewModel: DartForecastViewModel = hiltViewModel(),
-    setRefreshAction: (() -> Unit) -> Unit
+    setRefreshAction: (() -> Unit) -> Unit,
+    modifier: Modifier = Modifier,
+    dartForecastViewModel: DartForecastViewModel = hiltViewModel()
 ) {
     val uiResult by dartForecastViewModel.uiResult.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
@@ -46,8 +48,11 @@ fun DartForecastContent(
             EmptyContent(it)
         },
         onSuccess = { uiState ->
-            Column {
-                RefreshProgressIndicator(refreshProgress = uiState.refreshProgress)
+            Column(modifier) {
+                RefreshProgressIndicator(
+                    cycleKey = uiState.fetchedAt,
+                    intervalMillis = DartForecastTabContract.REFRESH_INTERVAL_MILLIS
+                )
                 DartListContent(
                     uiState = uiState,
                     onStopSelect = { stop ->
@@ -80,6 +85,9 @@ fun DartListContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (uiState.isStale) {
+            StaleDataBanner(lastUpdated = uiState.fetchedAt)
+        }
         DropdownTextField(
             modifier = Modifier.fillMaxWidth(),
             label = "Station",
@@ -99,7 +107,8 @@ fun DartListContent(
                 eta = rowData.expectedAt,
                 dueIn = rowData.dueIn,
                 scheduledTime = rowData.scheduledAt,
-                late = rowData.late
+                late = rowData.late,
+                showCountdown = !uiState.isStale
             )
         }
     }

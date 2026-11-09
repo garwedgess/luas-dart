@@ -1,0 +1,141 @@
+package com.wedgess.luas.domain
+
+import app.cash.turbine.test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import kotlin.random.Random
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class PollingTest {
+
+    private val interval = 15_000L
+    private val backoff = listOf(1_000L, 2_000L, 4_000L)
+
+    private fun <T> poll(refresh: kotlinx.coroutines.flow.Flow<Unit> = emptyFlow(), fetch: suspend () -> Result<T>) =
+        pollFlow(interval, refresh, backoff, Random(0), fetch)
+
+    @Test
+    fun `fetches immediately then once per interval`() = runTest {
+        var calls = 0
+        poll { Result.success(++calls) }.test {
+            assertEquals(1, awaitItem().data)
+            expectNoEvents()
+            advanceTimeBy(interval - 1)
+            expectNoEvents()
+            advanceTimeBy(1)
+            assertEquals(2, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `keeps last data and reports the error when a fetch fails`() = runTest {
+        val results = ArrayDeque(listOf(Result.success("live"), Result.failure<String>(IllegalStateException("down"))))
+        poll { results.removeFirst() }.test {
+            assertEquals(Polled("live"), awaitItem())
+            advanceTimeBy(interval)
+            val failed = awaitItem()
+            assertEquals("live", failed.data)
+            assertEquals("down", failed.error?.message)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `reports an error without data when the first fetch fails`() = runTest {
+        poll<String> { Result.failure(IllegalStateException("down")) }.test {
+            val first = awaitItem()
+            assertNull(first.data)
+            assertEquals("down", first.error?.message)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    /** Virtual-time gaps (ms) between consecutive fetches when each fetch returns the next scripted result. */
+    private fun TestScope.fetchGaps(results: List<Result<Int>>, runForMillis: Long): List<Long> {
+        val queue = ArrayDeque(results)
+        val times = mutableListOf<Long>()
+        val job = launch {
+            poll {
+                times += testScheduler.currentTime
+                queue.removeFirstOrNull() ?: Result.failure(Exception("end"))
+            }
+                .collect { }
+        }
+        testScheduler.advanceTimeBy(runForMillis)
+        testScheduler.runCurrent()
+        job.cancel()
+        return times.zipWithNext { a, b -> b - a }
+    }
+
+    @Test
+    fun `retries with increasing backoff capped at the last step`() = runTest {
+        val gaps = fetchGaps(results = emptyList(), runForMillis = 30_000)
+
+        // Each wait is the backoff step plus at most 20% jitter, never the 15s polling interval.
+        assertTrue(gaps[0] in 1_000L..1_200L)
+        assertTrue(gaps[1] in 2_000L..2_400L)
+        assertTrue(gaps[2] in 4_000L..4_800L)
+        assertTrue("capped at the last step", gaps.drop(2).all { it in 4_000L..4_800L })
+    }
+
+    @Test
+    fun `backoff resets to the first step after a success`() = runTest {
+        val gaps = fetchGaps(
+            results = listOf(
+                Result.failure(Exception("1")),
+                Result.failure(Exception("2")),
+                Result.success(3),
+                Result.failure(Exception("4"))
+            ),
+            runForMillis = 25_000
+        )
+
+        assertTrue(gaps[0] in 1_000L..1_200L)
+        assertTrue(gaps[1] in 2_000L..2_400L)
+        assertEquals("a success waits for the normal interval", interval, gaps[2])
+        assertTrue("then the failure starts from the first step again", gaps[3] in 1_000L..1_200L)
+    }
+
+    @Test
+    fun `a refresh request fetches immediately instead of waiting for the interval`() = runTest {
+        val refresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        var calls = 0
+        poll(refresh) { Result.success(++calls) }.test {
+            assertEquals(1, awaitItem().data)
+            refresh.tryEmit(Unit)
+            assertEquals(2, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `stops fetching once the collector is cancelled`() = runTest {
+        var calls = 0
+        poll { Result.success(++calls) }.test {
+            awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+        advanceTimeBy(interval * 4)
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `emits the successful value instance unchanged`() = runTest {
+        val value = Any()
+        poll { Result.success(value) }.test {
+            assertSame(value, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+}

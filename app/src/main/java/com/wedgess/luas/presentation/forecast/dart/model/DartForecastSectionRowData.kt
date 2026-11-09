@@ -1,6 +1,6 @@
 package com.wedgess.luas.presentation.forecast.dart.model
 
-import com.wedgess.luas.domain.model.DartDirectionEntity
+import com.wedgess.luas.domain.model.DepartureDirection
 
 data class DartForecastSectionRowData(
     val trainCode: String,
@@ -11,5 +11,5 @@ data class DartForecastSectionRowData(
     val late: Int,
     val expectedAt: String,
     val scheduledAt: String,
-    val direction: DartDirectionEntity
+    val direction: DepartureDirection
 )

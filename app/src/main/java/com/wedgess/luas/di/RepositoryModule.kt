@@ -22,6 +22,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -33,18 +34,20 @@ object RepositoryModule {
     fun provideLuasRepository(
         stopsApiService: LuasStopApiService,
         forecastApiService: LuasForecastApiService,
-        stopsDao: LuasStopDao
+        stopsDao: LuasStopDao,
+        clock: Clock
     ): LuasRepository =
-        LuasRepositoryImpl(stopsApiService, forecastApiService, stopsDao)
+        LuasRepositoryImpl(stopsApiService, forecastApiService, stopsDao, clock)
 
     @Provides
     @Singleton
     fun provideDartRepository(
         stopsApiService: DartStationsApiService,
         forecastApiService: DartStationForecastApiService,
-        stopsDao: DartStationDao
+        stopsDao: DartStationDao,
+        clock: Clock
     ): DartRepository =
-        DartRepositoryImpl(stopsApiService, forecastApiService, stopsDao)
+        DartRepositoryImpl(stopsApiService, forecastApiService, stopsDao, clock)
 
     @Provides
     @Singleton

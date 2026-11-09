@@ -30,6 +30,8 @@ fun LuasForecastItemRow(
     dueIn: Int,
     destination: String,
     modifier: Modifier = Modifier,
+    stale: Boolean = false,
+    expectedTime: String? = null,
     onRowClick: (Int, String) -> Unit
 ) {
     val animatedValue by animateIntAsState(
@@ -40,7 +42,7 @@ fun LuasForecastItemRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onRowClick(dueIn, destination) }
+            .clickable(enabled = !stale) { onRowClick(dueIn, destination) }
             .padding(vertical = 4.dp, horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -51,13 +53,14 @@ fun LuasForecastItemRow(
         )
         AnimatedVisibility(
             modifier = Modifier.weight(0.4f),
-            visible = animatedValue != -1
+            visible = animatedValue != -1 && (!stale || expectedTime != null)
         ) {
             Text(
-                text = if (animatedValue == 0) {
-                    stringResource(R.string.now)
-                } else {
-                    pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
+                text = when {
+                    // Stale data is never counted down; show the absolute time it was last predicted for.
+                    stale -> stringResource(R.string.label_expected_at, expectedTime.orEmpty())
+                    animatedValue == 0 -> stringResource(R.string.now)
+                    else -> pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
                 },
                 style = MaterialTheme.typography.bodyLarge
             )

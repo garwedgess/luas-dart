@@ -16,7 +16,7 @@ class LuasStopApiServiceImpl @Inject constructor(val client: HttpClient) : LuasS
             url {
                 host = "luasforecasts.rpa.ie"
                 encodedPath = "xml/get.ashx"
-                protocol = URLProtocol.HTTP
+                protocol = URLProtocol.HTTPS
                 parameters["action"] = "stops"
                 parameters["encrypt"] = false.toString()
             }

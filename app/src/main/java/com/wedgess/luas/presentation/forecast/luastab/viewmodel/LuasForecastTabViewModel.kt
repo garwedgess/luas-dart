@@ -5,17 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
-import com.wedgess.luas.domain.model.RefreshMode
-import com.wedgess.luas.domain.model.RefreshState
+import com.wedgess.luas.domain.model.displayable
+import com.wedgess.luas.domain.pollFlow
+import com.wedgess.luas.domain.repository.LuasRepository
+import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
 import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
 import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopForecastUseCase
-import com.wedgess.luas.domain.usecase.FetchLuasStopsUseCase
-import com.wedgess.luas.domain.usecase.FetchSelectedLuasStopUseCase
 import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
-import com.wedgess.luas.domain.usecase.UpdateSelectedLuasStopUseCase
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.extensions.toDropdownItem
 import com.wedgess.luas.presentation.forecast.luastab.extensions.toEntity
@@ -30,7 +28,9 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -43,29 +43,33 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 @HiltViewModel(assistedFactory = ForecastTabViewModelFactory::class)
 class LuasForecastTabViewModel @AssistedInject constructor(
     @Assisted val luasLine: LuasLineEntity,
-    fetchLuasStopsUseCase: FetchLuasStopsUseCase,
-    private val fetchLuasStopForecastUseCase: FetchLuasStopForecastUseCase,
-    private val updateSelectedLuasStopUseCase: UpdateSelectedLuasStopUseCase,
+    private val luasRepository: LuasRepository,
+    private val preferencesRepository: PreferencesRepository,
+    private val clock: Clock,
     private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase,
     private val cancelAlarmUseCase: CancelAlarmUseCase,
     private val scheduleAlarmUseCase: ScheduleAlarmUseCase,
     private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
-    isAlarmRunningUseCase: FetchIsAlarmRunningUseCase,
-    fetchSelectedLuasStopUseCase: FetchSelectedLuasStopUseCase
+    isAlarmRunningUseCase: FetchIsAlarmRunningUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LuasForecastTabContract.UiState())
     private var eventTriggerTime = 0L
     private var notificationTimerJob: Job? = null
+    private val refreshTrigger = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     private val stopsAndStationFlow = combine(
-        fetchLuasStopsUseCase(luasLine),
-        fetchSelectedLuasStopUseCase(luasLine),
+        luasRepository.fetchStops(luasLine),
+        selectedStopName(),
         isAlarmRunningUseCase()
     ) { stopsResult, currentSelectedStopName, alarmIsRunning ->
         stopsResult.mapCatching { stops ->
@@ -95,26 +99,20 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                     if (stops.isEmpty()) {
                         flowOf(UiResult.Empty("No stops found"))
                     } else {
-                        fetchLuasStopForecastUseCase(selectedStop.abbreviation)
-                            .map { forecastRefreshResult ->
-                                when (forecastRefreshResult) {
-                                    is RefreshState.Error -> UiResult.Error(
-                                        forecastRefreshResult.exception.message
-                                            ?: "Failed to fetch forecast"
-                                    )
-
-                                    is RefreshState.Success -> {
-                                        val updatedState = _uiState.updateAndGet { currentState ->
-                                            currentState.copy(
-                                                refreshProgress = forecastRefreshResult.progress,
-                                                forecast = forecastRefreshResult.data
-                                            )
-                                        }
-
-                                        UiResult.Success(updatedState)
+                        pollFlow(LuasForecastTabContract.REFRESH_INTERVAL_MILLIS, refreshTrigger) {
+                            luasRepository.fetchForecast(selectedStop.abbreviation)
+                        }.map { polled ->
+                            val departures = polled.displayable(clock.instant())
+                            if (departures == null) {
+                                UiResult.Error(polled.error?.message ?: "Failed to fetch forecast")
+                            } else {
+                                UiResult.Success(
+                                    _uiState.updateAndGet {
+                                        it.copy(forecast = departures, isStale = polled.error != null)
                                     }
-                                }
+                                )
                             }
+                        }
                     }
                 },
                 onFailure = { throwable ->
@@ -122,13 +120,18 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                 }
             )
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiResult.Loading)
+        .stateIn(
+            viewModelScope,
+            // Drop the cached value once unsubscribed so a resumed screen never shows old data as live.
+            SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000, replayExpirationMillis = 0),
+            UiResult.Loading
+        )
 
     fun onEvent(event: LuasForecastTabContract.Event) {
         when (event) {
             is LuasForecastTabContract.Event.OnStopSelected -> onStopSelected((event.stopName))
 
-            LuasForecastTabContract.Event.OnRefresh -> fetchLuasStopForecastUseCase.refresh(RefreshMode.MANUAL)
+            LuasForecastTabContract.Event.OnRefresh -> refreshTrigger.tryEmit(Unit)
             LuasForecastTabContract.Event.OnDismissDialog -> _uiState.update {
                 it.copy(dialog = LuasForecastTabDialogState.None)
             }
@@ -149,7 +152,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                 it.copy(luasNotificationState = it.luasNotificationState.copy(notifyMinutesBefore = event.minutes))
             }
 
-            is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (event.dueInMins > 0) {
+            is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (canShowAlarmDialog(event.dueInMins)) {
                 showNotificationDialog(
                     event.dueInMins,
                     event.destination
@@ -211,7 +214,18 @@ class LuasForecastTabViewModel @AssistedInject constructor(
 
     private fun onStopSelected(stopName: String) {
         viewModelScope.launch {
-            updateSelectedLuasStopUseCase(stopName, luasLine)
+            when (luasLine) {
+                LuasLineEntity.RED -> preferencesRepository.updateSelectedRedLineStation(stopName)
+                LuasLineEntity.GREEN -> preferencesRepository.updateSelectedGreenLineStation(stopName)
+            }
         }
     }
+
+    private fun selectedStopName() = when (luasLine) {
+        LuasLineEntity.RED -> preferencesRepository.fetchSelectedRedLineStation()
+        LuasLineEntity.GREEN -> preferencesRepository.fetchSelectedGreenLineStation()
+    }
+
+    // An alarm must never be derived from a countdown that is no longer live.
+    private fun canShowAlarmDialog(dueInMins: Int) = dueInMins > 0 && !_uiState.value.isStale
 }

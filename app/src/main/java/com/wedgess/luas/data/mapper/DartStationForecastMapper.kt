@@ -1,46 +1,56 @@
 package com.wedgess.luas.data.mapper
 
 import com.wedgess.luas.data.model.DartDirectionData
-import com.wedgess.luas.data.model.DartLocationTypeData
 import com.wedgess.luas.data.model.DartStationForecastResponseData
-import com.wedgess.luas.domain.model.DartDirectionEntity
-import com.wedgess.luas.domain.model.DartLocationTypeEntity
-import com.wedgess.luas.domain.model.DartStationForecastEntity
+import com.wedgess.luas.domain.model.Departure
+import com.wedgess.luas.domain.model.DepartureDirection
+import com.wedgess.luas.domain.model.Departures
+import com.wedgess.luas.domain.model.TransportType
+import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.Locale
 
-fun DartStationForecastResponseData.toEntity() = this.stationData.map {
-    DartStationForecastEntity(
-        serverTime = it.serverTime,
-        trainCode = it.trainCode,
-        stationFullName = it.stationFullName,
-        stationCode = it.stationCode,
-        queryTime = it.queryTime,
-        trainDate = it.trainDate,
-        origin = it.origin,
-        destination = it.destination,
-        originTime = it.originTime,
-        destinationTime = it.destinationTime,
-        status = it.status,
-        lastLocation = it.lastLocation,
-        dueIn = it.dueIn,
-        late = it.late,
-        expArrival = it.expArrival,
-        expDepart = it.expDepart,
-        schArrival = it.schArrival,
-        schDepart = it.schDepart,
-        direction = it.direction.toEntity(),
-        trainType = it.trainType,
-        locationType = it.locationType.toEntity()
+private const val SECONDS_PER_MINUTE = 60L
+private val TRAIN_DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
+
+fun DartStationForecastResponseData.toDepartures(fetchedAt: Instant): Departures {
+    val first = stationData.firstOrNull()
+    return Departures(
+        stationCode = first?.stationCode?.trim().orEmpty(),
+        stationName = first?.stationFullName.orEmpty(),
+        fetchedAt = fetchedAt,
+        message = "",
+        items = stationData.map { data ->
+            val expectedAt = fetchedAt.plusSeconds(data.dueIn * SECONDS_PER_MINUTE)
+            Departure(
+                transport = TransportType.DART,
+                direction = data.direction.toDirection(),
+                destination = data.destination,
+                dueMins = data.dueIn,
+                expectedAt = expectedAt,
+                // The API reports lateness in minutes against the timetable, so scheduled = expected - late.
+                scheduledAt = expectedAt.minusSeconds(data.late * SECONDS_PER_MINUTE),
+                lateMins = data.late,
+                // The API pads train codes with whitespace (e.g. "E846 ").
+                tripCode = data.trainCode.trim(),
+                operatingDate = data.trainDate.toOperatingDate(),
+                status = data.status,
+                lastLocation = data.lastLocation
+            )
+        }
     )
 }
 
-fun DartDirectionData.toEntity() = when (this) {
-    DartDirectionData.NORTHBOUND -> DartDirectionEntity.NORTHBOUND
-    DartDirectionData.SOUTHBOUND -> DartDirectionEntity.SOUTHBOUND
-    DartDirectionData.UNKNOWN -> DartDirectionEntity.UNKNOWN
+private fun DartDirectionData.toDirection() = when (this) {
+    DartDirectionData.NORTHBOUND -> DepartureDirection.NORTHBOUND
+    DartDirectionData.SOUTHBOUND -> DepartureDirection.SOUTHBOUND
+    DartDirectionData.UNKNOWN -> DepartureDirection.UNKNOWN
 }
 
-fun DartLocationTypeData.toEntity() = when (this) {
-    DartLocationTypeData.ORIGIN -> DartLocationTypeEntity.ORIGIN
-    DartLocationTypeData.DESTINATION -> DartLocationTypeEntity.DESTINATION
-    DartLocationTypeData.STOP -> DartLocationTypeEntity.STOP
+private fun String.toOperatingDate(): LocalDate? = try {
+    LocalDate.parse(trim(), TRAIN_DATE_FORMAT)
+} catch (_: DateTimeParseException) {
+    null
 }

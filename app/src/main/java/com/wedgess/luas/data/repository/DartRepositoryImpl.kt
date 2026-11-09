@@ -4,11 +4,12 @@ import com.wedgess.luas.data.api.DartStationForecastApiService
 import com.wedgess.luas.data.api.DartStationsApiService
 import com.wedgess.luas.data.db.dao.DartStationDao
 import com.wedgess.luas.data.mapper.toDao
+import com.wedgess.luas.data.mapper.toDepartures
 import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.mapper.toLocationEntity
 import com.wedgess.luas.data.utils.extensions.resultOf
 import com.wedgess.luas.domain.model.DartStationEntity
-import com.wedgess.luas.domain.model.DartStationForecastEntity
+import com.wedgess.luas.domain.model.Departures
 import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.repository.DartRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,12 +19,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.time.Clock
 import javax.inject.Inject
 
 class DartRepositoryImpl @Inject constructor(
     private val stationsApi: DartStationsApiService,
     private val forecastApi: DartStationForecastApiService,
     private val stationsDao: DartStationDao,
+    private val clock: Clock = Clock.systemUTC(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : DartRepository {
 
@@ -43,9 +46,9 @@ class DartRepositoryImpl @Inject constructor(
         return stationsDao.fetchAll().map { stations -> stations.map { it.toLocationEntity() } }.resultOf()
     }
 
-    override suspend fun fetchForecast(stationCode: String): Result<List<DartStationForecastEntity>> =
+    override suspend fun fetchForecast(stationCode: String): Result<Departures> =
         withContext(ioDispatcher) {
-            forecastApi.fetchForecast(stationCode).mapCatching { it.toEntity() }
+            forecastApi.fetchForecast(stationCode).mapCatching { it.toDepartures(fetchedAt = clock.instant()) }
                 .onFailure { Timber.e(it, "Call has failed: ${it.message}") }
         }
 

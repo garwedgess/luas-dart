@@ -3,6 +3,7 @@
 package com.wedgess.luas.di
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,7 +56,7 @@ object NetworkModule {
                 preconfigured = okHttpClient
             }
             installLuasContentNegotiation()
-            installLogging()
+            installLogging(context)
             installRedirect()
         }
     }
@@ -75,7 +76,7 @@ object NetworkModule {
                 preconfigured = okHttpClient
             }
             installDartContentNegotiation()
-            installLogging()
+            installLogging(context)
             installRedirect()
         }
     }
@@ -95,15 +96,18 @@ object NetworkModule {
         autoPolymorphic = false
     }
 
-    private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installLogging() =
+    private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installLogging(context: Context) =
         install(Logging) {
             logger = object : Logger {
                 override fun log(message: String) {
                     Timber.d(message)
                 }
             }
-            level = LogLevel.ALL
+            // Request and response bodies are only logged in debuggable builds.
+            level = if (context.isDebuggable()) LogLevel.ALL else LogLevel.NONE
         }
+
+    private fun Context.isDebuggable() = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
 
     private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.installRedirect() =
         install(HttpRedirect) {
