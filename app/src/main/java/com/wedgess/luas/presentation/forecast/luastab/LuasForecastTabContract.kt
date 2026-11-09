@@ -6,6 +6,7 @@ import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.Departures
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
+import com.wedgess.luas.domain.model.StationPreferences
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasDropdownItem
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationState
@@ -28,11 +29,13 @@ interface LuasForecastTabContract {
         /** Active Luas alarms at any station: an alarm belongs to its station, not to the one being viewed. */
         val activeAlarms: ImmutableList<Alarm> = persistentListOf(),
         /** What the device allows, read when the alarm dialog opens so it can explain any degraded behaviour. */
+        val stationPreferences: StationPreferences = StationPreferences(),
         val alarmCapabilities: AlarmCapabilities = AlarmCapabilities(exactAlarms = true, notifications = true)
     )
 
     sealed interface Event {
         data class OnStopSelected(val stopName: String) : Event
+        data class OnToggleFavourite(val stopName: String, val favourite: Boolean) : Event
         data object OnShowTravelUpdatesDialog : Event
         data class OnNotificationMinutesChanged(val minutes: Int) : Event
         data class OnShowNotificationsDialog(

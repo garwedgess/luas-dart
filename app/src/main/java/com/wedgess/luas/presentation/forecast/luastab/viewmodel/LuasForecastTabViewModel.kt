@@ -13,6 +13,7 @@ import com.wedgess.luas.domain.model.displayable
 import com.wedgess.luas.domain.pollFlow
 import com.wedgess.luas.domain.repository.LuasRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
+import com.wedgess.luas.domain.repository.StationPreferencesRepository
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.extensions.toDropdownItem
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
@@ -48,6 +49,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val luasRepository: LuasRepository,
     private val preferencesRepository: PreferencesRepository,
     private val alarmCoordinator: AlarmCoordinator,
+    private val stationPreferencesRepository: StationPreferencesRepository,
     private val clock: Clock
 ) : ViewModel() {
 
@@ -117,9 +119,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         .map { alarms -> alarms.filter { it.transport == TransportType.LUAS }.toImmutableList() }
 
     // Dialog and alarm changes re-emit immediately; they must not wait for the next poll.
-    val uiResult = combine(forecastResult, _uiState, activeLuasAlarms) { result, state, alarms ->
+    val uiResult = combine(
+        forecastResult,
+        _uiState,
+        activeLuasAlarms,
+        stationPreferencesRepository.observe(TransportType.LUAS)
+    ) { result, state, alarms, preferences ->
         when (result) {
-            is UiResult.Success -> UiResult.Success(state.copy(activeAlarms = alarms))
+            is UiResult.Success -> UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
             is UiResult.Error -> result
             is UiResult.Empty -> result
             UiResult.Loading -> UiResult.Loading
@@ -134,6 +141,9 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     fun onEvent(event: LuasForecastTabContract.Event) {
         when (event) {
             is LuasForecastTabContract.Event.OnStopSelected -> onStopSelected((event.stopName))
+            is LuasForecastTabContract.Event.OnToggleFavourite -> viewModelScope.launch {
+                stationPreferencesRepository.setFavourite(TransportType.LUAS, event.stopName, event.favourite)
+            }
 
             LuasForecastTabContract.Event.OnRefresh -> refreshTrigger.tryEmit(Unit)
             LuasForecastTabContract.Event.OnDismissDialog -> _uiState.update {
@@ -213,6 +223,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
 
     private fun onStopSelected(stopName: String) {
         viewModelScope.launch {
+            stationPreferencesRepository.markUsed(TransportType.LUAS, stopName)
             when (luasLine) {
                 LuasLineEntity.RED -> preferencesRepository.updateSelectedRedLineStation(stopName)
                 LuasLineEntity.GREEN -> preferencesRepository.updateSelectedGreenLineStation(stopName)

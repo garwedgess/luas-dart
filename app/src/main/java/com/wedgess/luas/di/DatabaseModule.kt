@@ -10,6 +10,7 @@ import com.wedgess.luas.data.db.dao.DartStationDao
 import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
 import com.wedgess.luas.data.db.dao.LuasStopDao
 import com.wedgess.luas.data.db.dao.SelectedStationDao
+import com.wedgess.luas.data.db.dao.StationPreferenceDao
 import com.wedgess.luas.data.db.utils.doubleAdapter
 import com.wedgess.luas.data.db.utils.luasLineAdapter
 import com.wedgess.luas.data.db.utils.uuidAdapter
@@ -66,4 +67,8 @@ object DatabaseModule {
     @Singleton
     @Provides
     fun provideSelectedStationDao(db: LuasDatabase) = SelectedStationDao(db)
+
+    @Singleton
+    @Provides
+    fun provideStationPreferenceDao(db: LuasDatabase) = StationPreferenceDao(db)
 }

@@ -4,6 +4,7 @@ import com.wedgess.luas.domain.model.Alarm
 import com.wedgess.luas.domain.model.AlarmCapabilities
 import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.DepartureDirection
+import com.wedgess.luas.domain.model.StationPreferences
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionedListState
 import com.wedgess.luas.presentation.forecast.dart.model.DartDropdownItem
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
@@ -25,6 +26,7 @@ interface DartForecastTabContract {
         val isStale: Boolean = false,
         val fetchedAt: Instant = Instant.EPOCH,
         val dropdownOptions: ImmutableList<DropdownItem> = persistentListOf(),
+        val stationPreferences: StationPreferences = StationPreferences(),
         val alarmDraft: AlarmDraft? = null,
         val activeAlarms: ImmutableList<Alarm> = persistentListOf(),
         val alarmCapabilities: AlarmCapabilities = AlarmCapabilities(exactAlarms = true, notifications = true)
@@ -47,6 +49,7 @@ interface DartForecastTabContract {
 
     sealed interface Event {
         data class OnStationSelected(val stationName: String) : Event
+        data class OnToggleFavourite(val stationName: String, val favourite: Boolean) : Event
         data object OnRefresh : Event
         data class OnToggleSection(val id: Long) : Event
         data class OnShowAlarmDialog(

@@ -13,6 +13,7 @@ import com.wedgess.luas.domain.model.displayable
 import com.wedgess.luas.domain.pollFlow
 import com.wedgess.luas.domain.repository.DartRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
+import com.wedgess.luas.domain.repository.StationPreferencesRepository
 import com.wedgess.luas.presentation.components.sectionedlist.model.Section
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionItem
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionedListState
@@ -49,6 +50,7 @@ class DartForecastViewModel @Inject constructor(
     private val dartRepository: DartRepository,
     private val preferencesRepository: PreferencesRepository,
     private val alarmCoordinator: AlarmCoordinator,
+    private val stationPreferencesRepository: StationPreferencesRepository,
     private val clock: Clock
 ) : ViewModel() {
 
@@ -124,8 +126,17 @@ class DartForecastViewModel @Inject constructor(
         .map { alarms -> alarms.filter { it.transport == TransportType.DART }.toImmutableList() }
 
     // Dialog and alarm changes re-emit immediately; they must not wait for the next poll.
-    val uiResult = combine(forecastResult, _uiState, activeDartAlarms) { result, state, alarms ->
-        if (result is UiResult.Success) UiResult.Success(state.copy(activeAlarms = alarms)) else result
+    val uiResult = combine(
+        forecastResult,
+        _uiState,
+        activeDartAlarms,
+        stationPreferencesRepository.observe(TransportType.DART)
+    ) { result, state, alarms, preferences ->
+        if (result is UiResult.Success) {
+            UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
+        } else {
+            result
+        }
     }
         .stateIn(
             viewModelScope,
@@ -178,6 +189,9 @@ class DartForecastViewModel @Inject constructor(
         when (event) {
             is DartForecastTabContract.Event.OnStationSelected -> onStopSelected(event.stationName)
             DartForecastTabContract.Event.OnRefresh -> refreshTrigger.tryEmit(Unit)
+            is DartForecastTabContract.Event.OnToggleFavourite -> viewModelScope.launch {
+                stationPreferencesRepository.setFavourite(TransportType.DART, event.stationName, event.favourite)
+            }
             is DartForecastTabContract.Event.OnShowAlarmDialog -> showAlarmDialog(event)
             is DartForecastTabContract.Event.OnAlarmMinutesChanged -> _uiState.update { state ->
                 state.copy(alarmDraft = state.alarmDraft?.copy(notifyMinutesBefore = event.minutes))
@@ -248,6 +262,7 @@ class DartForecastViewModel @Inject constructor(
 
     private fun onStopSelected(stationName: String) {
         viewModelScope.launch {
+            stationPreferencesRepository.markUsed(TransportType.DART, stationName)
             preferencesRepository.updateSelectedDartStation(stationName)
         }
     }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,13 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
+import com.wedgess.luas.presentation.components.stationpicker.StationPicker
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
@@ -121,13 +120,16 @@ fun DartListContent(
         if (uiState.isStale) {
             StaleDataBanner(lastUpdated = uiState.fetchedAt)
         }
-        DropdownTextField(
-            modifier = Modifier.fillMaxWidth(),
+        StationPicker(
             label = "Station",
-            valueFormatter = { item -> item.text },
+            selected = uiState.selectedStation,
             options = uiState.dropdownOptions,
-            selectedValue = uiState.selectedStation,
-            onValueChange = onStopSelect
+            favourites = uiState.stationPreferences.favourites,
+            recents = uiState.stationPreferences.recents,
+            onSelect = onStopSelect,
+            onToggleFavourite = { name, favourite ->
+                onEvent(DartForecastTabContract.Event.OnToggleFavourite(name, favourite))
+            }
         )
         uiState.activeAlarms.forEach { alarm ->
             LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)

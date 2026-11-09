@@ -9,6 +9,7 @@ import com.wedgess.luas.data.db.dao.AlarmDao
 import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
 import com.wedgess.luas.data.db.dao.LuasStopDao
 import com.wedgess.luas.data.db.dao.SelectedStationDao
+import com.wedgess.luas.data.db.dao.StationPreferenceDao
 import com.wedgess.luas.data.mapper.toAlarm
 import com.wedgess.luas.domain.model.AlarmState
 import com.wedgess.luas.domain.model.Departures
@@ -67,12 +68,12 @@ class DatabaseMigrationTest {
 
     @Test
     fun `every released schema has a committed snapshot and the current schema is the latest`() {
-        (1..2).forEach { assertEquals(true, File(SNAPSHOT_DIR, "$it.db").exists()) }
-        assertEquals(3L, LuasDatabase.Schema.version)
+        (1..3).forEach { assertEquals(true, File(SNAPSHOT_DIR, "$it.db").exists()) }
+        assertEquals(4L, LuasDatabase.Schema.version)
     }
 
     @Test
-    fun `upgrading from version 1 keeps existing data and adds working persistence tables`() = runTest {
+    fun `upgrading from version 1 keeps existing data and adds working persistence tables including station preferences`() = runTest {
         install(1) {
             it.execSQL(
                 "INSERT INTO DartStation(Id, Name, Code, Alias, Latitude, Longitude) " +
@@ -93,11 +94,13 @@ class DatabaseMigrationTest {
             assertEquals("Malahide", SelectedStationDao(db).observe("DART").first())
 
             assertEquals(emptyList<Any>(), AlarmDao(db).findByState("ACTIVE"))
+            StationPreferenceDao(db).setFavourite("DART", "Howth", true)
+            assertEquals(1, db.stationPreferenceQueries.selectByTransport("DART").executeAsList().size)
             assertEquals(0, LuasStopDao(db).fetchAll().first().size)
         } finally {
             driver.close()
         }
-        assertEquals(3L, userVersion())
+        assertEquals(4L, userVersion())
     }
 
     @Test
@@ -135,7 +138,7 @@ class DatabaseMigrationTest {
         } finally {
             driver.close()
         }
-        assertEquals(3L, userVersion())
+        assertEquals(4L, userVersion())
     }
 
     @Test

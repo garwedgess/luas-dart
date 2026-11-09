@@ -37,4 +37,10 @@
     <string name="next_departure_label">Next departure</string>
     <string name="next_departure_description_live">Next departure to %1$s, %2$s</string>
     <string name="next_departure_description_stale">Next departure to %1$s, expected around %2$s, not live</string>
+    <string name="station_search">Search stations</string>
+    <string name="station_favourites">Favourites</string>
+    <string name="station_recents">Recent</string>
+    <string name="station_all">All stations</string>
+    <string name="station_add_favourite">Add %1$s to favourites</string>
+    <string name="station_remove_favourite">Remove %1$s from favourites</string>
 </resources>

@@ -12,17 +12,20 @@ import com.wedgess.luas.data.db.dao.DartStationDao
 import com.wedgess.luas.data.db.dao.DepartureSnapshotDao
 import com.wedgess.luas.data.db.dao.LuasStopDao
 import com.wedgess.luas.data.db.dao.SelectedStationDao
+import com.wedgess.luas.data.db.dao.StationPreferenceDao
 import com.wedgess.luas.data.model.UserPreferences
 import com.wedgess.luas.data.repository.AlarmConfigRepositoryImpl
 import com.wedgess.luas.data.repository.DartRepositoryImpl
 import com.wedgess.luas.data.repository.LocationRepositoryImpl
 import com.wedgess.luas.data.repository.LuasRepositoryImpl
 import com.wedgess.luas.data.repository.PreferencesRepositoryImpl
+import com.wedgess.luas.data.repository.StationPreferencesRepositoryImpl
 import com.wedgess.luas.domain.repository.AlarmConfigRepository
 import com.wedgess.luas.domain.repository.DartRepository
 import com.wedgess.luas.domain.repository.LocationRepository
 import com.wedgess.luas.domain.repository.LuasRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
+import com.wedgess.luas.domain.repository.StationPreferencesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -75,4 +78,9 @@ object RepositoryModule {
     @Singleton
     fun provideAlarmConfigRepository(alarmDao: AlarmDao, clock: Clock): AlarmConfigRepository =
         AlarmConfigRepositoryImpl(alarmDao, clock)
+
+    @Provides
+    @Singleton
+    fun provideStationPreferencesRepository(dao: StationPreferenceDao, clock: Clock): StationPreferencesRepository =
+        StationPreferencesRepositoryImpl(dao, clock)
 }

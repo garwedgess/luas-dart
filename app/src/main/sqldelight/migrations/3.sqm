@@ -1,0 +1,7 @@
+CREATE TABLE StationPreference (
+    Transport TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    IsFavourite INTEGER NOT NULL,
+    LastUsedAtMillis INTEGER NOT NULL,
+    PRIMARY KEY (Transport, StationName)
+);

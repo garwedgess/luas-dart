@@ -13,9 +13,11 @@ import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.Departures
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
+import com.wedgess.luas.domain.model.StationPreferences
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.repository.LuasRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
+import com.wedgess.luas.domain.repository.StationPreferencesRepository
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
 import com.wedgess.luas.presentation.model.UiResult
@@ -67,6 +69,11 @@ class ForecastTabViewModelTest {
 
     @MockK
     private lateinit var alarmCoordinator: AlarmCoordinator
+
+    @MockK
+    private lateinit var stationPreferencesRepository: StationPreferencesRepository
+
+    private val preferencesFlow = MutableStateFlow(StationPreferences())
 
     private lateinit var viewModel: LuasForecastTabViewModel
 
@@ -129,6 +136,9 @@ class ForecastTabViewModelTest {
         coEvery { luasRepository.cachedForecast(any()) } answers { cachedForecast }
         every { preferencesRepository.fetchSelectedGreenLineStation() } returns selectedStationFlow
         every { preferencesRepository.fetchSelectedRedLineStation() } returns selectedStationFlow
+        every { stationPreferencesRepository.observe(any()) } returns preferencesFlow
+        coEvery { stationPreferencesRepository.markUsed(any(), any()) } returns Result.success(Unit)
+        coEvery { stationPreferencesRepository.setFavourite(any(), any(), any()) } returns Result.success(Unit)
         every { alarmCoordinator.observeActive() } returns activeAlarmsFlow
         every { alarmCoordinator.capabilities } answers { capabilities }
         every { alarmCoordinator.openExactAlarmSettings() } returns Unit
@@ -141,6 +151,7 @@ class ForecastTabViewModelTest {
             luasRepository = luasRepository,
             preferencesRepository = preferencesRepository,
             alarmCoordinator = alarmCoordinator,
+            stationPreferencesRepository = stationPreferencesRepository,
             clock = clock
         )
     }
@@ -602,6 +613,32 @@ class ForecastTabViewModelTest {
                 LuasForecastTabContract.Event.OnShowNotificationsDialog(-5, "Broombridge", DepartureDirection.INBOUND)
             )
             expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `favouriting a station is stored for this transport only`() = runTest {
+        viewModel.onEvent(LuasForecastTabContract.Event.OnToggleFavourite("Harcourt", true))
+
+        coVerify { stationPreferencesRepository.setFavourite(TransportType.LUAS, any(), true) }
+    }
+
+    @Test
+    fun `picking a station records it as recently used for this transport`() = runTest {
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected("Harcourt"))
+
+        coVerify { stationPreferencesRepository.markUsed(TransportType.LUAS, any()) }
+    }
+
+    @Test
+    fun `stored favourites and recents reach the state`() = runTest {
+        preferencesFlow.value = StationPreferences(setOf("A"), listOf("B"))
+
+        viewModel.uiResult.test {
+            val state = (awaitItem() as UiResult.Success).data
+            assertEquals(setOf("A"), state.stationPreferences.favourites)
+            assertEquals(listOf("B"), state.stationPreferences.recents)
             cancelAndIgnoreRemainingEvents()
         }
     }

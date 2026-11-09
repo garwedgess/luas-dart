@@ -1,0 +1,20 @@
+-- Per-mode station favourites and recents. A row exists once a station has been used or favourited.
+CREATE TABLE StationPreference (
+    Transport TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    IsFavourite INTEGER NOT NULL,
+    LastUsedAtMillis INTEGER NOT NULL,
+    PRIMARY KEY (Transport, StationName)
+);
+
+selectByTransport:
+SELECT * FROM StationPreference WHERE Transport = :transport;
+
+insertIfAbsent:
+INSERT OR IGNORE INTO StationPreference(Transport, StationName, IsFavourite, LastUsedAtMillis) VALUES (?, ?, 0, 0);
+
+touch:
+UPDATE StationPreference SET LastUsedAtMillis = :usedAtMillis WHERE Transport = :transport AND StationName = :stationName;
+
+updateFavourite:
+UPDATE StationPreference SET IsFavourite = :favourite WHERE Transport = :transport AND StationName = :stationName;

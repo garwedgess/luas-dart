@@ -6,7 +6,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,12 +25,12 @@ import com.wedgess.luas.R
 import com.wedgess.luas.di.ForecastTabViewModelFactory
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.LuasLineEntity
-import com.wedgess.luas.presentation.components.DropdownTextField
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.StaleDataBanner
+import com.wedgess.luas.presentation.components.stationpicker.StationPicker
 import com.wedgess.luas.presentation.extensions.toClockTime
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
@@ -60,6 +59,12 @@ fun LuasForecastTabContent(
         {
                 stop: DropdownItem ->
             luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(stop.text))
+        }
+    }
+    val onToggleFavourite = remember(luasForecastTabViewModel) {
+        {
+                name: String, favourite: Boolean ->
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnToggleFavourite(name, favourite))
         }
     }
     val onShowTravelUpdatesDialog = remember(luasForecastTabViewModel) {
@@ -95,6 +100,7 @@ fun LuasForecastTabContent(
             LuasTabListContent(
                 uiState = uiState,
                 onStopSelect = onStopSelect,
+                onToggleFavourite = onToggleFavourite,
                 onShowTravelUpdatesDialog = onShowTravelUpdatesDialog,
                 onTramClick = onTramClick,
                 onCancelAlarm = onCancelAlarm
@@ -109,6 +115,7 @@ fun LuasForecastTabContent(
     )
 }
 
+@Suppress("LongParameterList") // Stateless UI: one callback per user action.
 @SuppressLint("ComposeModifierMissing")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -116,6 +123,7 @@ fun LuasTabListContent(
     uiState: LuasForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (DropdownItem) -> Unit,
+    onToggleFavourite: (String, Boolean) -> Unit,
     onTramClick: (Int, String, DepartureDirection) -> Unit,
     onCancelAlarm: (String) -> Unit
 ) {
@@ -128,18 +136,21 @@ fun LuasTabListContent(
             uiState = uiState,
             onShowTravelUpdatesDialog = onShowTravelUpdatesDialog,
             onStopSelect = onStopSelect,
+            onToggleFavourite = onToggleFavourite,
             onTramClick = onTramClick,
             onCancelAlarm = onCancelAlarm
         )
     }
 }
 
+@Suppress("LongParameterList") // Stateless UI: one callback per user action.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LuasTramList(
     uiState: LuasForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (DropdownItem) -> Unit,
+    onToggleFavourite: (String, Boolean) -> Unit,
     onTramClick: (Int, String, DepartureDirection) -> Unit,
     onCancelAlarm: (String) -> Unit
 ) {
@@ -152,13 +163,14 @@ private fun LuasTramList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         stickyHeader {
-            DropdownTextField(
-                modifier = Modifier.fillMaxWidth(),
+            StationPicker(
                 label = "Stop",
-                valueFormatter = { item -> item.text },
+                selected = uiState.selectedStop,
                 options = uiState.dropdownOptions,
-                selectedValue = uiState.selectedStop,
-                onValueChange = onStopSelect
+                favourites = uiState.stationPreferences.favourites,
+                recents = uiState.stationPreferences.recents,
+                onSelect = onStopSelect,
+                onToggleFavourite = onToggleFavourite
             )
         }
         if (uiState.isStale) {

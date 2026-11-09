@@ -11,9 +11,11 @@ import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.Departure
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.Departures
+import com.wedgess.luas.domain.model.StationPreferences
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.repository.DartRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
+import com.wedgess.luas.domain.repository.StationPreferencesRepository
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.model.UiResult
 import io.mockk.MockKAnnotations
@@ -62,7 +64,12 @@ class DartForecastViewModelTest {
     @MockK
     private lateinit var alarmCoordinator: AlarmCoordinator
 
+    @MockK
+    private lateinit var stationPreferencesRepository: StationPreferencesRepository
+
     private val activeAlarms = MutableStateFlow<List<Alarm>>(emptyList())
+
+    private val preferencesFlow = MutableStateFlow(StationPreferences())
 
     private lateinit var viewModel: DartForecastViewModel
 
@@ -134,6 +141,9 @@ class DartForecastViewModelTest {
         every { preferencesRepository.fetchSelectedDartStation() } returns selectedStationFlow
         coEvery { preferencesRepository.updateSelectedDartStation(any()) } returns Result.success(Unit)
 
+        every { stationPreferencesRepository.observe(any()) } returns preferencesFlow
+        coEvery { stationPreferencesRepository.markUsed(any(), any()) } returns Result.success(Unit)
+        coEvery { stationPreferencesRepository.setFavourite(any(), any(), any()) } returns Result.success(Unit)
         every { alarmCoordinator.observeActive() } returns activeAlarms
         every { alarmCoordinator.capabilities } returns AlarmCapabilities(exactAlarms = true, notifications = true)
         every { alarmCoordinator.openExactAlarmSettings() } returns Unit
@@ -144,6 +154,7 @@ class DartForecastViewModelTest {
             dartRepository = dartRepository,
             preferencesRepository = preferencesRepository,
             alarmCoordinator = alarmCoordinator,
+            stationPreferencesRepository = stationPreferencesRepository,
             clock = clock
         )
     }
@@ -492,5 +503,31 @@ class DartForecastViewModelTest {
         }
         viewModel.onEvent(DartForecastTabContract.Event.OnCancelAlarm("d"))
         coVerify { alarmCoordinator.cancel("d") }
+    }
+
+    @Test
+    fun `favouriting a station is stored for this transport only`() = runTest {
+        viewModel.onEvent(DartForecastTabContract.Event.OnToggleFavourite("Dublin Pearse", true))
+
+        coVerify { stationPreferencesRepository.setFavourite(TransportType.DART, any(), true) }
+    }
+
+    @Test
+    fun `picking a station records it as recently used for this transport`() = runTest {
+        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected("Dublin Pearse"))
+
+        coVerify { stationPreferencesRepository.markUsed(TransportType.DART, any()) }
+    }
+
+    @Test
+    fun `stored favourites and recents reach the state`() = runTest {
+        preferencesFlow.value = StationPreferences(setOf("A"), listOf("B"))
+
+        viewModel.uiResult.test {
+            val state = (awaitItem() as UiResult.Success).data
+            assertEquals(setOf("A"), state.stationPreferences.favourites)
+            assertEquals(listOf("B"), state.stationPreferences.recents)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }
