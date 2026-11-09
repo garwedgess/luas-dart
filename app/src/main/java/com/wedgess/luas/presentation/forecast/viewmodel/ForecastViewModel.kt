@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
-import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
 import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
-import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreNotificationPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateNotificationPermissionRequestedUseCase
 import com.wedgess.luas.domain.usecase.WasNotificationPermissionRequestedUseCase
@@ -33,8 +31,6 @@ class ForecastViewModel @Inject constructor(
     private val wasNotificationPermissionRequestedUseCase: WasNotificationPermissionRequestedUseCase,
     private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase,
     private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase,
-    private val canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase,
-    private val requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase,
     fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase
 ) : ViewModel(),
     SideEffectViewModel<ForecastContract.Effect> by SideEffectViewModelImpl() {
@@ -89,16 +85,6 @@ class ForecastViewModel @Inject constructor(
             ForecastContract.Event.OnNotificationWasRequested -> viewModelScope.launch {
                 updateNotificationPermissionRequestedUseCase(true)
             }
-
-            ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick -> openExactAlarmPermission()
-        }
-    }
-
-    private fun openExactAlarmPermission() {
-        requestExactAlarmPermissionUseCase().also {
-            _uiState.update {
-                it.copy(dialog = ForecastDialogState.None)
-            }
         }
     }
 
@@ -128,15 +114,7 @@ class ForecastViewModel @Inject constructor(
                                 ForecastDialogState.NotificationPermissionPermanentlyDenied
                             }
                         }
-
-                        Permission.Granted -> {
-                            if (!canScheduleExactAlarmsUseCase()) {
-                                ForecastDialogState.ScheduleExactAlarms
-                            } else {
-                                it.dialog
-                            }
-                        }
-
+                        // Exact alarms are optional, so they are not prompted for here.
                         else -> it.dialog
                     }
                 )

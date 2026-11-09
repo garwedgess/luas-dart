@@ -1,143 +1,75 @@
 package com.wedgess.luas.data.alarm
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
-import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
-import com.wedgess.luas.R
-import com.wedgess.luas.data.model.LuasNotificationData
-import com.wedgess.luas.domain.navigation.ServiceNavigator
-import com.wedgess.luas.domain.repository.AlarmRepository
+import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Entry point for everything the OS tells us about alarms: a registration firing, the notification being dismissed,
+ * and the system events after which registrations must be rebuilt (reboot, app update, clock, time zone and
+ * exact-alarm permission changes). All behaviour lives in [AlarmCoordinator]; this only routes broadcasts to it.
+ */
 @AndroidEntryPoint
 class AlarmReceiver : BroadcastReceiver() {
 
     @Inject
-    lateinit var navigationUseCase: ServiceNavigator
-
-    @Inject
-    lateinit var alarmRepository: AlarmRepository
+    lateinit var coordinator: AlarmCoordinator
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION_DISMISS) {
-            val notificationManager = ContextCompat.getSystemService(
-                context,
-                NotificationManager::class.java
-            )
-            notificationManager?.cancel(NOTIFICATION_ID)?.run {
-                alarmRepository.cancelAlarm()
-            }
-            return
+        val work = alarmWork(intent, coordinator) ?: return
+
+        // The broadcast stays alive while the coordinator works; it bounds its own network wait (a few seconds).
+        val pending = goAsync()
+        scope.launch {
+            runCatching { work() }.onFailure { Timber.e(it, "Alarm broadcast ${intent.action} failed") }
+            pending?.finish()
         }
-
-        val alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
-        val luasNotificationData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA, LuasNotificationData::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(EXTRA_NOTIFICATION_DATA)
-        }
-
-        if (luasNotificationData == null) {
-            return
-        }
-
-        Timber.d("Trigger, alarm is triggered, alarmId: $alarmId, notificationData: $luasNotificationData")
-
-        if (alarmId != -1) {
-            val notificationManager = ContextCompat.getSystemService(
-                context,
-                NotificationManager::class.java
-            ) ?: return
-            createNotificationChannelIfNeeded(notificationManager)
-            val notification = buildNotification(
-                context,
-                luasNotificationData.notificationTitle,
-                luasNotificationData.notifyBeforeMins,
-                alarmId
-            )
-            notificationManager.notify(NOTIFICATION_ID, notification)
-            alarmRepository.alarmFired()
-        }
-    }
-
-    private fun createNotificationChannelIfNeeded(notificationManager: NotificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Luas Notifications",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Shows notifications for tram departure"
-                enableVibration(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun buildNotification(
-        context: Context,
-        title: String,
-        minutesRemaining: Int,
-        alarmId: Int
-    ) = NotificationCompat.Builder(context, CHANNEL_ID).apply {
-        val dismissIntent = createDismissIntent(context, alarmId)
-        setContentTitle(title)
-        setContentText(context.resources.getQuantityString(R.plurals.due_minutes, minutesRemaining, minutesRemaining))
-        setSmallIcon(R.drawable.ic_tram)
-        setPriority(NotificationCompat.PRIORITY_HIGH)
-        setCategory(NotificationCompat.CATEGORY_ALARM)
-        setOngoing(true)
-        setAutoCancel(false)
-        setOnlyAlertOnce(true)
-        setContentIntent(createContentIntent(context))
-        setTimeoutAfter(-1)
-        addAction(
-            R.drawable.ic_close,
-            context.getString(R.string.action_dismiss),
-            dismissIntent
-        )
-            .setDeleteIntent(dismissIntent)
-    }.build()
-
-    private fun createContentIntent(context: Context): PendingIntent {
-        val intent = Intent(context, navigationUseCase.mainActivityClass()).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        return PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-    }
-
-    private fun createDismissIntent(context: Context, alarmId: Int): PendingIntent {
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            action = ACTION_DISMISS
-            putExtra(EXTRA_ALARM_ID, alarmId)
-        }
-        return PendingIntent.getBroadcast(
-            context,
-            1,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
     }
 
     companion object {
-        const val EXTRA_ALARM_ID = "EXTRA_ALARM_ID"
-        const val EXTRA_NOTIFICATION_DATA = "EXTRA_NOTIFICATION_DATA"
-        const val NOTIFICATION_ID = 1
-        const val CHANNEL_ID = "countdown_channel"
+        const val ACTION_ALARM_DUE = "com.wedgess.luas.ACTION_ALARM_DUE"
         const val ACTION_DISMISS = "com.wedgess.luas.ACTION_DISMISS"
+        internal const val ALARM_SCHEME = "luasalarm"
+
+        /** The permission-change broadcast only exists on Android 12+, so it is referenced by value. */
+        private const val ACTION_EXACT_ALARM_PERMISSION_CHANGED =
+            "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"
+
+        internal val RECONCILE_ACTIONS = buildSet {
+            add(Intent.ACTION_BOOT_COMPLETED)
+            add(Intent.ACTION_MY_PACKAGE_REPLACED)
+            add(Intent.ACTION_TIME_CHANGED)
+            add(Intent.ACTION_TIMEZONE_CHANGED)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(ACTION_EXACT_ALARM_PERMISSION_CHANGED)
+        }
+
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+        fun alarmUri(alarmId: String): Uri = Uri.Builder().scheme(
+            ALARM_SCHEME
+        ).authority("alarm").appendPath(alarmId).build()
+    }
+}
+
+/**
+ * Maps a broadcast to the coordinator call it stands for, or null for anything unrecognised (including an alarm
+ * broadcast without an alarm id). Kept separate from the receiver so the routing can be tested without Hilt.
+ */
+internal fun alarmWork(intent: Intent, coordinator: AlarmCoordinator): (suspend () -> Unit)? {
+    val alarmId = intent.data?.takeIf { it.scheme == AlarmReceiver.ALARM_SCHEME }?.lastPathSegment
+    return when (val action = intent.action) {
+        AlarmReceiver.ACTION_ALARM_DUE -> alarmId?.let { { coordinator.onAlarmDue(it) } }
+        AlarmReceiver.ACTION_DISMISS -> alarmId?.let { { coordinator.dismissNotification(it) } }
+        else -> if (action in AlarmReceiver.RECONCILE_ACTIONS) ({ coordinator.reconcile() }) else null
     }
 }

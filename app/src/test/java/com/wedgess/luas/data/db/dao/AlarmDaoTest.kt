@@ -16,7 +16,7 @@ import com.wedgess.luas.domain.model.TransportType
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -32,6 +32,7 @@ class AlarmDaoTest {
     private lateinit var driver: SqlDriver
     private lateinit var dao: AlarmDao
     private val created = Instant.parse("2026-11-09T22:00:00Z")
+    private val active = "ACTIVE"
 
     @Before
     fun setUp() {
@@ -45,8 +46,9 @@ class AlarmDaoTest {
         driver.close()
     }
 
-    private val dartAlarm = Alarm(
-        id = Alarm.departureId(TransportType.DART, "MHIDE", "E846", LocalDate.of(2026, 11, 9)),
+    private fun alarm(id: String = "alarm-1") = Alarm(
+        id = id,
+        requestCode = 0,
         kind = AlarmKind.SPECIFIC_DEPARTURE,
         state = AlarmState.ACTIVE,
         transport = TransportType.DART,
@@ -59,91 +61,101 @@ class AlarmDaoTest {
         operatingDate = LocalDate.of(2026, 11, 9),
         targetExpectedAt = created.plusSeconds(1_320),
         targetObservedAt = created,
+        reminderAt = created.plusSeconds(990),
         createdAt = created,
         updatedAt = created
     )
 
     @Test
-    fun `an alarm round-trips every field`() {
-        dao.save(dartAlarm.toRow())
+    fun `an alarm round-trips every field and receives a request code`() {
+        val stored = dao.insertIfAbsent(alarm().toRow()).toAlarm()
 
-        assertEquals(dartAlarm, dao.findById(dartAlarm.id)!!.toAlarm())
+        assertEquals(alarm().copy(requestCode = 1), stored)
+        assertEquals(stored, dao.findById("alarm-1")!!.toAlarm())
     }
 
     @Test
-    fun `saving the same id again updates the one row and keeps its creation time`() {
-        dao.save(dartAlarm.toRow())
+    fun `request codes are distinct and alarm identity is independent of the departure`() {
+        val a = dao.insertIfAbsent(alarm("a").toRow())
+        val b = dao.insertIfAbsent(alarm("b").toRow()) // same station, direction and train
 
-        dao.save(
-            dartAlarm.copy(
-                notifyMinutesBefore = 10,
-                createdAt = created.plusSeconds(99),
-                updatedAt = created.plusSeconds(99)
-            ).toRow()
+        assertEquals(setOf(1L, 2L), setOf(a.RequestCode, b.RequestCode))
+        assertEquals(2, dao.findByState(active).size)
+    }
+
+    @Test
+    fun `inserting an existing id returns the stored alarm and never overwrites it`() {
+        dao.insertIfAbsent(alarm().toRow())
+        dao.finish("alarm-1", "CANCELLED", "USER_CANCELLED", null, null, 5)
+
+        val again = dao.insertIfAbsent(alarm().copy(notifyMinutesBefore = 99).toRow()).toAlarm()
+
+        assertEquals(AlarmState.CANCELLED, again.state)
+        assertEquals(5, again.notifyMinutesBefore)
+        assertEquals(1, dao.findByState("CANCELLED").size)
+    }
+
+    @Test
+    fun `finishing is a conditional transition won by exactly one caller`() {
+        dao.insertIfAbsent(alarm().toRow())
+
+        assertTrue(dao.finish("alarm-1", "FIRED", "NOTIFIED", "LIVE_VERIFIED", 10, 10))
+        assertFalse(dao.finish("alarm-1", "FIRED", "NOTIFIED", "LIVE_VERIFIED", 11, 11))
+        assertFalse(
+            "a finished alarm cannot be cancelled afterwards",
+            dao.finish("alarm-1", "CANCELLED", "USER_CANCELLED", null, null, 12)
         )
 
-        val rows = dao.findByState("ACTIVE")
-        assertEquals(1, rows.size)
-        assertEquals(10, rows.single().toAlarm().notifyMinutesBefore)
-        assertEquals(created, rows.single().toAlarm().createdAt)
-        assertEquals(created.plusSeconds(99), rows.single().toAlarm().updatedAt)
+        val row = dao.findById("alarm-1")!!.toAlarm()
+        assertEquals(AlarmState.FIRED, row.state)
+        assertEquals(Instant.ofEpochMilli(10), row.notifiedAt)
+        assertEquals("LIVE_VERIFIED", row.verification!!.name)
     }
 
     @Test
-    fun `state changes are idempotent`() {
-        dao.save(dartAlarm.toRow())
+    fun `updates apply only to active alarms`() {
+        dao.insertIfAbsent(alarm().toRow())
+        assertTrue(dao.updateSchedule("alarm-1", 100, 200, 50, 2, 60))
+        assertTrue(dao.updateRegistration("alarm-1", "INEXACT", 61))
+        dao.finish("alarm-1", "CANCELLED", "USER_CANCELLED", null, null, 70)
 
-        assertTrue(dao.updateState(dartAlarm.id, "ACTIVE", "CANCELLED", 1))
-        assertFalse("a second cancel changes nothing", dao.updateState(dartAlarm.id, "ACTIVE", "CANCELLED", 2))
-        assertEquals(AlarmState.CANCELLED, dao.findById(dartAlarm.id)!!.toAlarm().state)
-        assertEquals(1L, dao.findById(dartAlarm.id)!!.UpdatedAtMillis)
+        assertFalse(dao.updateSchedule("alarm-1", 999, 999, 999, 3, 80))
+        assertFalse(dao.updateRegistration("alarm-1", "EXACT", 81))
+
+        val row = dao.findById("alarm-1")!!.toAlarm()
+        assertEquals(Instant.ofEpochMilli(100), row.reminderAt)
+        assertEquals(2, row.checkCount)
+        assertEquals("INEXACT", row.registration!!.name)
     }
 
     @Test
-    fun `a finished alarm cannot be moved to a different finished state`() {
-        dao.save(dartAlarm.toRow())
-        dao.updateState(dartAlarm.id, "ACTIVE", "FIRED", 1)
-
-        assertFalse(dao.updateState(dartAlarm.id, "ACTIVE", "CANCELLED", 2))
-        assertEquals(AlarmState.FIRED, dao.findById(dartAlarm.id)!!.toAlarm().state)
-    }
-
-    @Test
-    fun `updating an unknown id changes nothing`() {
-        assertFalse(dao.updateState("missing", "ACTIVE", "CANCELLED", 1))
+    fun `updating an unknown alarm changes nothing`() {
+        assertFalse(dao.updateSchedule("missing", 1, 1, 1, 1, 1))
+        assertFalse(dao.finish("missing", "FIRED", "NOTIFIED", null, null, 1))
         assertNull(dao.findById("missing"))
     }
 
     @Test
-    fun `updateStateOfAll only touches active alarms`() {
-        val other = dartAlarm.copy(id = "other", state = AlarmState.FIRED)
-        dao.save(dartAlarm.toRow())
-        dao.save(other.toRow())
+    fun `active alarms are listed by reminder time`() {
+        dao.insertIfAbsent(alarm("late").copy(reminderAt = created.plusSeconds(500)).toRow())
+        dao.insertIfAbsent(alarm("early").copy(reminderAt = created.plusSeconds(100)).toRow())
 
-        dao.updateStateOfAll("ACTIVE", "CANCELLED", 5)
-
-        assertEquals(AlarmState.CANCELLED, dao.findById(dartAlarm.id)!!.toAlarm().state)
-        assertEquals(AlarmState.FIRED, dao.findById("other")!!.toAlarm().state)
+        assertEquals(listOf("early", "late"), dao.findByState(active).map { it.Id })
     }
 
     @Test
     fun `purging removes only finished alarms not updated since the cut-off`() {
-        dao.save(dartAlarm.copy(id = "active-old", updatedAt = Instant.ofEpochMilli(1)).toRow())
-        dao.save(
-            dartAlarm.copy(
-                id = "cancelled-old",
-                state = AlarmState.CANCELLED,
-                updatedAt = Instant.ofEpochMilli(1)
-            ).toRow()
-        )
-        dao.save(
-            dartAlarm.copy(id = "fired-new", state = AlarmState.FIRED, updatedAt = Instant.ofEpochMilli(100)).toRow()
-        )
+        val old = Instant.ofEpochMilli(1)
+        dao.insertIfAbsent(alarm("active-old").copy(updatedAt = old).toRow())
+        dao.insertIfAbsent(alarm("cancelled-old").toRow())
+        dao.finish("cancelled-old", "CANCELLED", "USER_CANCELLED", null, null, 1)
+        dao.insertIfAbsent(alarm("fired-new").toRow())
+        dao.finish("fired-new", "FIRED", "NOTIFIED", null, null, 100)
 
-        dao.deleteFinishedBefore("ACTIVE", 50)
+        dao.deleteFinishedBefore(50)
 
-        assertNotEquals(null, dao.findById("active-old"))
+        assertNotNull(dao.findById("active-old"))
         assertNull(dao.findById("cancelled-old"))
-        assertNotEquals(null, dao.findById("fired-new"))
+        assertNotNull(dao.findById("fired-new"))
     }
 }

@@ -1,0 +1,48 @@
+-- Alarm identity is now a stable request id with its own integer code, separate from the departure it follows,
+-- and the alarm records its reminder time, live re-check count, OS registration type and outcome.
+CREATE TABLE AlarmNew (
+    Id TEXT NOT NULL PRIMARY KEY,
+    RequestCode INTEGER NOT NULL,
+    Kind TEXT NOT NULL,
+    State TEXT NOT NULL,
+    Transport TEXT NOT NULL,
+    StationCode TEXT NOT NULL,
+    StationName TEXT NOT NULL,
+    Direction TEXT,
+    Destination TEXT,
+    NotifyMinutesBefore INTEGER NOT NULL,
+    TripCode TEXT,
+    OperatingDate TEXT,
+    TargetExpectedAtMillis INTEGER,
+    TargetObservedAtMillis INTEGER,
+    ReminderAtMillis INTEGER NOT NULL,
+    CheckCount INTEGER NOT NULL,
+    Registration TEXT,
+    FinishReason TEXT,
+    Verification TEXT,
+    NotifiedAtMillis INTEGER,
+    CreatedAtMillis INTEGER NOT NULL,
+    UpdatedAtMillis INTEGER NOT NULL
+);
+
+INSERT INTO AlarmNew(
+    Id, RequestCode, Kind, State, Transport, StationCode, StationName, Direction, Destination, NotifyMinutesBefore,
+    TripCode, OperatingDate, TargetExpectedAtMillis, TargetObservedAtMillis, ReminderAtMillis, CheckCount,
+    Registration, FinishReason, Verification, NotifiedAtMillis, CreatedAtMillis, UpdatedAtMillis
+)
+SELECT
+    Id, rowid, Kind, State, Transport, StationCode, StationName, Direction, Destination, NotifyMinutesBefore,
+    TripCode, OperatingDate, TargetExpectedAtMillis, TargetObservedAtMillis,
+    COALESCE(TargetExpectedAtMillis - NotifyMinutesBefore * 60000 - 30000, UpdatedAtMillis), 0,
+    NULL, NULL, NULL, NULL, CreatedAtMillis, UpdatedAtMillis
+FROM Alarm;
+
+DROP INDEX AlarmStateIndex;
+
+DROP TABLE Alarm;
+
+ALTER TABLE AlarmNew RENAME TO Alarm;
+
+CREATE INDEX AlarmStateIndex ON Alarm(State);
+
+CREATE UNIQUE INDEX AlarmRequestCodeIndex ON Alarm(RequestCode);

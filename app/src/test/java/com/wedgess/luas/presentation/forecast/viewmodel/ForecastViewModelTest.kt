@@ -7,10 +7,8 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.wedgess.luas.domain.model.TransportType
-import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
 import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
-import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreNotificationPermissionUseCase
 import com.wedgess.luas.domain.usecase.UpdateNotificationPermissionRequestedUseCase
 import com.wedgess.luas.domain.usecase.WasNotificationPermissionRequestedUseCase
@@ -23,7 +21,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -63,12 +60,6 @@ class ForecastViewModelTest {
     @MockK
     private lateinit var fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase
 
-    @MockK
-    private lateinit var canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase
-
-    @MockK
-    private lateinit var requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase
-
     private lateinit var viewModel: ForecastViewModel
 
     @Before
@@ -81,8 +72,6 @@ class ForecastViewModelTest {
         coEvery { wasNotificationPermissionRequestedUseCase() } returns false
         coEvery { updateNotificationPermissionRequestedUseCase(any()) } returns Result.success(Unit)
         coEvery { updateIgnoreNotificationPermissionUseCase(any()) } returns Result.success(Unit)
-        coEvery { canScheduleExactAlarmsUseCase() } returns true
-        coEvery { requestExactAlarmPermissionUseCase() } returns Unit
         every { fetchSelectedTransportTypeUseCase() } returns flowOf(TransportType.LUAS)
 
         viewModel = ForecastViewModel(
@@ -90,8 +79,6 @@ class ForecastViewModelTest {
             wasNotificationPermissionRequestedUseCase,
             updateNotificationPermissionRequestedUseCase,
             updateIgnoreNotificationPermissionUseCase,
-            canScheduleExactAlarmsUseCase,
-            requestExactAlarmPermissionUseCase,
             fetchSelectedTransportTypeUseCase
         )
     }
@@ -191,16 +178,6 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `OnOpenScheduleExactAlarmPermissionClick requests exact alarm permission and clears dialog`() = runTest {
-        // Act
-        viewModel.onEvent(ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick)
-
-        // Assert
-        assertEquals(ForecastDialogState.None, viewModel.uiState.value.dialog)
-        verify { requestExactAlarmPermissionUseCase() }
-    }
-
-    @Test
     fun `handlePermissionChange sets permission to ShowRationale and shows rationale dialog`() = runTest {
         // Setup
         val mockPermissionState = mockk<PermissionState>(relaxed = true)
@@ -277,33 +254,25 @@ class ForecastViewModelTest {
         }
 
     @Test
-    fun `handlePermissionChange sets permission to Granted and shows ScheduleExactAlarms dialog when needed`() =
-        runTest {
-            // Setup
-            val mockPermissionState = mockk<PermissionState>(relaxed = true)
-
-            // Mock properties to ensure toPermission returns Granted
-            every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
-                every { this@apply.isGranted } returns true
-            }
-
-            coEvery { wasNotificationPermissionRequestedUseCase() } returns true
-            coEvery { isNotificationPermissionIgnoredUseCase() } returns false
-            coEvery { canScheduleExactAlarmsUseCase() } returns false
-
-            // Act
-            viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
-
-            // Assert
-            viewModel.uiState.test {
-                val state = awaitItem()
-                assertEquals(Permission.Granted, state.notificationPermission)
-                assertEquals(ForecastDialogState.ScheduleExactAlarms, state.dialog)
-            }
+    fun `granting notifications never prompts for exact alarms, which only degrade reminders`() = runTest {
+        val mockPermissionState = mockk<PermissionState>(relaxed = true)
+        every { mockPermissionState.status } returns mockk<PermissionStatus.Granted>().apply {
+            every { this@apply.isGranted } returns true
         }
+        coEvery { wasNotificationPermissionRequestedUseCase() } returns true
+        coEvery { isNotificationPermissionIgnoredUseCase() } returns false
+
+        viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals(Permission.Granted, state.notificationPermission)
+            assertEquals(ForecastDialogState.None, state.dialog)
+        }
+    }
 
     @Test
-    fun `handlePermissionChange sets permission to Granted and maintains dialog when exact alarms allowed`() = runTest {
+    fun `handlePermissionChange sets permission to Granted and maintains the current dialog`() = runTest {
         // Setup - First set a different dialog state
         viewModel.onEvent(ForecastContract.Event.OnNotificationPermanentlyDeniedDialog)
 
@@ -316,7 +285,6 @@ class ForecastViewModelTest {
 
         coEvery { wasNotificationPermissionRequestedUseCase() } returns true
         coEvery { isNotificationPermissionIgnoredUseCase() } returns false
-        coEvery { canScheduleExactAlarmsUseCase() } returns true
 
         // Act
         viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))
@@ -342,7 +310,6 @@ class ForecastViewModelTest {
 
             coEvery { wasNotificationPermissionRequestedUseCase() } returns true
             coEvery { isNotificationPermissionIgnoredUseCase() } returns true
-            coEvery { canScheduleExactAlarmsUseCase() } returns true
 
             // Act
             viewModel.onEvent(ForecastContract.Event.OnPermissionStateChanged(mockPermissionState))

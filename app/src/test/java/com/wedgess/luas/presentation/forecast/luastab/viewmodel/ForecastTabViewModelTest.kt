@@ -2,6 +2,12 @@ package com.wedgess.luas.presentation.forecast.luastab.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import com.wedgess.luas.domain.alarm.AlarmCoordinator
+import com.wedgess.luas.domain.model.Alarm
+import com.wedgess.luas.domain.model.AlarmCapabilities
+import com.wedgess.luas.domain.model.AlarmKind
+import com.wedgess.luas.domain.model.AlarmRequest
+import com.wedgess.luas.domain.model.AlarmState
 import com.wedgess.luas.domain.model.Departure
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.Departures
@@ -10,11 +16,6 @@ import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.repository.LuasRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
-import com.wedgess.luas.domain.usecase.CanScheduleExactAlarmsUseCase
-import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
-import com.wedgess.luas.domain.usecase.FetchIsAlarmRunningUseCase
-import com.wedgess.luas.domain.usecase.RequestExactAlarmPermissionUseCase
-import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
 import com.wedgess.luas.presentation.model.UiResult
@@ -23,6 +24,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -63,19 +66,7 @@ class ForecastTabViewModelTest {
     private lateinit var preferencesRepository: PreferencesRepository
 
     @MockK
-    private lateinit var canScheduleExactAlarmsUseCase: CanScheduleExactAlarmsUseCase
-
-    @MockK
-    private lateinit var cancelAlarmUseCase: CancelAlarmUseCase
-
-    @MockK
-    private lateinit var scheduleAlarmUseCase: ScheduleAlarmUseCase
-
-    @MockK
-    private lateinit var isAlarmRunningUseCase: FetchIsAlarmRunningUseCase
-
-    @MockK
-    private lateinit var requestExactAlarmPermissionUseCase: RequestExactAlarmPermissionUseCase
+    private lateinit var alarmCoordinator: AlarmCoordinator
 
     private lateinit var viewModel: LuasForecastTabViewModel
 
@@ -125,7 +116,8 @@ class ForecastTabViewModelTest {
     private var forecastResult: Result<Departures> = Result.success(mockForecast)
     private var cachedForecast: Departures? = null
     private val selectedStationFlow = MutableStateFlow("")
-    private val isAlarmRunningFlow = MutableStateFlow(false)
+    private val activeAlarmsFlow = MutableStateFlow<List<Alarm>>(emptyList())
+    private var capabilities = AlarmCapabilities(exactAlarms = true, notifications = true)
 
     @Before
     fun setUp() {
@@ -137,22 +129,19 @@ class ForecastTabViewModelTest {
         coEvery { luasRepository.cachedForecast(any()) } answers { cachedForecast }
         every { preferencesRepository.fetchSelectedGreenLineStation() } returns selectedStationFlow
         every { preferencesRepository.fetchSelectedRedLineStation() } returns selectedStationFlow
-        every { isAlarmRunningUseCase() } returns isAlarmRunningFlow
+        every { alarmCoordinator.observeActive() } returns activeAlarmsFlow
+        every { alarmCoordinator.capabilities } answers { capabilities }
+        every { alarmCoordinator.openExactAlarmSettings() } returns Unit
+        coEvery { alarmCoordinator.cancel(any()) } returns Result.success(true)
+        coEvery { alarmCoordinator.create(any()) } answers { Result.success(mockk(relaxed = true)) }
         coEvery { preferencesRepository.updateSelectedGreenLineStation(any()) } returns Result.success(Unit)
-        every { canScheduleExactAlarmsUseCase() } returns false
-        every { cancelAlarmUseCase() } returns Unit
-        coEvery { scheduleAlarmUseCase(any(), any()) } returns Result.success(0L)
 
         viewModel = LuasForecastTabViewModel(
             luasLine = luasLine,
             luasRepository = luasRepository,
             preferencesRepository = preferencesRepository,
-            clock = clock,
-            canScheduleExactAlarmsUseCase = canScheduleExactAlarmsUseCase,
-            cancelAlarmUseCase = cancelAlarmUseCase,
-            scheduleAlarmUseCase = scheduleAlarmUseCase,
-            isAlarmRunningUseCase = isAlarmRunningUseCase,
-            requestExactAlarmPermissionUseCase = requestExactAlarmPermissionUseCase
+            alarmCoordinator = alarmCoordinator,
+            clock = clock
         )
     }
 
@@ -281,12 +270,13 @@ class ForecastTabViewModelTest {
     @Test
     fun `should not offer an alarm from stored data before the first live fetch`() = runTest {
         cachedForecast = mockForecast
-        every { canScheduleExactAlarmsUseCase() } returns true
         coEvery { luasRepository.fetchForecast(any()) } coAnswers { awaitCancellation() }
 
         viewModel.uiResult.test {
             assertTrue((awaitItem() as UiResult.Success).data.isStale)
-            viewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge"))
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+            )
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
         }
@@ -325,15 +315,15 @@ class ForecastTabViewModelTest {
 
     @Test
     fun `should not offer an alarm from stale data`() = runTest {
-        every { canScheduleExactAlarmsUseCase() } returns true
-
         viewModel.uiResult.test {
             awaitItem()
             forecastResult = Result.failure(Exception("offline"))
             viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
             assertTrue((awaitItem() as UiResult.Success).data.isStale)
 
-            viewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge"))
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+            )
             expectNoEvents()
         }
         assertEquals(
@@ -392,77 +382,6 @@ class ForecastTabViewModelTest {
     }
 
     @Test
-    fun `timer should stop when all minutes are elapsed`() = runTest {
-        // Given
-        val dueInMins = 2
-        val destination = "Broombridge"
-        every { canScheduleExactAlarmsUseCase() } returns true
-
-        // First setup notification state
-        viewModel.onEvent(
-            LuasForecastTabContract.Event.OnShowNotificationsDialog(
-                dueInMins = dueInMins,
-                destination = destination
-            )
-        )
-
-        // When
-        viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 1))
-
-        // Check initial state
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(dueInMins, (result as UiResult.Success).data.luasNotificationState.dueInMins)
-        }
-
-        // Advance past timer end (2 minutes plus a bit more)
-        advanceTimeBy(2 * 60_000 + 1000)
-        runCurrent()
-
-        // Then - timer should have stopped at 0
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(0, (result as UiResult.Success).data.luasNotificationState.dueInMins)
-        }
-
-        // Advance more time - should still be at 0
-        advanceTimeBy(60_000)
-        runCurrent()
-
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(0, (result as UiResult.Success).data.luasNotificationState.dueInMins)
-        }
-    }
-
-    @Test
-    fun `Notification dialog is not displayed when exact alarm permission is disabled`() = runTest {
-        // Given
-        val dueInMins = 2
-        val destination = "Broombridge"
-        every { canScheduleExactAlarmsUseCase() } returns false
-        every { requestExactAlarmPermissionUseCase() } returns Unit
-
-        // First setup notification state
-        viewModel.onEvent(
-            LuasForecastTabContract.Event.OnShowNotificationsDialog(
-                dueInMins = dueInMins,
-                destination = destination
-            )
-        )
-
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(LuasForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
-        }
-        verify { requestExactAlarmPermissionUseCase() }
-    }
-
-    @Test
     fun `should handle non-existent stop when OnStopSelected is called`() = runTest {
         // Given a stop that's not in the list
         val nonExistentStop = LuasStopEntity(
@@ -484,39 +403,6 @@ class ForecastTabViewModelTest {
     }
 
     @Test
-    fun `timer should be cancelled when OnStopNotification event is received`() = runTest {
-        // Given
-        val dueInMins = 10
-        val destination = "Broombridge"
-        every { canScheduleExactAlarmsUseCase() } returns true
-
-        // Setup notification and start timer
-        viewModel.onEvent(
-            LuasForecastTabContract.Event.OnShowNotificationsDialog(
-                dueInMins = dueInMins,
-                destination = destination
-            )
-        )
-        viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 5))
-
-        // Advance time to verify the timer is running
-        advanceTimeBy(60_000) // 1 minute
-        runCurrent()
-
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(9, (result as UiResult.Success).data.luasNotificationState.dueInMins)
-        }
-
-        // Stop the notification
-        viewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification)
-
-        // Call to cancel alarm should be made
-        verify { cancelAlarmUseCase() }
-    }
-
-    @Test
     fun `should handle update of selected station failure gracefully`() = runTest {
         // Given
         coEvery {
@@ -530,43 +416,6 @@ class ForecastTabViewModelTest {
     }
 
     @Test
-    fun `OnShowNotificationsDialog with zero or negative minutes should not show dialog`() = runTest {
-        // Given
-        val dueInMins = 0 // Zero minutes
-        val destination = "Broombridge"
-
-        // When
-        viewModel.onEvent(
-            LuasForecastTabContract.Event.OnShowNotificationsDialog(
-                dueInMins = dueInMins,
-                destination = destination
-            )
-        )
-
-        // Then
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(LuasForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
-        }
-
-        // Try with negative minutes
-        viewModel.onEvent(
-            LuasForecastTabContract.Event.OnShowNotificationsDialog(
-                dueInMins = -5,
-                destination = destination
-            )
-        )
-
-        // Then
-        viewModel.uiResult.test {
-            val result = awaitItem()
-            assertTrue(result is UiResult.Success)
-            assertEquals(LuasForecastTabDialogState.None, (result as UiResult.Success).data.dialog)
-        }
-    }
-
-    @Test
     fun `should handle null error message from forecast exception`() = runTest {
         // Given
         forecastResult = Result.failure(Exception()) // No message
@@ -576,6 +425,184 @@ class ForecastTabViewModelTest {
             val result = awaitItem()
             assertTrue(result is UiResult.Error)
             assertEquals("Failed to fetch forecast", (result as UiResult.Error).message)
+        }
+    }
+
+    private fun alarm(id: String, station: String = "STA") = Alarm(
+        id = id,
+        requestCode = 1,
+        kind = AlarmKind.SPECIFIC_DEPARTURE,
+        state = AlarmState.ACTIVE,
+        transport = TransportType.LUAS,
+        stationCode = station,
+        stationName = "Station $station",
+        destination = "Broombridge",
+        notifyMinutesBefore = 3,
+        reminderAt = now,
+        createdAt = now,
+        updatedAt = now
+    )
+
+    @Test
+    fun `opening the alarm dialog shows it straight away without waiting for the next poll`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+            )
+
+            val state = (awaitItem() as UiResult.Success).data
+            assertEquals(LuasForecastTabDialogState.Notification, state.dialog)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the alarm dialog records the live expected arrival and the station code`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+            )
+
+            val pending = (awaitItem() as UiResult.Success).data.luasNotificationState
+            assertEquals("STA", pending.stationCode)
+            assertEquals(DepartureDirection.INBOUND, pending.direction)
+            // The fetch time plus the live minutes, not a countdown from whenever the dialog happened to open.
+            assertEquals(mockForecast.fetchedAt.plusSeconds(300), pending.expectedAt)
+            assertEquals(5, pending.notifyMinutesBefore)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `confirming creates a specific-departure alarm request through the coordinator`() = runTest {
+        val request = slot<AlarmRequest>()
+        coEvery { alarmCoordinator.create(capture(request)) } returns Result.success(mockk(relaxed = true))
+
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(8, "Broombridge", DepartureDirection.INBOUND)
+            )
+            awaitItem()
+            viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 3))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        with(request.captured) {
+            assertEquals(AlarmKind.SPECIFIC_DEPARTURE, kind)
+            assertEquals(TransportType.LUAS, transport)
+            assertEquals("STA", stationCode)
+            assertEquals("St. Stephens Green", stationName)
+            assertEquals(DepartureDirection.INBOUND, direction)
+            assertEquals("Broombridge", destination)
+            assertEquals(3, notifyMinutesBefore)
+            assertEquals(mockForecast.fetchedAt.plusSeconds(480), expectedAt)
+            assertEquals(mockForecast.fetchedAt, observedAt)
+            assertTrue(requestId.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `confirming the same dialog twice sends the same request id so it stays one alarm`() = runTest {
+        val requests = mutableListOf<AlarmRequest>()
+        coEvery { alarmCoordinator.create(capture(requests)) } returns Result.success(mockk(relaxed = true))
+
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(8, "Broombridge", DepartureDirection.INBOUND)
+            )
+            awaitItem()
+            viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 3))
+            viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 3))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals(1, requests.map { it.requestId }.toSet().size)
+    }
+
+    @Test
+    fun `opening the dialog reads what the device allows but never prompts`() = runTest {
+        capabilities = AlarmCapabilities(exactAlarms = false, notifications = false)
+
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+            )
+
+            val state = (awaitItem() as UiResult.Success).data
+            assertEquals(capabilities, state.alarmCapabilities)
+            assertEquals(LuasForecastTabDialogState.Notification, state.dialog)
+            cancelAndIgnoreRemainingEvents()
+        }
+        verify(exactly = 0) { alarmCoordinator.openExactAlarmSettings() }
+    }
+
+    @Test
+    fun `settings are only opened when the user asks`() = runTest {
+        viewModel.onEvent(LuasForecastTabContract.Event.OnOpenExactAlarmSettings)
+
+        verify(exactly = 1) { alarmCoordinator.openExactAlarmSettings() }
+    }
+
+    @Test
+    fun `cancelling cancels that alarm by id`() = runTest {
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification("alarm-7"))
+
+        coVerify { alarmCoordinator.cancel("alarm-7") }
+    }
+
+    @Test
+    fun `active alarms of every station are shown and survive changing the viewed station`() = runTest {
+        activeAlarmsFlow.value = listOf(alarm("a", "STA"), alarm("b", "HAR"))
+
+        viewModel.uiResult.test {
+            assertEquals(listOf("a", "b"), (awaitItem() as UiResult.Success).data.activeAlarms.map { it.id })
+
+            viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected(mockStops[1].name))
+
+            cancelAndIgnoreRemainingEvents()
+        }
+        coVerify(exactly = 0) { alarmCoordinator.cancel(any()) }
+    }
+
+    @Test
+    fun `only Luas alarms appear in the Luas list`() = runTest {
+        activeAlarmsFlow.value = listOf(alarm("luas"), alarm("dart").copy(transport = TransportType.DART))
+
+        viewModel.uiResult.test {
+            assertEquals(listOf("luas"), (awaitItem() as UiResult.Success).data.activeAlarms.map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `an alarm finishing removes it from the list without waiting for a poll`() = runTest {
+        activeAlarmsFlow.value = listOf(alarm("a"))
+
+        viewModel.uiResult.test {
+            assertEquals(1, (awaitItem() as UiResult.Success).data.activeAlarms.size)
+            activeAlarmsFlow.value = emptyList()
+            assertEquals(0, (awaitItem() as UiResult.Success).data.activeAlarms.size)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `zero or negative minutes do not open the alarm dialog`() = runTest {
+        viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(0, "Broombridge", DepartureDirection.INBOUND)
+            )
+            viewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(-5, "Broombridge", DepartureDirection.INBOUND)
+            )
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 }

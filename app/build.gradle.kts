@@ -51,6 +51,13 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // Robolectric needs the app's resources and manifest, which also makes it run at the target SDK
+            // instead of its oldest default.
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {

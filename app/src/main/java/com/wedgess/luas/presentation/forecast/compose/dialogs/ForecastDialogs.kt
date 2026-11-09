@@ -47,21 +47,5 @@ fun ForecastDialogs(
                 }
             }
         )
-
-        ForecastDialogState.ScheduleExactAlarms -> AlertDialog(
-            onDismissRequest = { onEvent(ForecastContract.Event.OnDismissDialogClick) },
-            title = { Text(stringResource(R.string.alarm_permission_dialog_title)) },
-            text = { Text(stringResource(R.string.exact_alarm_permission_msg)) },
-            confirmButton = {
-                TextButton(onClick = { onEvent(ForecastContract.Event.OnOpenScheduleExactAlarmPermissionClick) }) {
-                    Text(stringResource(R.string.btn_yes))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onEvent(ForecastContract.Event.OnDismissDialogClick) }) {
-                    Text(stringResource(R.string.btn_no))
-                }
-            }
-        )
     }
 }

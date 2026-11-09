@@ -1,6 +1,7 @@
 package com.wedgess.luas.presentation.forecast.luastab.compose.components
 
 import androidx.compose.runtime.Composable
+import com.wedgess.luas.domain.model.AlarmCapabilities
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.compose.dialogs.NotificationTimeDialog
 import com.wedgess.luas.presentation.forecast.luastab.compose.dialogs.TravelUpdatesDialog
@@ -11,6 +12,7 @@ import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationStat
 fun LuasForecastTabDialogs(
     dialogsState: LuasForecastTabDialogState,
     luasNotificationState: LuasNotificationState,
+    alarmCapabilities: AlarmCapabilities,
     onEvent: (LuasForecastTabContract.Event) -> Unit
 ) {
     when (dialogsState) {
@@ -28,7 +30,10 @@ fun LuasForecastTabDialogs(
                     LuasForecastTabContract.Event.OnStartNotification(minutes = minutesBefore)
                 )
             },
-            onDismiss = { onEvent(LuasForecastTabContract.Event.OnDismissDialog) }
+            onDismiss = { onEvent(LuasForecastTabContract.Event.OnDismissDialog) },
+            exactAlarmsAllowed = alarmCapabilities.exactAlarms,
+            notificationsAllowed = alarmCapabilities.notifications,
+            onOpenSettings = { onEvent(LuasForecastTabContract.Event.OnOpenExactAlarmSettings) }
         )
     }
 }

@@ -21,11 +21,15 @@ class AlarmDao @Inject constructor(
 
     fun observeByState(state: String) = queries.selectByState(state).asFlow().mapToList(ioDispatcher)
 
-    /** Inserts or replaces by id, keeping the creation time of an existing row. */
-    fun save(alarm: Alarm) = db.transaction {
-        val createdAt = queries.selectById(alarm.Id).executeAsOneOrNull()?.CreatedAtMillis ?: alarm.CreatedAtMillis
-        queries.upsert(
+    /**
+     * Inserts the alarm with the next free request code, unless the id already exists, and returns the stored row.
+     * Runs in one transaction, so concurrent callers get distinct codes and a repeated id never overwrites.
+     */
+    fun insertIfAbsent(alarm: Alarm): Alarm = db.transactionWithResult {
+        val code = queries.nextRequestCode().executeAsOne()
+        queries.insertIfAbsent(
             Id = alarm.Id,
+            RequestCode = code,
             Kind = alarm.Kind,
             State = alarm.State,
             Transport = alarm.Transport,
@@ -38,21 +42,63 @@ class AlarmDao @Inject constructor(
             OperatingDate = alarm.OperatingDate,
             TargetExpectedAtMillis = alarm.TargetExpectedAtMillis,
             TargetObservedAtMillis = alarm.TargetObservedAtMillis,
-            CreatedAtMillis = createdAt,
+            ReminderAtMillis = alarm.ReminderAtMillis,
+            CheckCount = alarm.CheckCount,
+            Registration = alarm.Registration,
+            FinishReason = alarm.FinishReason,
+            Verification = alarm.Verification,
+            NotifiedAtMillis = alarm.NotifiedAtMillis,
+            CreatedAtMillis = alarm.CreatedAtMillis,
             UpdatedAtMillis = alarm.UpdatedAtMillis
         )
+        queries.selectById(alarm.Id).executeAsOne()
     }
 
-    /** Returns true if a row moved from [fromState] to [newState]. */
-    fun updateState(id: String, fromState: String, newState: String, updatedAtMillis: Long): Boolean =
+    // The parameters map one-to-one onto the columns being written.
+    @Suppress("LongParameterList")
+    fun updateSchedule(
+        id: String,
+        reminderAtMillis: Long,
+        targetExpectedAtMillis: Long?,
+        targetObservedAtMillis: Long?,
+        checkCount: Long,
+        updatedAtMillis: Long
+    ): Boolean = db.transactionWithResult {
+        queries.updateSchedule(
+            reminderAtMillis,
+            targetExpectedAtMillis,
+            targetObservedAtMillis,
+            checkCount,
+            updatedAtMillis,
+            id,
+            ACTIVE
+        )
+        queries.changes().executeAsOne() > 0
+    }
+
+    fun updateRegistration(id: String, registration: String, updatedAtMillis: Long): Boolean =
         db.transactionWithResult {
-            queries.updateState(newState, updatedAtMillis, id, fromState)
+            queries.updateRegistration(registration, updatedAtMillis, id, ACTIVE)
             queries.changes().executeAsOne() > 0
         }
 
-    fun updateStateOfAll(fromState: String, newState: String, updatedAtMillis: Long) =
-        queries.updateStateOfAll(newState, updatedAtMillis, fromState)
+    /** Moves an ACTIVE alarm to a finished state. Returns true for exactly one of several racing callers. */
+    @Suppress("LongParameterList")
+    fun finish(
+        id: String,
+        newState: String,
+        finishReason: String,
+        verification: String?,
+        notifiedAtMillis: Long?,
+        updatedAtMillis: Long
+    ): Boolean = db.transactionWithResult {
+        queries.finish(newState, finishReason, verification, notifiedAtMillis, updatedAtMillis, id, ACTIVE)
+        queries.changes().executeAsOne() > 0
+    }
 
-    fun deleteFinishedBefore(activeState: String, updatedBeforeMillis: Long) =
-        queries.deleteFinishedBefore(activeState, updatedBeforeMillis)
+    fun deleteFinishedBefore(updatedBeforeMillis: Long) = queries.deleteFinishedBefore(ACTIVE, updatedBeforeMillis)
+
+    private companion object {
+        const val ACTIVE = "ACTIVE"
+    }
 }

@@ -1,7 +1,11 @@
 -- Durable alarm definitions are the source of truth; AlarmManager registrations are rebuilt from the ACTIVE rows.
--- Id is a stable identifier (see Alarm.nextDepartureId / Alarm.departureId) so saving the same alarm twice updates it.
+-- Id is the stable identity of the alarm request (a UUID chosen when the user creates it). It is deliberately not
+-- derived from the departure: the departure it follows is described by Transport/StationCode/Direction/Destination and,
+-- for DART, TripCode + OperatingDate, so two alarms for the same train never collide.
+-- Every state change out of ACTIVE is a single conditional UPDATE, so exactly one caller wins a race.
 CREATE TABLE Alarm (
     Id TEXT NOT NULL PRIMARY KEY,
+    RequestCode INTEGER NOT NULL,
     Kind TEXT NOT NULL,
     State TEXT NOT NULL,
     Transport TEXT NOT NULL,
@@ -14,30 +18,57 @@ CREATE TABLE Alarm (
     OperatingDate TEXT,
     TargetExpectedAtMillis INTEGER,
     TargetObservedAtMillis INTEGER,
+    ReminderAtMillis INTEGER NOT NULL,
+    CheckCount INTEGER NOT NULL,
+    Registration TEXT,
+    FinishReason TEXT,
+    Verification TEXT,
+    NotifiedAtMillis INTEGER,
     CreatedAtMillis INTEGER NOT NULL,
     UpdatedAtMillis INTEGER NOT NULL
 );
 
 CREATE INDEX AlarmStateIndex ON Alarm(State);
 
+CREATE UNIQUE INDEX AlarmRequestCodeIndex ON Alarm(RequestCode);
+
 selectById:
 SELECT * FROM Alarm WHERE Id = :id;
 
 selectByState:
-SELECT * FROM Alarm WHERE State = :state ORDER BY CreatedAtMillis, Id;
+SELECT * FROM Alarm WHERE State = :state ORDER BY ReminderAtMillis, Id;
 
-upsert:
-INSERT OR REPLACE INTO Alarm(
-    Id, Kind, State, Transport, StationCode, StationName, Direction, Destination, NotifyMinutesBefore, TripCode,
-    OperatingDate, TargetExpectedAtMillis, TargetObservedAtMillis, CreatedAtMillis, UpdatedAtMillis
+nextRequestCode:
+SELECT COALESCE(MAX(RequestCode), 0) + 1 FROM Alarm;
+
+insertIfAbsent:
+INSERT OR IGNORE INTO Alarm(
+    Id, RequestCode, Kind, State, Transport, StationCode, StationName, Direction, Destination, NotifyMinutesBefore,
+    TripCode, OperatingDate, TargetExpectedAtMillis, TargetObservedAtMillis, ReminderAtMillis, CheckCount,
+    Registration, FinishReason, Verification, NotifiedAtMillis, CreatedAtMillis, UpdatedAtMillis
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
-updateState:
-UPDATE Alarm SET State = :newState, UpdatedAtMillis = :updatedAtMillis WHERE Id = :id AND State = :fromState;
+updateSchedule:
+UPDATE Alarm
+SET ReminderAtMillis = :reminderAtMillis,
+    TargetExpectedAtMillis = :targetExpectedAtMillis,
+    TargetObservedAtMillis = :targetObservedAtMillis,
+    CheckCount = :checkCount,
+    UpdatedAtMillis = :updatedAtMillis
+WHERE Id = :id AND State = :activeState;
 
-updateStateOfAll:
-UPDATE Alarm SET State = :newState, UpdatedAtMillis = :updatedAtMillis WHERE State = :fromState;
+updateRegistration:
+UPDATE Alarm SET Registration = :registration, UpdatedAtMillis = :updatedAtMillis WHERE Id = :id AND State = :activeState;
+
+finish:
+UPDATE Alarm
+SET State = :newState,
+    FinishReason = :finishReason,
+    Verification = :verification,
+    NotifiedAtMillis = :notifiedAtMillis,
+    UpdatedAtMillis = :updatedAtMillis
+WHERE Id = :id AND State = :activeState;
 
 deleteFinishedBefore:
 DELETE FROM Alarm WHERE State != :activeState AND UpdatedAtMillis < :updatedBeforeMillis;

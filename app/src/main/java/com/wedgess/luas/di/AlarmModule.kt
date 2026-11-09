@@ -1,56 +1,32 @@
 package com.wedgess.luas.di
 
-import android.content.Context
-import com.wedgess.luas.data.alarm.AlarmManagerDataSource
-import com.wedgess.luas.data.repository.AlarmRepositoryImpl
+import com.wedgess.luas.data.alarm.AlarmManagerScheduler
+import com.wedgess.luas.data.alarm.AlarmNotificationNotifier
+import com.wedgess.luas.domain.alarm.AlarmNotifier
+import com.wedgess.luas.domain.alarm.AlarmScheduler
 import com.wedgess.luas.domain.navigation.ServiceNavigator
-import com.wedgess.luas.domain.repository.AlarmConfigRepository
-import com.wedgess.luas.domain.repository.AlarmRepository
-import com.wedgess.luas.domain.usecase.CancelAlarmUseCase
-import com.wedgess.luas.domain.usecase.ScheduleAlarmUseCase
 import com.wedgess.luas.presentation.navigation.service.ServiceNavigatorImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import java.time.Clock
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AlarmModule {
+abstract class AlarmModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideAlarmRepository(
-        alarmManagerDataSource: AlarmManagerDataSource,
-        alarmConfigRepository: AlarmConfigRepository,
-        clock: Clock
-    ): AlarmRepository {
-        return AlarmRepositoryImpl(alarmManagerDataSource, alarmConfigRepository, clock)
-    }
+    abstract fun bindAlarmScheduler(scheduler: AlarmManagerScheduler): AlarmScheduler
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideAlarmManagerDataSource(
-        @ApplicationContext context: Context
-    ): AlarmManagerDataSource {
-        return AlarmManagerDataSource(context)
-    }
+    abstract fun bindAlarmNotifier(notifier: AlarmNotificationNotifier): AlarmNotifier
 
-    @Provides
-    fun provideScheduleAlarmUseCase(alarmRepository: AlarmRepository): ScheduleAlarmUseCase {
-        return ScheduleAlarmUseCase(alarmRepository)
-    }
-
-    @Provides
-    fun provideCancelAlarmUseCase(alarmRepository: AlarmRepository): CancelAlarmUseCase {
-        return CancelAlarmUseCase(alarmRepository)
-    }
-
-    @Provides
-    fun provideNavigationUseCase(): ServiceNavigator {
-        return ServiceNavigatorImpl()
+    companion object {
+        @Provides
+        fun provideNavigationUseCase(): ServiceNavigator = ServiceNavigatorImpl()
     }
 }

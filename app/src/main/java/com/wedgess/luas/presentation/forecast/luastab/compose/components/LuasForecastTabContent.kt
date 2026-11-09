@@ -68,13 +68,16 @@ fun LuasForecastTabContent(
     }
     val onTramClick = remember(luasForecastTabViewModel) {
         {
-                mins: Int, destination: String ->
-            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination))
+                mins: Int, destination: String, direction: DepartureDirection ->
+            luasForecastTabViewModel.onEvent(
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination, direction)
+            )
         }
     }
     val onCancelAlarm = remember(luasForecastTabViewModel) {
         {
-            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification)
+                alarmId: String ->
+            luasForecastTabViewModel.onEvent(LuasForecastTabContract.Event.OnStopNotification(alarmId))
         }
     }
     uiResult.Compose(
@@ -98,6 +101,7 @@ fun LuasForecastTabContent(
             LuasForecastTabDialogs(
                 dialogsState = uiState.dialog,
                 luasNotificationState = uiState.luasNotificationState,
+                alarmCapabilities = uiState.alarmCapabilities,
                 onEvent = luasForecastTabViewModel::onEvent
             )
         }
@@ -111,8 +115,8 @@ fun LuasTabListContent(
     uiState: LuasForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (DropdownItem) -> Unit,
-    onTramClick: (Int, String) -> Unit,
-    onCancelAlarm: () -> Unit
+    onTramClick: (Int, String, DepartureDirection) -> Unit,
+    onCancelAlarm: (String) -> Unit
 ) {
     Column {
         RefreshProgressIndicator(
@@ -135,8 +139,8 @@ private fun LuasTramList(
     uiState: LuasForecastTabContract.UiState,
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (DropdownItem) -> Unit,
-    onTramClick: (Int, String) -> Unit,
-    onCancelAlarm: () -> Unit
+    onTramClick: (Int, String, DepartureDirection) -> Unit,
+    onCancelAlarm: (String) -> Unit
 ) {
     val outbound = uiState.forecast.byDirection(DepartureDirection.OUTBOUND)
     val inbound = uiState.forecast.byDirection(DepartureDirection.INBOUND)
@@ -159,13 +163,8 @@ private fun LuasTramList(
         if (uiState.isStale) {
             item { StaleDataBanner(lastUpdated = uiState.forecast.fetchedAt) }
         }
-        item {
-            AnimatedVisibility(uiState.alarmIsRunning) {
-                LuasForecastAlarmRow(
-                    luasNotificationState = uiState.luasNotificationState,
-                    onCancelAlarm = onCancelAlarm
-                )
-            }
+        items(uiState.activeAlarms, key = { it.id }) { alarm ->
+            LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)
         }
         item {
             LuasForecastStatusMessage(
@@ -190,7 +189,7 @@ private fun LuasTramList(
                 destination = tram.destination,
                 stale = uiState.isStale,
                 expectedTime = tram.expectedAt?.toClockTime(),
-                onRowClick = onTramClick
+                onRowClick = { mins, destination -> onTramClick(mins, destination, tram.direction) }
             )
         }
 
@@ -212,7 +211,7 @@ private fun LuasTramList(
                 destination = tram.destination,
                 stale = uiState.isStale,
                 expectedTime = tram.expectedAt?.toClockTime(),
-                onRowClick = onTramClick
+                onRowClick = { mins, destination -> onTramClick(mins, destination, tram.direction) }
             )
         }
     }

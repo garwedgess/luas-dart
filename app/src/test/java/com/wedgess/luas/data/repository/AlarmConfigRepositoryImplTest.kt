@@ -9,15 +9,19 @@ import com.wedgess.luas.data.LuasDatabase
 import com.wedgess.luas.data.db.dao.AlarmDao
 import com.wedgess.luas.data.db.luasDatabase
 import com.wedgess.luas.domain.model.Alarm
+import com.wedgess.luas.domain.model.AlarmFinishReason
 import com.wedgess.luas.domain.model.AlarmKind
+import com.wedgess.luas.domain.model.AlarmRegistration
 import com.wedgess.luas.domain.model.AlarmState
+import com.wedgess.luas.domain.model.AlarmVerification
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.TransportType
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -51,117 +55,114 @@ class AlarmConfigRepositoryImplTest {
         context.deleteDatabase(DB_NAME)
     }
 
-    private fun alarm(
-        id: String,
-        station: String = "STI",
-        kind: AlarmKind = AlarmKind.NEXT_DEPARTURE,
-        direction: DepartureDirection? = DepartureDirection.INBOUND
-    ) = Alarm(
+    private fun alarm(id: String, station: String = "STI", reminderOffset: Long = 600) = Alarm(
         id = id,
-        kind = kind,
+        requestCode = 0,
+        kind = AlarmKind.SPECIFIC_DEPARTURE,
         state = AlarmState.ACTIVE,
         transport = TransportType.LUAS,
         stationCode = station,
         stationName = "Station $station",
-        direction = direction,
+        direction = DepartureDirection.INBOUND,
+        destination = "Broombridge",
         notifyMinutesBefore = 3,
+        targetExpectedAt = now.plusSeconds(reminderOffset + 210),
+        targetObservedAt = now,
+        reminderAt = now.plusSeconds(reminderOffset),
         createdAt = now,
         updatedAt = now
     )
 
     @Test
-    fun `saving the same alarm repeatedly keeps one record`() = runTest {
-        val alarm = alarm("a")
+    fun `storing the same alarm repeatedly keeps one record and its request code`() = runTest {
+        val first = repository.insertIfAbsent(alarm("a")).getOrThrow()
 
-        repeat(3) { repository.save(alarm) }
+        repeat(3) { assertEquals(first, repository.insertIfAbsent(alarm("a")).getOrThrow()) }
 
-        assertEquals(listOf(alarm), repository.activeAlarms().getOrThrow())
+        assertEquals(listOf(first), repository.activeAlarms().getOrThrow())
     }
 
     @Test
-    fun `stable ids are deterministic and distinguish stations, directions and services`() {
-        val inbound = Alarm.nextDepartureId(TransportType.LUAS, "STI", DepartureDirection.INBOUND)
+    fun `alarms for the same station and departure coexist under their own ids`() = runTest {
+        repository.insertIfAbsent(alarm("a"))
+        repository.insertIfAbsent(alarm("b"))
+        repository.insertIfAbsent(alarm("c", station = "STS"))
 
-        assertEquals(inbound, Alarm.nextDepartureId(TransportType.LUAS, "STI", DepartureDirection.INBOUND))
-        assertNotEquals(inbound, Alarm.nextDepartureId(TransportType.LUAS, "STI", DepartureDirection.OUTBOUND))
-        assertNotEquals(inbound, Alarm.nextDepartureId(TransportType.LUAS, "STS", DepartureDirection.INBOUND))
-        assertNotEquals(inbound, Alarm.nextDepartureId(TransportType.DART, "STI", DepartureDirection.INBOUND))
-        val date = LocalDate.of(2026, 11, 9)
-        assertNotEquals(
-            Alarm.departureId(TransportType.DART, "MHIDE", "E846", date),
-            Alarm.departureId(TransportType.DART, "MHIDE", "E846", date.plusDays(1))
-        )
+        val active = repository.activeAlarms().getOrThrow()
+        assertEquals(setOf("a", "b", "c"), active.map { it.id }.toSet())
+        assertEquals(3, active.map { it.requestCode }.toSet().size)
     }
 
     @Test
-    fun `alarms belong to their own stations and several can be active at once`() = runTest {
-        repository.save(alarm("a", station = "STI"))
-        repository.save(alarm("b", station = "STS"))
+    fun `finishing is idempotent and only one of several racing callers wins`() = runTest {
+        repository.insertIfAbsent(alarm("a"))
 
-        assertEquals(setOf("STI", "STS"), repository.activeAlarms().getOrThrow().map { it.stationCode }.toSet())
+        val results = List(8) {
+            async {
+                repository.finish(
+                    "a",
+                    AlarmState.FIRED,
+                    AlarmFinishReason.NOTIFIED,
+                    AlarmVerification.UNVERIFIED,
+                    now
+                )
+            }
+        }.awaitAll().map { it.getOrThrow() }
+
+        assertEquals(1, results.count { it })
+        assertEquals(AlarmState.FIRED, repository.get("a").getOrThrow()!!.state)
     }
 
     @Test
-    fun `finishing an alarm is idempotent`() = runTest {
-        repository.save(alarm("a"))
+    fun `a finished alarm is never resurrected by later updates`() = runTest {
+        repository.insertIfAbsent(alarm("a"))
+        repository.finish("a", AlarmState.CANCELLED, AlarmFinishReason.USER_CANCELLED)
 
-        assertTrue(repository.finish("a", AlarmState.CANCELLED).getOrThrow())
-        assertFalse(repository.finish("a", AlarmState.CANCELLED).getOrThrow())
-
-        assertEquals(AlarmState.CANCELLED, repository.get("a").getOrThrow()!!.state)
+        assertFalse(repository.updateSchedule("a", now, now, now, 1).getOrThrow())
+        assertFalse(repository.updateRegistration("a", AlarmRegistration.EXACT).getOrThrow())
+        assertFalse(repository.finish("a", AlarmState.FIRED, AlarmFinishReason.NOTIFIED).getOrThrow())
         assertTrue(repository.activeAlarms().getOrThrow().isEmpty())
-    }
-
-    @Test
-    fun `finishing an alarm to ACTIVE is rejected`() = runTest {
-        repository.save(alarm("a"))
-
-        assertTrue(repository.finish("a", AlarmState.ACTIVE).isFailure)
-        assertTrue(repository.finishAllActive(AlarmState.ACTIVE).isFailure)
-    }
-
-    @Test
-    fun `finishing all active alarms leaves earlier finished ones as they were`() = runTest {
-        repository.save(alarm("a"))
-        repository.save(alarm("b"))
-        repository.finish("b", AlarmState.FIRED)
-
-        repository.finishAllActive(AlarmState.CANCELLED)
-
         assertEquals(AlarmState.CANCELLED, repository.get("a").getOrThrow()!!.state)
-        assertEquals(AlarmState.FIRED, repository.get("b").getOrThrow()!!.state)
+    }
+
+    @Test
+    fun `finishing to ACTIVE is rejected`() = runTest {
+        repository.insertIfAbsent(alarm("a"))
+
+        assertTrue(repository.finish("a", AlarmState.ACTIVE, AlarmFinishReason.NOTIFIED).isFailure)
     }
 
     @Test
     fun `a missing alarm is reported as null rather than failing`() = runTest {
         assertNull(repository.get("missing").getOrThrow())
-        assertFalse(repository.finish("missing", AlarmState.CANCELLED).getOrThrow())
+        assertFalse(repository.finish("missing", AlarmState.CANCELLED, AlarmFinishReason.USER_CANCELLED).getOrThrow())
     }
 
     @Test
-    fun `observing active alarms follows saves and cancellations`() = runTest {
+    fun `observing active alarms follows creation, schedule changes and completion`() = runTest {
         repository.observeActive().test {
             assertEquals(emptyList<Alarm>(), awaitItem())
-            repository.save(alarm("a"))
+            repository.insertIfAbsent(alarm("a"))
             assertEquals(listOf("a"), awaitItem().map { it.id })
-            repository.finish("a", AlarmState.CANCELLED)
+            repository.finish("a", AlarmState.CANCELLED, AlarmFinishReason.USER_CANCELLED)
             assertEquals(emptyList<Alarm>(), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `active alarms are restored after the database and repository are recreated`() = runTest {
-        val specific = alarm("s", kind = AlarmKind.SPECIFIC_DEPARTURE).copy(
+    fun `active alarms are restored with their progress after the database and repository are recreated`() = runTest {
+        val dart = alarm("dart").copy(
+            transport = TransportType.DART,
             tripCode = "E846",
-            operatingDate = LocalDate.of(2026, 11, 9),
-            targetExpectedAt = now.plusSeconds(600),
-            targetObservedAt = now
+            operatingDate = LocalDate.of(2026, 11, 9)
         )
-        repository.save(alarm("n"))
-        repository.save(specific)
-        repository.save(alarm("done"))
-        repository.finish("done", AlarmState.FIRED)
+        repository.insertIfAbsent(alarm("luas"))
+        repository.insertIfAbsent(dart)
+        repository.updateSchedule("luas", now.plusSeconds(900), now.plusSeconds(1_110), now, 2)
+        repository.updateRegistration("luas", AlarmRegistration.INEXACT)
+        repository.insertIfAbsent(alarm("done"))
+        repository.finish("done", AlarmState.FIRED, AlarmFinishReason.NOTIFIED, AlarmVerification.LIVE_VERIFIED, now)
         driver.close()
 
         // Simulates process death: a new driver, DAO and repository over the same database file.
@@ -169,28 +170,32 @@ class AlarmConfigRepositoryImplTest {
         val restored = AlarmConfigRepositoryImpl(AlarmDao(luasDatabase(driver)), clock)
 
         val active = restored.activeAlarms().getOrThrow()
-        assertEquals(setOf("n", "s"), active.map { it.id }.toSet())
-        assertEquals(specific, active.first { it.id == "s" })
+        assertEquals(setOf("luas", "dart"), active.map { it.id }.toSet())
+        val luas = active.first { it.id == "luas" }
+        assertEquals(2, luas.checkCount)
+        assertEquals(AlarmRegistration.INEXACT, luas.registration)
+        assertEquals(now.plusSeconds(900), luas.reminderAt)
+        assertEquals("E846", active.first { it.id == "dart" }.tripCode)
         assertEquals(AlarmState.FIRED, restored.get("done").getOrThrow()!!.state)
     }
 
     @Test
-    fun `restoring and re-saving after a restart does not duplicate alarms`() = runTest {
-        repository.save(alarm("a"))
+    fun `request codes keep increasing across a restart so alarms never collide`() = runTest {
+        val first = repository.insertIfAbsent(alarm("a")).getOrThrow()
         driver.close()
         driver = AndroidSqliteDriver(LuasDatabase.Schema, context, DB_NAME)
         val restored = AlarmConfigRepositoryImpl(AlarmDao(luasDatabase(driver)), clock)
 
-        restored.activeAlarms().getOrThrow().forEach { restored.save(it) }
+        val second = restored.insertIfAbsent(alarm("b")).getOrThrow()
 
-        assertEquals(1, restored.activeAlarms().getOrThrow().size)
+        assertEquals(first.requestCode + 1, second.requestCode)
     }
 
     @Test
     fun `purging removes old finished alarms only`() = runTest {
-        repository.save(alarm("active"))
-        repository.save(alarm("old"))
-        repository.finish("old", AlarmState.CANCELLED)
+        repository.insertIfAbsent(alarm("active"))
+        repository.insertIfAbsent(alarm("old"))
+        repository.finish("old", AlarmState.CANCELLED, AlarmFinishReason.USER_CANCELLED)
 
         repository.purgeFinished(updatedBeforeMillis = now.toEpochMilli() + 1)
 

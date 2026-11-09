@@ -19,14 +19,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
-import com.wedgess.luas.presentation.forecast.luastab.model.LuasNotificationState
+import com.wedgess.luas.domain.model.Alarm
+import com.wedgess.luas.domain.model.AlarmKind
+import com.wedgess.luas.domain.model.AlarmState
+import com.wedgess.luas.domain.model.TransportType
+import com.wedgess.luas.presentation.extensions.toClockTime
 import com.wedgess.luas.ui.theme.LuasTheme
+import java.time.Instant
 
+/** One active reminder. It shows the absolute time it was planned around, never a countdown that could go stale. */
 @Composable
 fun LuasForecastAlarmRow(
-    luasNotificationState: LuasNotificationState,
+    alarm: Alarm,
     modifier: Modifier = Modifier,
-    onCancelAlarm: () -> Unit
+    onCancelAlarm: (String) -> Unit
 ) {
     Box(
         modifier = modifier.fillMaxWidth(),
@@ -38,17 +44,19 @@ fun LuasForecastAlarmRow(
         ) {
             Text(
                 modifier = Modifier
+                    .weight(1f)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 text = stringResource(
-                    R.string.notifying_msg_for_to_in,
-                    luasNotificationState.station,
-                    luasNotificationState.destination,
-                    luasNotificationState.dueInMins
+                    R.string.alarm_banner_msg,
+                    alarm.stationName,
+                    alarm.destination.orEmpty(),
+                    alarm.notifyMinutesBefore,
+                    alarm.targetExpectedAt?.toClockTime().orEmpty()
                 ),
                 style = MaterialTheme.typography.labelLarge,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Start
             )
-            IconButton(onClick = onCancelAlarm) {
+            IconButton(onClick = { onCancelAlarm(alarm.id) }) {
                 Icon(imageVector = Icons.Default.NotificationsActive, contentDescription = null)
             }
         }
@@ -61,11 +69,20 @@ private fun LuasForecastAlarmRowPreview() {
     LuasTheme {
         Surface {
             LuasForecastAlarmRow(
-                luasNotificationState = LuasNotificationState(
-                    dueInMins = 10,
+                alarm = Alarm(
+                    id = "preview",
+                    requestCode = 1,
+                    kind = AlarmKind.SPECIFIC_DEPARTURE,
+                    state = AlarmState.ACTIVE,
+                    transport = TransportType.LUAS,
+                    stationCode = "STS",
+                    stationName = "St. Stephen's Green",
                     destination = "Carickmines",
-                    station = "St. Stephen's Green",
-                    notifyMinutesBefore = 10
+                    notifyMinutesBefore = 10,
+                    targetExpectedAt = Instant.parse("2026-11-09T22:30:00Z"),
+                    reminderAt = Instant.parse("2026-11-09T22:19:30Z"),
+                    createdAt = Instant.parse("2026-11-09T22:00:00Z"),
+                    updatedAt = Instant.parse("2026-11-09T22:00:00Z")
                 ),
                 onCancelAlarm = {}
             )

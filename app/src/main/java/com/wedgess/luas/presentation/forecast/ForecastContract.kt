@@ -15,7 +15,6 @@ interface ForecastContract {
     )
 
     sealed interface Event {
-        data object OnOpenScheduleExactAlarmPermissionClick : Event
         data object OnNotificationPermanentlyDeniedDialog : Event
         data object OnNotificationWasRequested : Event
         data object OnIgnoreNotificationPermissionClick : Event

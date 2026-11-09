@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -29,7 +30,10 @@ fun NotificationTimeDialog(
     dueInMinutes: Int,
     onMinutesChange: (Int) -> Unit,
     onConfirm: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    exactAlarmsAllowed: Boolean = true,
+    notificationsAllowed: Boolean = true,
+    onOpenSettings: () -> Unit = {}
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -56,6 +60,24 @@ fun NotificationTimeDialog(
                     onIsErrorChange = {},
                     enableEdition = true
                 )
+
+                // Degraded behaviour is explained here once, when the user is already deciding; it never prompts.
+                if (!notificationsAllowed) {
+                    Text(
+                        text = stringResource(R.string.alarm_note_notifications_off),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                if (!exactAlarmsAllowed) {
+                    Text(
+                        text = stringResource(R.string.alarm_note_inexact),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    TextButton(onClick = onOpenSettings) {
+                        Text(stringResource(R.string.btn_open_settings))
+                    }
+                }
 
                 Row(
                     modifier = Modifier
