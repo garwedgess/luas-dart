@@ -25,6 +25,8 @@ interface DartForecastTabContract {
         /** True when the latest refresh failed, so the rows are the last live result and show no countdown. */
         val isStale: Boolean = false,
         val fetchedAt: Instant = Instant.EPOCH,
+        /** The station that produced the rows; null while a different station is loading. */
+        val forecastStationCode: String? = null,
         val dropdownOptions: ImmutableList<DropdownItem> = persistentListOf(),
         val stationPreferences: StationPreferences = StationPreferences(),
         val alarmDraft: AlarmDraft? = null,
@@ -53,6 +55,7 @@ interface DartForecastTabContract {
         data object OnRefresh : Event
         data class OnToggleSection(val id: Long) : Event
         data class OnShowAlarmDialog(
+            val stationCode: String,
             val tripCode: String,
             val operatingDate: LocalDate?,
             val dueInMins: Int,

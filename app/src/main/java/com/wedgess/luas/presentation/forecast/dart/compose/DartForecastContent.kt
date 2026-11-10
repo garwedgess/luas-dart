@@ -71,6 +71,7 @@ fun DartForecastContent(
                     onRowClick = { row ->
                         dartForecastViewModel.onEvent(
                             DartForecastTabContract.Event.OnShowAlarmDialog(
+                                stationCode = uiState.forecastStationCode.orEmpty(),
                                 tripCode = row.trainCode,
                                 operatingDate = row.operatingDate,
                                 dueInMins = row.dueIn,

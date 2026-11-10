@@ -202,7 +202,7 @@ private fun LazyListScope.downloadStatus(state: TimetableUiState, onUpdate: () -
     }
     item {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onUpdate, enabled = !state.updating) {
+            Button(onClick = onUpdate, enabled = !state.updating && !state.loading) {
                 Text(
                     stringResource(
                         if (state.feed == null) R.string.timetable_download else R.string.timetable_update

@@ -5,18 +5,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.presentation.components.MainTopAppbar
 import com.wedgess.luas.presentation.main.MainContract
 import com.wedgess.luas.presentation.main.MainViewModel
 import com.wedgess.luas.presentation.navigation.BottomNavigationBar
 import com.wedgess.luas.presentation.navigation.MainNavigationGraph
+import com.wedgess.luas.presentation.navigation.Screens
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
@@ -27,6 +31,17 @@ fun MainContent(
     val navHostController = rememberNavController()
     val backStackEntry = navHostController.currentBackStackEntryAsState()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.transportType, backStackEntry.value?.destination) {
+        if (uiState.transportType == TransportType.DART &&
+            backStackEntry.value?.destination?.hasRoute<Screens.Alerts>() == true
+        ) {
+            navHostController.navigate(Screens.Forecast) {
+                popUpTo(navHostController.graph.findStartDestination().id)
+                launchSingleTop = true
+            }
+        }
+    }
 
     LuasTheme {
         Scaffold(

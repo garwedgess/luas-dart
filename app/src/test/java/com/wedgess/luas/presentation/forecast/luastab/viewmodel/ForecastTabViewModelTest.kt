@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -126,6 +127,13 @@ class ForecastTabViewModelTest {
     private val activeAlarmsFlow = MutableStateFlow<List<Alarm>>(emptyList())
     private var capabilities = AlarmCapabilities(exactAlarms = true, notifications = true)
 
+    private fun showAlarm(minutes: Int) = LuasForecastTabContract.Event.OnShowNotificationsDialog(
+        "STA",
+        minutes,
+        "Broombridge",
+        DepartureDirection.INBOUND
+    )
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
@@ -190,7 +198,7 @@ class ForecastTabViewModelTest {
     }
 
     @Test
-    fun `should use initial stop when selected stop not found in stops list`() = runTest {
+    fun `should fall back to the first stop when a stored selection has disappeared`() = runTest {
         // Given
         selectedStationFlow.value = "NON_EXISTENT"
 
@@ -199,8 +207,8 @@ class ForecastTabViewModelTest {
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
             val state = (result as UiResult.Success).data
-            // Should default to StopEntity.initial()
-            assertEquals("", state.selectedStop.text)
+            // A removed saved stop must not cause a forecast request with an empty code.
+            assertEquals(mockStops.first().name, state.selectedStop.text)
         }
     }
 
@@ -286,7 +294,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             assertTrue((awaitItem() as UiResult.Success).data.isStale)
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(5)
             )
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
@@ -333,7 +341,7 @@ class ForecastTabViewModelTest {
             assertTrue((awaitItem() as UiResult.Success).data.isStale)
 
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(5)
             )
             expectNoEvents()
         }
@@ -357,11 +365,9 @@ class ForecastTabViewModelTest {
 
     @Test
     fun `should show travel updates dialog when OnShowTravelUpdatesDialog event is received`() = runTest {
-        // When
-        viewModel.onEvent(LuasForecastTabContract.Event.OnShowTravelUpdatesDialog)
-
-        // Then
         viewModel.uiResult.test {
+            awaitItem()
+            viewModel.onEvent(LuasForecastTabContract.Event.OnShowTravelUpdatesDialog)
             val result = awaitItem()
             assertTrue(result is UiResult.Success)
             assertEquals(LuasForecastTabDialogState.TravelUpdatesAlert, (result as UiResult.Success).data.dialog)
@@ -459,7 +465,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             awaitItem()
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(5)
             )
 
             val state = (awaitItem() as UiResult.Success).data
@@ -473,7 +479,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             awaitItem()
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(5)
             )
 
             val pending = (awaitItem() as UiResult.Success).data.luasNotificationState
@@ -494,7 +500,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             awaitItem()
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(8, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(8)
             )
             awaitItem()
             viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 3))
@@ -523,7 +529,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             awaitItem()
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(8, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(8)
             )
             awaitItem()
             viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(minutes = 3))
@@ -541,7 +547,7 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             awaitItem()
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(5, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(5)
             )
 
             val state = (awaitItem() as UiResult.Success).data
@@ -607,10 +613,10 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             awaitItem()
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(0, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(0)
             )
             viewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(-5, "Broombridge", DepartureDirection.INBOUND)
+                showAlarm(-5)
             )
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
@@ -650,5 +656,64 @@ class ForecastTabViewModelTest {
         viewModel.uiResult.test {
             assertEquals("Network error occurred", (awaitItem() as UiResult.Offline).message)
         }
+    }
+
+    @Test
+    fun `station switch hides old rows until its own response and rejects an old station tap`() = runTest {
+        val next = CompletableDeferred<Result<Departures>>()
+        coEvery { luasRepository.fetchForecast("HAR") } coAnswers { next.await() }
+        val rendered = mutableListOf<UiResult<LuasForecastTabContract.UiState>>()
+        backgroundScope.launch(testDispatcher) { viewModel.uiResult.collect { rendered.add(it) } }
+        assertEquals("STA", (viewModel.uiResult.value as UiResult.Success).data.forecastStationCode)
+
+        selectedStationFlow.value = "Harcourt"
+        runCurrent()
+        assertTrue(viewModel.uiResult.value is UiResult.Loading)
+        assertFalse(
+            rendered.filterIsInstance<UiResult.Success<LuasForecastTabContract.UiState>>().any {
+                it.data.selectedStop.text == "Harcourt" && it.data.forecast.stationCode == "STA"
+            }
+        )
+        viewModel.onEvent(showAlarm(5))
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(1))
+        coVerify(exactly = 0) { alarmCoordinator.create(any()) }
+
+        next.complete(Result.success(mockForecast.copy(stationCode = "HAR", stationName = "Harcourt")))
+        runCurrent()
+        assertEquals("HAR", (viewModel.uiResult.value as UiResult.Success).data.forecastStationCode)
+        viewModel.onEvent(showAlarm(5))
+        assertEquals(LuasForecastTabDialogState.None, (viewModel.uiResult.value as UiResult.Success).data.dialog)
+        viewModel.onEvent(showAlarm(5).copy(stationCode = "HAR"))
+        assertEquals("HAR", (viewModel.uiResult.value as UiResult.Success).data.luasNotificationState.stationCode)
+    }
+
+    @Test
+    fun `new station cache is shown as stale while its live fetch is pending`() = runTest {
+        coEvery { luasRepository.cachedForecast("HAR") } returns mockForecast.copy(
+            stationCode = "HAR",
+            stationName = "Harcourt",
+            fetchedAt = now.minusSeconds(60)
+        )
+        coEvery { luasRepository.fetchForecast("HAR") } coAnswers { awaitCancellation() }
+        backgroundScope.launch(testDispatcher) { viewModel.uiResult.collect {} }
+        selectedStationFlow.value = "Harcourt"
+        runCurrent()
+        val state = (viewModel.uiResult.value as UiResult.Success).data
+        assertTrue(state.isStale)
+        assertEquals("HAR", state.forecastStationCode)
+        assertEquals("HAR", state.forecast.stationCode)
+    }
+
+    @Test
+    fun `station selection immediately discards an open alarm draft before preferences finish saving`() = runTest {
+        backgroundScope.launch(testDispatcher) { viewModel.uiResult.collect {} }
+        viewModel.onEvent(showAlarm(5))
+        assertEquals(
+            LuasForecastTabDialogState.Notification,
+            (viewModel.uiResult.value as UiResult.Success).data.dialog
+        )
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected("Harcourt"))
+        viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(1))
+        coVerify(exactly = 0) { alarmCoordinator.create(any()) }
     }
 }

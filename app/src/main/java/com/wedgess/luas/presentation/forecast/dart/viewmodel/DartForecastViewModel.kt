@@ -25,6 +25,7 @@ import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowD
 import com.wedgess.luas.presentation.model.UiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,11 +34,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -69,11 +72,12 @@ class DartForecastViewModel @Inject constructor(
             val selectedStation = if (currentSelectedStop.isBlank()) {
                 stations.firstOrNull() ?: DartStationEntity.initial()
             } else {
-                stations.firstOrNull { it.name == currentSelectedStop } ?: DartStationEntity.initial()
+                stations.firstOrNull { it.name == currentSelectedStop }
+                    ?: stations.firstOrNull() ?: DartStationEntity.initial()
             }
             Pair(stations, selectedStation)
         }
-    }
+    }.distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val forecastResult = stopsAndStationFlow
@@ -84,6 +88,11 @@ class DartForecastViewModel @Inject constructor(
                         it.copy(
                             stations = stops.toImmutableList(),
                             selectedStation = selectedStop.toDropdownItem(),
+                            forecastStationCode = null,
+                            sectionedListState = SectionedListState(sections = persistentListOf()),
+                            fetchedAt = java.time.Instant.EPOCH,
+                            isStale = true,
+                            alarmDraft = null,
                             dropdownOptions = stops.map { it.toDropdownItem() }.toImmutableList()
                         )
                     }
@@ -109,12 +118,13 @@ class DartForecastViewModel @Inject constructor(
                                         it.copy(
                                             isStale = !polled.isLive,
                                             fetchedAt = departures.fetchedAt,
+                                            forecastStationCode = selectedStop.code,
                                             sectionedListState = departures.toSectionListState(expandedSections)
                                         )
                                     }
                                 )
                             }
-                        }
+                        }.onStart { emit(UiResult.Loading) }
                     }
                 },
                 onFailure = { throwable ->
@@ -134,7 +144,12 @@ class DartForecastViewModel @Inject constructor(
         stationPreferencesRepository.observe(TransportType.DART)
     ) { result, state, alarms, preferences ->
         if (result is UiResult.Success) {
-            UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
+            val selectedCode = state.stations.firstOrNull { it.name == state.selectedStation.text }?.code
+            if (state.forecastStationCode != null && state.forecastStationCode == selectedCode) {
+                UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
+            } else {
+                UiResult.Loading
+            }
         } else {
             result
         }
@@ -216,6 +231,7 @@ class DartForecastViewModel @Inject constructor(
         val state = _uiState.value
         // An alarm must never be derived from a countdown that is no longer live.
         if (event.dueInMins <= 0 || state.isStale || event.tripCode.isBlank()) return
+        if (state.forecastStationCode != event.stationCode) return
         val station = state.stations.firstOrNull { it.name == state.selectedStation.text } ?: return
         _uiState.update {
             it.copy(
@@ -262,6 +278,9 @@ class DartForecastViewModel @Inject constructor(
     }
 
     private fun onStopSelected(stationName: String) {
+        _uiState.update {
+            if (stationName == it.selectedStation.text) it else it.copy(isStale = true, alarmDraft = null)
+        }
         viewModelScope.launch {
             stationPreferencesRepository.markUsed(TransportType.DART, stationName)
             preferencesRepository.updateSelectedDartStation(stationName)

@@ -7,6 +7,7 @@ import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import com.wedgess.luas.domain.isOffline
 import com.wedgess.luas.domain.model.AlarmKind
 import com.wedgess.luas.domain.model.AlarmRequest
+import com.wedgess.luas.domain.model.Departures
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.domain.model.LuasStopEntity
 import com.wedgess.luas.domain.model.TransportType
@@ -31,11 +32,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -68,11 +71,12 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             val selectedStop = if (currentSelectedStopName.isBlank()) {
                 stops.firstOrNull() ?: LuasStopEntity.initial()
             } else {
-                stops.firstOrNull { it.name == currentSelectedStopName } ?: LuasStopEntity.initial()
+                stops.firstOrNull { it.name == currentSelectedStopName }
+                    ?: stops.firstOrNull() ?: LuasStopEntity.initial()
             }
             stops to selectedStop
         }
-    }
+    }.distinctUntilChanged()
 
     /** Loading/empty/error/success of the forecast. The state itself lives in [_uiState]. */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -84,7 +88,12 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                         it.copy(
                             stops = stops.toImmutableList(),
                             dropdownOptions = stops.map { it.toDropdownItem() }.toImmutableList(),
-                            selectedStop = selectedStop.toDropdownItem()
+                            selectedStop = selectedStop.toDropdownItem(),
+                            forecastStationCode = null,
+                            forecast = Departures.empty,
+                            isStale = true,
+                            dialog = LuasForecastTabDialogState.None,
+                            luasNotificationState = LuasNotificationState()
                         )
                     }
 
@@ -104,10 +113,16 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                             if (departures == null) {
                                 polled.error.toErrorResult()
                             } else {
-                                _uiState.update { it.copy(forecast = departures, isStale = !polled.isLive) }
+                                _uiState.update {
+                                    it.copy(
+                                        forecast = departures,
+                                        forecastStationCode = selectedStop.abbreviation,
+                                        isStale = !polled.isLive
+                                    )
+                                }
                                 UiResult.Success(Unit)
                             }
-                        }
+                        }.onStart { emit(UiResult.Loading) }
                     }
                 },
                 onFailure = { throwable ->
@@ -127,7 +142,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         stationPreferencesRepository.observe(TransportType.LUAS)
     ) { result, state, alarms, preferences ->
         when (result) {
-            is UiResult.Success -> UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
+            is UiResult.Success -> {
+                val selectedCode = state.stops.firstOrNull { it.name == state.selectedStop.text }?.abbreviation
+                if (state.forecastStationCode != null && state.forecastStationCode == selectedCode) {
+                    UiResult.Success(state.copy(activeAlarms = alarms, stationPreferences = preferences))
+                } else {
+                    UiResult.Loading
+                }
+            }
             is UiResult.Error -> result
             is UiResult.Empty -> result
             is UiResult.Offline -> result
@@ -169,7 +191,11 @@ class LuasForecastTabViewModel @AssistedInject constructor(
             }
 
             // An alarm must never be derived from a countdown that is no longer live.
-            is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (canShowAlarmDialog(event.dueInMins)) {
+            is LuasForecastTabContract.Event.OnShowNotificationsDialog -> if (canShowAlarmDialog(
+                    event.dueInMins,
+                    event.stationCode
+                )
+            ) {
                 showNotificationDialog(event)
             }
         }
@@ -221,9 +247,23 @@ class LuasForecastTabViewModel @AssistedInject constructor(
         }
     }
 
-    private fun canShowAlarmDialog(dueInMins: Int) = dueInMins > 0 && !_uiState.value.isStale
+    private fun canShowAlarmDialog(dueInMins: Int, stationCode: String): Boolean {
+        val state = _uiState.value
+        return dueInMins > 0 && !state.isStale && state.forecastStationCode == stationCode
+    }
 
     private fun onStopSelected(stopName: String) {
+        _uiState.update {
+            if (stopName == it.selectedStop.text) {
+                it
+            } else {
+                it.copy(
+                    isStale = true,
+                    dialog = LuasForecastTabDialogState.None,
+                    luasNotificationState = LuasNotificationState()
+                )
+            }
+        }
         viewModelScope.launch {
             stationPreferencesRepository.markUsed(TransportType.LUAS, stopName)
             when (luasLine) {

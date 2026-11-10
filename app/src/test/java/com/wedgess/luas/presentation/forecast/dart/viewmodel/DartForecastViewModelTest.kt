@@ -28,7 +28,9 @@ import io.mockk.slot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -188,11 +190,11 @@ class DartForecastViewModelTest {
     }
 
     @Test
-    fun `should use initial station when selected station not found in stations list`() = runTest {
+    fun `should fall back to the first station when a stored selection has disappeared`() = runTest {
         selectedStationFlow.value = "NON_EXISTENT"
 
         viewModel.uiResult.test {
-            assertEquals("", awaitState().selectedStation.text)
+            assertEquals(mockStations.first().name, awaitState().selectedStation.text)
         }
     }
 
@@ -441,6 +443,7 @@ class DartForecastViewModelTest {
     }
 
     private val show = DartForecastTabContract.Event.OnShowAlarmDialog(
+        stationCode = "CNLLY",
         tripCode = "D123",
         operatingDate = LocalDate.of(2026, 11, 9),
         dueInMins = 8,
@@ -538,5 +541,57 @@ class DartForecastViewModelTest {
         viewModel.uiResult.test {
             assertEquals("Network error occurred", (awaitItem() as UiResult.Offline).message)
         }
+    }
+
+    @Test
+    fun `station switch hides old rows until its own response and rejects an old station tap`() = runTest {
+        val next = CompletableDeferred<Result<Departures>>()
+        coEvery { dartRepository.fetchForecast("PERSE") } coAnswers { next.await() }
+        val rendered = mutableListOf<UiResult<DartForecastTabContract.UiState>>()
+        backgroundScope.launch(testDispatcher) { viewModel.uiResult.collect { rendered.add(it) } }
+        assertEquals("CNLLY", (viewModel.uiResult.value as UiResult.Success).data.forecastStationCode)
+
+        selectedStationFlow.value = "Dublin Pearse"
+        runCurrent()
+        assertTrue(viewModel.uiResult.value is UiResult.Loading)
+        assertFalse(
+            rendered.filterIsInstance<UiResult.Success<DartForecastTabContract.UiState>>().any {
+                it.data.selectedStation.text == "Dublin Pearse" &&
+                    it.data.sectionedListState.sections.any { section -> section.items.any { row -> row.id == "D123" } }
+            }
+        )
+        viewModel.onEvent(show)
+        viewModel.onEvent(DartForecastTabContract.Event.OnStartAlarm(1))
+        coVerify(exactly = 0) { alarmCoordinator.create(any()) }
+
+        next.complete(Result.success(departures(southbound.copy(tripCode = "PEAR")).copy(stationCode = "PERSE")))
+        runCurrent()
+        assertEquals("PERSE", (viewModel.uiResult.value as UiResult.Success).data.forecastStationCode)
+        viewModel.onEvent(show)
+        assertEquals(null, (viewModel.uiResult.value as UiResult.Success).data.alarmDraft)
+        viewModel.onEvent(show.copy(stationCode = "PERSE", tripCode = "PEAR"))
+        assertEquals("PERSE", (viewModel.uiResult.value as UiResult.Success).data.alarmDraft?.stationCode)
+    }
+
+    @Test
+    fun `new station cache is shown as stale while its live fetch is pending`() = runTest {
+        coEvery { dartRepository.cachedForecast("PERSE") } returns departures(southbound).copy(stationCode = "PERSE")
+        coEvery { dartRepository.fetchForecast("PERSE") } coAnswers { awaitCancellation() }
+        backgroundScope.launch(testDispatcher) { viewModel.uiResult.collect {} }
+        selectedStationFlow.value = "Dublin Pearse"
+        runCurrent()
+        val state = (viewModel.uiResult.value as UiResult.Success).data
+        assertTrue(state.isStale)
+        assertEquals("PERSE", state.forecastStationCode)
+    }
+
+    @Test
+    fun `station selection immediately discards an open alarm draft before preferences finish saving`() = runTest {
+        backgroundScope.launch(testDispatcher) { viewModel.uiResult.collect {} }
+        viewModel.onEvent(show)
+        assertTrue((viewModel.uiResult.value as UiResult.Success).data.alarmDraft != null)
+        viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected("Dublin Pearse"))
+        viewModel.onEvent(DartForecastTabContract.Event.OnStartAlarm(1))
+        coVerify(exactly = 0) { alarmCoordinator.create(any()) }
     }
 }

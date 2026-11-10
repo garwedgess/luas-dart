@@ -76,9 +76,9 @@ fun LuasForecastTabContent(
     }
     val onTramClick = remember(luasForecastTabViewModel) {
         {
-                mins: Int, destination: String, direction: DepartureDirection ->
+                mins: Int, destination: String, direction: DepartureDirection, stationCode: String ->
             luasForecastTabViewModel.onEvent(
-                LuasForecastTabContract.Event.OnShowNotificationsDialog(mins, destination, direction)
+                LuasForecastTabContract.Event.OnShowNotificationsDialog(stationCode, mins, destination, direction)
             )
         }
     }
@@ -129,7 +129,7 @@ fun LuasTabListContent(
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (DropdownItem) -> Unit,
     onToggleFavourite: (String, Boolean) -> Unit,
-    onTramClick: (Int, String, DepartureDirection) -> Unit,
+    onTramClick: (Int, String, DepartureDirection, String) -> Unit,
     onCancelAlarm: (String) -> Unit
 ) {
     Column {
@@ -156,7 +156,7 @@ private fun LuasTramList(
     onShowTravelUpdatesDialog: () -> Unit,
     onStopSelect: (DropdownItem) -> Unit,
     onToggleFavourite: (String, Boolean) -> Unit,
-    onTramClick: (Int, String, DepartureDirection) -> Unit,
+    onTramClick: (Int, String, DepartureDirection, String) -> Unit,
     onCancelAlarm: (String) -> Unit
 ) {
     val outbound = uiState.forecast.byDirection(DepartureDirection.OUTBOUND)
@@ -220,7 +220,14 @@ private fun LuasTramList(
                 destination = tram.destination,
                 stale = uiState.isStale,
                 expectedTime = tram.expectedAt?.toClockTime(),
-                onRowClick = { mins, destination -> onTramClick(mins, destination, tram.direction) }
+                onRowClick = { mins, destination ->
+                    onTramClick(
+                        mins,
+                        destination,
+                        tram.direction,
+                        uiState.forecastStationCode.orEmpty()
+                    )
+                }
             )
         }
 
@@ -242,7 +249,14 @@ private fun LuasTramList(
                 destination = tram.destination,
                 stale = uiState.isStale,
                 expectedTime = tram.expectedAt?.toClockTime(),
-                onRowClick = { mins, destination -> onTramClick(mins, destination, tram.direction) }
+                onRowClick = { mins, destination ->
+                    onTramClick(
+                        mins,
+                        destination,
+                        tram.direction,
+                        uiState.forecastStationCode.orEmpty()
+                    )
+                }
             )
         }
     }

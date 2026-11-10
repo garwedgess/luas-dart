@@ -20,6 +20,8 @@ interface LuasForecastTabContract {
         val stops: ImmutableList<LuasStopEntity> = persistentListOf(),
         val selectedStop: DropdownItem = LuasDropdownItem.default,
         val forecast: Departures = Departures.empty,
+        /** The station that produced the rows; null while a different station is loading. */
+        val forecastStationCode: String? = null,
         /** True when the latest refresh failed, so [forecast] is the last live result and must not be counted down. */
         val isStale: Boolean = false,
         val line: LuasLineEntity = LuasLineEntity.RED,
@@ -39,6 +41,7 @@ interface LuasForecastTabContract {
         data object OnShowTravelUpdatesDialog : Event
         data class OnNotificationMinutesChanged(val minutes: Int) : Event
         data class OnShowNotificationsDialog(
+            val stationCode: String,
             val dueInMins: Int,
             val destination: String,
             val direction: DepartureDirection
