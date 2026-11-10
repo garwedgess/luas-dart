@@ -46,4 +46,6 @@
     <string name="offline_title">You\'re offline</string>
     <string name="offline_message">Live times need a connection. Departures will appear when you\'re back online.</string>
     <string name="retry">Retry</string>
+    <string name="freshness_live">Live · %1$s</string>
+    <string name="freshness_live_description">Live times, updated at %1$s</string>
 </resources>

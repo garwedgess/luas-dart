@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +53,7 @@ fun DartForecastItemRow(
             .then(
                 if (onClick != null) Modifier.clickable(onClickLabel = "Set reminder", onClick = onClick) else Modifier
             )
+            .heightIn(min = 48.dp)
             .padding(horizontal = 4.dp, vertical = 8.dp)
     ) {
         Row(

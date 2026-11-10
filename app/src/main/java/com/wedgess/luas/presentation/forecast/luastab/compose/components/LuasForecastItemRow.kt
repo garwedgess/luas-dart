@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -43,6 +44,7 @@ fun LuasForecastItemRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = !stale) { onRowClick(dueIn, destination) }
+            .heightIn(min = 48.dp)
             .padding(vertical = 4.dp, horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {

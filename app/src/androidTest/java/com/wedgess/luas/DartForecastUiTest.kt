@@ -62,6 +62,7 @@ class DartForecastUiTest {
         show(stale = false) { clicked = it }
 
         compose.onNode(hasContentDescription("Next departure to Greystones", substring = true)).assertIsDisplayed()
+        compose.onNode(hasContentDescription("Live times, updated at", substring = true)).assertIsDisplayed()
         // Index 1 is the row; index 0 is inside the next-departure header.
         compose.onAllNodesWithText("Greystones", useUnmergedTree = true)[1].performClick()
         assertEquals("E134", clicked?.trainCode)
@@ -73,6 +74,7 @@ class DartForecastUiTest {
         show(stale = true) { clicked = true }
 
         compose.onNode(hasContentDescription("expected around 09:14, not live", substring = true)).assertIsDisplayed()
+        compose.onNode(hasContentDescription("Live times, updated at", substring = true)).assertDoesNotExist()
         // Index 1 is the row; index 0 is inside the next-departure header.
         compose.onAllNodesWithText("Greystones", useUnmergedTree = true)[1].performClick()
         assertEquals(false, clicked)

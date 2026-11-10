@@ -27,6 +27,7 @@ import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
+import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
@@ -179,6 +180,8 @@ private fun LuasTramList(
         }
         if (uiState.isStale) {
             item { StaleDataBanner(lastUpdated = uiState.forecast.fetchedAt) }
+        } else {
+            item { FreshnessBadge(fetchedAt = uiState.forecast.fetchedAt) }
         }
         items(uiState.activeAlarms, key = { it.id }) { alarm ->
             LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)

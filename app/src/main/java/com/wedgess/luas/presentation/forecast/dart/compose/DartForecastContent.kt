@@ -15,6 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
+import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
@@ -123,6 +124,8 @@ fun DartListContent(
     ) {
         if (uiState.isStale) {
             StaleDataBanner(lastUpdated = uiState.fetchedAt)
+        } else {
+            FreshnessBadge(fetchedAt = uiState.fetchedAt)
         }
         StationPicker(
             label = "Station",
