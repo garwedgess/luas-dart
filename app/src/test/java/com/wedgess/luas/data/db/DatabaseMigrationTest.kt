@@ -68,8 +68,8 @@ class DatabaseMigrationTest {
 
     @Test
     fun `every released schema has a committed snapshot and the current schema is the latest`() {
-        (1..3).forEach { assertEquals(true, File(SNAPSHOT_DIR, "$it.db").exists()) }
-        assertEquals(4L, LuasDatabase.Schema.version)
+        (1..5).forEach { assertEquals(true, File(SNAPSHOT_DIR, "$it.db").exists()) }
+        assertEquals(5L, LuasDatabase.Schema.version)
     }
 
     @Test
@@ -100,7 +100,7 @@ class DatabaseMigrationTest {
         } finally {
             driver.close()
         }
-        assertEquals(4L, userVersion())
+        assertEquals(5L, userVersion())
     }
 
     @Test
@@ -138,7 +138,7 @@ class DatabaseMigrationTest {
         } finally {
             driver.close()
         }
-        assertEquals(4L, userVersion())
+        assertEquals(5L, userVersion())
     }
 
     @Test
@@ -153,6 +153,43 @@ class DatabaseMigrationTest {
         }
 
         assertEquals(LuasDatabase.Schema.version, userVersion())
+    }
+
+    @Test
+    fun `upgrading v4 preserves favourites and selections and creates timetable tables`() = runTest {
+        install(4) {
+            it.execSQL("INSERT INTO StationPreference VALUES ('DART', 'Bray', 1, 100)")
+            it.execSQL("INSERT INTO SelectedStation VALUES ('DART', 'Bray')")
+        }
+        val driver = AndroidSqliteDriver(LuasDatabase.Schema, context, DB_NAME)
+        try {
+            val db = luasDatabase(driver)
+            assertEquals("Bray", SelectedStationDao(db).observe("DART").first())
+            assertEquals("Bray", StationPreferenceDao(db).observe("DART").first().single().StationName)
+            assertEquals(emptyList<Any>(), db.timetableQueries.selectStations("DART").executeAsList())
+            db.timetableQueries.insertStation("DART", "bray", "Bray")
+            assertEquals("Bray", db.timetableQueries.selectStations("DART").executeAsOne().Name)
+        } finally {
+            driver.close()
+        }
+        assertEquals(5L, userVersion())
+    }
+
+    @Test
+    fun `every earlier snapshot upgrades with working timetable storage`() {
+        (1..4).forEach { version ->
+            context.deleteDatabase(DB_NAME)
+            install(version)
+            val driver = AndroidSqliteDriver(LuasDatabase.Schema, context, DB_NAME)
+            try {
+                val db = luasDatabase(driver)
+                db.timetableQueries.insertStation("LUAS", "abbey", "Abbey Street")
+                assertEquals("Abbey Street", db.timetableQueries.selectStations("LUAS").executeAsOne().Name)
+            } finally {
+                driver.close()
+            }
+            assertEquals(5L, userVersion())
+        }
     }
 
     @Test

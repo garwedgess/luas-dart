@@ -10,5 +10,8 @@ sealed interface Screens {
     data object Map : Screens
 
     @Serializable
+    data object Timetable : Screens
+
+    @Serializable
     data object Alerts : Screens
 }

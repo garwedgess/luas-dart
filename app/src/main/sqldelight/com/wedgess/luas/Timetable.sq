@@ -1,0 +1,110 @@
+CREATE TABLE TimetableFeed (
+    Transport TEXT NOT NULL PRIMARY KEY,
+    ETag TEXT,
+    LastModified TEXT,
+    DownloadedAtMillis INTEGER NOT NULL,
+    CheckedAtMillis INTEGER NOT NULL,
+    ValidFromDay INTEGER NOT NULL,
+    ValidUntilDay INTEGER NOT NULL,
+    Zone TEXT NOT NULL,
+    Version TEXT NOT NULL,
+    MaxDepartureSeconds INTEGER NOT NULL
+);
+
+CREATE TABLE TimetableStation (
+    Transport TEXT NOT NULL,
+    StationId TEXT NOT NULL,
+    Name TEXT NOT NULL,
+    PRIMARY KEY (Transport, StationId)
+);
+
+CREATE TABLE TimetableTrip (
+    Transport TEXT NOT NULL,
+    TripId TEXT NOT NULL,
+    ServiceId TEXT NOT NULL,
+    Destination TEXT NOT NULL,
+    Direction TEXT NOT NULL,
+    Line TEXT NOT NULL,
+    PRIMARY KEY (Transport, TripId)
+);
+
+CREATE TABLE TimetableTime (
+    Transport TEXT NOT NULL,
+    TripId TEXT NOT NULL,
+    Sequence INTEGER NOT NULL,
+    StationId TEXT NOT NULL,
+    DepartureSeconds INTEGER NOT NULL,
+    Headsign TEXT NOT NULL,
+    PRIMARY KEY (Transport, TripId, Sequence)
+);
+CREATE INDEX TimetableStationTimeIndex ON TimetableTime(Transport, StationId);
+
+CREATE TABLE TimetableCalendar (
+    Transport TEXT NOT NULL,
+    ServiceId TEXT NOT NULL,
+    Weekdays INTEGER NOT NULL,
+    StartDay INTEGER NOT NULL,
+    EndDay INTEGER NOT NULL,
+    PRIMARY KEY (Transport, ServiceId)
+);
+
+CREATE TABLE TimetableException (
+    Transport TEXT NOT NULL,
+    ServiceId TEXT NOT NULL,
+    Day INTEGER NOT NULL,
+    Added INTEGER NOT NULL,
+    PRIMARY KEY (Transport, ServiceId, Day)
+);
+
+selectFeed:
+SELECT * FROM TimetableFeed WHERE Transport = ?;
+
+selectStations:
+SELECT * FROM TimetableStation WHERE Transport = ? ORDER BY Name COLLATE NOCASE;
+
+selectCalendars:
+SELECT * FROM TimetableCalendar WHERE Transport = ?;
+
+selectExceptions:
+SELECT * FROM TimetableException WHERE Transport = ?;
+
+selectTimes:
+SELECT t.TripId, t.ServiceId, t.Destination, t.Direction, t.Line, s.DepartureSeconds, s.Headsign, s.Sequence
+FROM TimetableTime s JOIN TimetableTrip t ON s.Transport = t.Transport AND s.TripId = t.TripId
+WHERE s.Transport = :transport AND s.StationId = :station;
+
+insertFeed:
+INSERT OR REPLACE INTO TimetableFeed VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+markChecked:
+UPDATE TimetableFeed SET CheckedAtMillis = ? WHERE Transport = ?;
+
+insertStation:
+INSERT INTO TimetableStation VALUES (?, ?, ?);
+
+insertTrip:
+INSERT INTO TimetableTrip VALUES (?, ?, ?, ?, ?, ?);
+
+insertTime:
+INSERT INTO TimetableTime VALUES (?, ?, ?, ?, ?, ?);
+
+insertCalendar:
+INSERT INTO TimetableCalendar VALUES (?, ?, ?, ?, ?);
+
+insertException:
+INSERT INTO TimetableException VALUES (?, ?, ?, ?);
+
+deleteStations:
+DELETE FROM TimetableStation WHERE Transport = ?;
+
+deleteTrips:
+DELETE FROM TimetableTrip WHERE Transport = ?;
+
+deleteTimes:
+DELETE FROM TimetableTime WHERE Transport = ?;
+
+deleteCalendars:
+DELETE FROM TimetableCalendar WHERE Transport = ?;
+
+deleteExceptions:
+DELETE FROM TimetableException WHERE Transport = ?;

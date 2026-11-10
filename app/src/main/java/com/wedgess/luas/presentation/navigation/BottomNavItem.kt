@@ -3,6 +3,7 @@ package com.wedgess.luas.presentation.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Tram
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
@@ -38,6 +39,12 @@ sealed class BottomNavItem<T>(
         Icons.Outlined.Map
     )
 
+    data object Timetable : BottomNavItem<Screens.Timetable>(
+        route = Screens.Timetable,
+        UiText.StringResource(R.string.nav_title_timetable),
+        Icons.Outlined.Schedule
+    )
+
     data object Alerts : BottomNavItem<Screens.Alerts>(
         route = Screens.Alerts,
         UiText.StringResource(R.string.nav_title_news),
@@ -46,8 +53,8 @@ sealed class BottomNavItem<T>(
 
     companion object {
         fun all(transportType: TransportType) = when (transportType) {
-            TransportType.LUAS -> listOf(Forecast(transportType), Map, Alerts)
-            TransportType.DART -> listOf(Forecast(transportType), Map)
+            TransportType.LUAS -> listOf(Forecast(transportType), Map, Timetable, Alerts)
+            TransportType.DART -> listOf(Forecast(transportType), Map, Timetable)
         }
     }
 }

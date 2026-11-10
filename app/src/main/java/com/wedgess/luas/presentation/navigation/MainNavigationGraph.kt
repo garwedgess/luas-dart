@@ -8,6 +8,7 @@ import com.wedgess.luas.presentation.forecast.compose.navigation.forecastRoot
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.map.compose.navigation.mapRoot
 import com.wedgess.luas.presentation.news.navigation.newsRoot
+import com.wedgess.luas.presentation.timetable.compose.timetableRoot
 
 @Composable
 fun MainNavigationGraph(
@@ -23,5 +24,6 @@ fun MainNavigationGraph(
         forecastRoot(onUpdateAppbarState)
         mapRoot(onUpdateAppbarState)
         newsRoot(onUpdateAppbarState)
+        timetableRoot(onUpdateAppbarState)
     }
 }

@@ -61,4 +61,27 @@
     <string name="alarm_cancel">Cancel</string>
     <string name="alarm_confirm">Set reminder</string>
     <string name="map_expected_at">Expected %1$s</string>
+    <string name="nav_title_timetable">Timetables</string>
+    <string name="timetable_scheduled_notice">Scheduled timetable — not live. Delays and cancellations are not included. Reminders use live departures only.</string>
+    <string name="timetable_download">Download timetable</string>
+    <string name="timetable_update">Update timetable</string>
+    <string name="timetable_download_hint">Download this transport’s timetable once to browse its stations and dates offline.</string>
+    <string name="timetable_loading">Loading timetable</string>
+    <string name="timetable_updating">Updating timetable…</string>
+    <string name="timetable_update_failed">Couldn’t update the timetable. Any previously saved timetable is kept. Check your connection and try again.</string>
+    <string name="timetable_expired">The saved timetable has expired. Download an update for current services.</string>
+    <string name="timetable_coverage">Published service dates: %1$s – %2$s</string>
+    <string name="timetable_downloaded">Saved %1$s</string>
+    <string name="timetable_station">Station: %1$s</string>
+    <string name="timetable_previous">Previous</string>
+    <string name="timetable_next">Next</string>
+    <string name="timetable_choose_date">Choose date</string>
+    <string name="timetable_from_time">From %1$s</string>
+    <string name="timetable_whole_day">Whole day</string>
+    <string name="timetable_not_published">No timetable published for this date. Try updating the download.</string>
+    <string name="timetable_no_departures">No scheduled departures for this station in the selected period.</string>
+    <string name="timetable_scheduled_time">Scheduled %1$s</string>
+    <string name="timetable_service_day">From service day %1$s</string>
+    <string name="timetable_attribution">Timetable data: National Transport Authority · CC BY 4.0</string>
+    <string name="timetable_dart_notice">DART services only. Scheduled timetable — not live. Delays and cancellations are not included. Reminders use live departures only.</string>
 </resources>
