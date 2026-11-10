@@ -27,6 +27,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -251,5 +252,37 @@ class LuasRepositoryImplTest {
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
         coVerify(exactly = 1) { forecastApi.fetchForecast(stopAbv) }
+    }
+
+    @Test
+    fun `map populates an empty catalogue after a forecast failed offline`() = runTest {
+        val database = MutableStateFlow(emptyList<LuasStop>())
+        every { stopsDao.fetchAllByLine(LuasLineData.RED) } returns database
+        every { stopsDao.fetchAll() } returns database
+        coEvery { stopsApi.fetchStops() } returns Result.failure(java.io.IOException("Offline"))
+        assertTrue(repository.fetchStops(LuasLineEntity.RED).first().getOrThrow().isEmpty())
+        coEvery { stopsApi.fetchStops() } returns Result.success(
+            LuasStopsResponseData(
+                listOf(
+                    LuasStopsResponseData.LineData(
+                        LuasLineData.RED,
+                        listOf(
+                            LuasStopsResponseData.LineData.StopData(
+                                name = "Abbey Street",
+                                pronunciation = "Abbey Street",
+                                abrev = "ABB",
+                                lat = 53.0,
+                                long = -6.0,
+                                isParkRide = 0,
+                                isCycleRide = 0
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        coEvery { stopsDao.insert(any<List<LuasStop>>()) } answers { database.value = firstArg() }
+        val locations = repository.fetchAllStopLocations().first { it.getOrNull()?.isNotEmpty() == true }.getOrThrow()
+        assertEquals("ABB", locations.single().stationCode)
     }
 }

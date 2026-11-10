@@ -9,6 +9,7 @@ import com.wedgess.luas.data.mapper.toDao
 import com.wedgess.luas.data.mapper.toDepartures
 import com.wedgess.luas.data.mapper.toEntity
 import com.wedgess.luas.data.mapper.toLocationEntity
+import com.wedgess.luas.data.utils.extensions.populateWhenEmpty
 import com.wedgess.luas.data.utils.extensions.resultOf
 import com.wedgess.luas.domain.model.DartStationEntity
 import com.wedgess.luas.domain.model.Departures
@@ -20,7 +21,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.Clock
@@ -35,20 +37,20 @@ class DartRepositoryImpl @Inject constructor(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : DartRepository {
 
+    private val catalogueMutex = Mutex()
+
     override fun fetchStations(): Flow<Result<List<DartStationEntity>>> {
         return stationsDao.fetchAll()
-            .onEach { localStops ->
-                if (localStops.isEmpty()) {
-                    fetchFromRemoteAndStore()
-                }
-            }
+            .populateWhenEmpty { catalogueMutex.withLock { fetchFromRemoteAndStore() } }
             .map { localStops ->
                 localStops.map { it.toEntity() }
             }.resultOf()
     }
 
     override fun fetchAllStationLocations(): Flow<Result<List<LocationEntity>>> {
-        return stationsDao.fetchAll().map { stations -> stations.map { it.toLocationEntity() } }.resultOf()
+        return stationsDao.fetchAll()
+            .populateWhenEmpty { catalogueMutex.withLock { fetchFromRemoteAndStore() } }
+            .map { stations -> stations.map { it.toLocationEntity() } }.resultOf()
     }
 
     override suspend fun fetchForecast(stationCode: String): Result<Departures> =

@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -129,11 +129,12 @@ fun TimetableScreen(
                         )
                     }
                 }
-                items(
+                itemsIndexed(
                     departures,
-                    key = { "${it.serviceDate}-${it.tripId}-${it.stopSequence}-${it.scheduledAt}" }
-                ) { departure ->
+                    key = { _, d -> "${d.serviceDate}-${d.tripId}-${d.stopSequence}-${d.scheduledAt}" }
+                ) { index, departure ->
                     ScheduledDepartureRow(departure, state.date)
+                    if (index < departures.lastIndex) HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
@@ -242,7 +243,6 @@ private fun ScheduledDepartureRow(departure: ScheduledDeparture, date: LocalDate
                 style = MaterialTheme.typography.bodySmall
             )
         }
-        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
 }
 

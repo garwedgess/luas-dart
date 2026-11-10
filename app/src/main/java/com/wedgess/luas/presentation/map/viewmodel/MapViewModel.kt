@@ -66,15 +66,11 @@ class MapViewModel @Inject constructor(
             }
 
             locationsFlow.map { locationsResult ->
-                locationsResult.map { locations ->
-                    TransportLocationData(transportType, locations)
-                }
+                TransportLocationData(transportType, locationsResult.getOrDefault(emptyList()))
             }
         }
-    ) { state, currentLocation, allLocationsResult ->
-        val (transportType, locations) = allLocationsResult.getOrDefault(
-            TransportLocationData(TransportType.LUAS, emptyList())
-        )
+    ) { state, currentLocation, locationData ->
+        val (transportType, locations) = locationData
         UiResult.Success(
             state.copy(
                 currentLocation = currentLocation ?: UserLocation(0.0, 0.0),

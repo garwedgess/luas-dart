@@ -15,18 +15,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
-import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
-import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
+import com.wedgess.luas.presentation.forecast.compose.ForecastStatus
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
 import com.wedgess.luas.presentation.forecast.dart.viewmodel.DartForecastViewModel
-import com.wedgess.luas.presentation.forecast.luastab.compose.components.LuasForecastAlarmRow
 import com.wedgess.luas.presentation.forecast.luastab.compose.dialogs.NotificationTimeDialog
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.presentation.model.DropdownItem
@@ -123,11 +121,7 @@ fun DartListContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (uiState.isStale) {
-            StaleDataBanner(lastUpdated = uiState.fetchedAt)
-        } else {
-            FreshnessBadge(fetchedAt = uiState.fetchedAt)
-        }
+        ForecastStatus(uiState.fetchedAt, uiState.isStale, uiState.activeAlarms, onCancelAlarm)
         StationPicker(
             label = "Station",
             selected = uiState.selectedStation,
@@ -139,9 +133,6 @@ fun DartListContent(
                 onEvent(DartForecastTabContract.Event.OnToggleFavourite(name, favourite))
             }
         )
-        uiState.activeAlarms.forEach { alarm ->
-            LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)
-        }
         uiState.sectionedListState.sections.flatMap { it.items }.map { it.content }
             .minByOrNull { it.dueIn }?.let { next ->
                 NextDepartureHeader(

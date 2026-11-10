@@ -84,4 +84,9 @@
     <string name="timetable_service_day">From service day %1$s</string>
     <string name="timetable_attribution">Timetable data: National Transport Authority · CC BY 4.0</string>
     <string name="timetable_dart_notice">DART services only. Scheduled timetable — not live. Delays and cancellations are not included. Reminders use live departures only.</string>
+    <string name="reminders_title">Departure reminders</string>
+    <plurals name="active_reminders">
+        <item quantity="one">%d reminder</item>
+        <item quantity="other">%d reminders</item>
+    </plurals>
 </resources>

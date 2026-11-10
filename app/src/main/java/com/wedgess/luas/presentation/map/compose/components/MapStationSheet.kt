@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -79,7 +79,7 @@ private fun MapDepartures(departures: Departures, stale: Boolean) {
                         modifier = Modifier.semantics { heading() }
                     )
                 }
-                items(items) { departure ->
+                itemsIndexed(items) { index, departure ->
                     Row(
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) {},
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -104,7 +104,7 @@ private fun MapDepartures(departures: Departures, stale: Boolean) {
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-                    HorizontalDivider()
+                    if (index < items.lastIndex) HorizontalDivider()
                 }
             }
         }

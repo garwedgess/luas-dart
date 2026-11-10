@@ -27,13 +27,12 @@ import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
-import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
-import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
 import com.wedgess.luas.presentation.extensions.toClockTime
+import com.wedgess.luas.presentation.forecast.compose.ForecastStatus
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.viewmodel.LuasForecastTabViewModel
@@ -178,13 +177,8 @@ private fun LuasTramList(
                 onToggleFavourite = onToggleFavourite
             )
         }
-        if (uiState.isStale) {
-            item { StaleDataBanner(lastUpdated = uiState.forecast.fetchedAt) }
-        } else {
-            item { FreshnessBadge(fetchedAt = uiState.forecast.fetchedAt) }
-        }
-        items(uiState.activeAlarms, key = { it.id }) { alarm ->
-            LuasForecastAlarmRow(alarm = alarm, onCancelAlarm = onCancelAlarm)
+        item {
+            ForecastStatus(uiState.forecast.fetchedAt, uiState.isStale, uiState.activeAlarms, onCancelAlarm)
         }
         uiState.forecast.items.filter { it.dueMins != null && it.expectedAt != null }
             .minByOrNull { requireNotNull(it.dueMins) }?.let { next ->

@@ -27,6 +27,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -263,5 +264,29 @@ class DartRepositoryImplTest {
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
         coVerify(exactly = 1) { forecastApi.fetchForecast(stopAbv) }
+    }
+
+    @Test
+    fun `map populates an empty catalogue after a forecast failed offline`() = runTest {
+        val database = MutableStateFlow(emptyList<DartStation>())
+        every { stationsDao.fetchAll() } returns database
+        coEvery { stationsApi.fetchStations() } returns Result.failure(java.io.IOException("Offline"))
+        assertTrue(repository.fetchStations().first().getOrThrow().isEmpty())
+        coEvery { stationsApi.fetchStations() } returns Result.success(
+            DartStationsResponseData(
+                listOf(
+                    DartStationsResponseData.DartStationData(
+                        stationDesc = "Dublin Pearse",
+                        stationLatitude = 53.0,
+                        stationLongitude = -6.0,
+                        stationCode = "PERSE",
+                        stationId = 1
+                    )
+                )
+            )
+        )
+        coEvery { stationsDao.insert(any<List<DartStation>>()) } answers { database.value = firstArg() }
+        val locations = repository.fetchAllStationLocations().first { it.getOrNull()?.isNotEmpty() == true }.getOrThrow()
+        assertEquals("PERSE", locations.single().stationCode)
     }
 }
