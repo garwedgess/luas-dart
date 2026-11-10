@@ -1,11 +1,11 @@
 package com.wedgess.luas.presentation.forecast.luastab.compose.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,12 +35,14 @@ fun LuasForecastAlarmRow(
     modifier: Modifier = Modifier,
     onCancelAlarm: (String) -> Unit
 ) {
-    Box(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).semantics(mergeDescendants = true) {},
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -57,7 +60,14 @@ fun LuasForecastAlarmRow(
                 textAlign = TextAlign.Start
             )
             IconButton(onClick = { onCancelAlarm(alarm.id) }) {
-                Icon(imageVector = Icons.Default.NotificationsActive, contentDescription = null)
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(
+                        R.string.cancel_alarm_description,
+                        alarm.stationName,
+                        alarm.destination.orEmpty()
+                    )
+                )
             }
         }
     }

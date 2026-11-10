@@ -73,12 +73,13 @@ fun DartForecastItemRow(
         Text(
             modifier = Modifier.weight(0.2f),
             text = scheduledTime,
-            style = MaterialTheme.typography.bodyLarge
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium
         )
         Text(
             modifier = Modifier.weight(0.2f),
             text = eta,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
         )
         Text(
             modifier = Modifier.weight(0.2f),

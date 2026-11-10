@@ -44,6 +44,7 @@ fun LuasStopsResponseData.toDao() = this.line.flatMap { line ->
 }
 
 fun LuasStop.toLocationEntity() = LocationEntity.Luas(
+    stationCode = this.Abbreviation,
     name = this.Name,
     latitude = this.Latitude,
     longitude = this.Longitude,

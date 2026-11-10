@@ -35,6 +35,7 @@ fun DartStationsResponseData.toDao() = this.stations.map { station ->
 }
 
 fun DartStation.toLocationEntity() = LocationEntity.Dart(
+    stationCode = this.Code,
     name = this.Name,
     latitude = this.Latitude,
     longitude = this.Longitude

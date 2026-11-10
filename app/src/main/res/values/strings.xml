@@ -48,4 +48,17 @@
     <string name="retry">Retry</string>
     <string name="freshness_live">Live · %1$s</string>
     <string name="freshness_live_description">Live times, updated at %1$s</string>
+    <string name="cancel_alarm_description">Cancel reminder from %1$s to %2$s</string>
+    <string name="expanded">Expanded</string>
+    <string name="collapsed">Collapsed</string>
+    <string name="map_find_station">Find a station</string>
+    <string name="map_no_stations">No matching stations</string>
+    <string name="map_loading_departures">Loading departures</string>
+    <string name="map_no_departures">No departures listed</string>
+    <string name="map_departures_error">Couldn’t load departures</string>
+    <string name="map_scheduled_at">Scheduled %1$s</string>
+    <string name="alarm_dialog_title">Departure reminder</string>
+    <string name="alarm_cancel">Cancel</string>
+    <string name="alarm_confirm">Set reminder</string>
+    <string name="map_expected_at">Expected %1$s</string>
 </resources>

@@ -19,6 +19,7 @@ import com.wedgess.luas.presentation.base.CollectSideEffect
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.map.MapContract
 import com.wedgess.luas.presentation.map.compose.MapScreen
+import com.wedgess.luas.presentation.map.viewmodel.MapStationViewModel
 import com.wedgess.luas.presentation.map.viewmodel.MapViewModel
 import com.wedgess.luas.presentation.navigation.Screens
 
@@ -27,6 +28,8 @@ fun NavGraphBuilder.mapRoot(onUpdateAppbarState: (TopAppBarState) -> Unit) {
     composable<Screens.Map> {
         val viewModel: MapViewModel = hiltViewModel()
         val uiResult by viewModel.uiResult.collectAsStateWithLifecycle()
+        val stationViewModel: MapStationViewModel = hiltViewModel()
+        val stationState by stationViewModel.stationState.collectAsStateWithLifecycle()
         val permissionsState = rememberMultiplePermissionsState(
             listOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -64,6 +67,13 @@ fun NavGraphBuilder.mapRoot(onUpdateAppbarState: (TopAppBarState) -> Unit) {
             }
         }
 
-        MapScreen(uiResult = uiResult, onEvent = viewModel::onEvent)
+        MapScreen(
+            uiResult = uiResult,
+            onEvent = viewModel::onEvent,
+            stationState = stationState,
+            onStationSelect = stationViewModel::select,
+            onDismissStation = stationViewModel::dismiss,
+            onRetryDepartures = stationViewModel::retry
+        )
     }
 }

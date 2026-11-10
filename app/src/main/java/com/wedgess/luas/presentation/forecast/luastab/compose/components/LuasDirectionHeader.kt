@@ -11,7 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -25,11 +28,13 @@ fun LuasDirectionHeader(
     noTramsDue: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                .clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .semantics { heading() }
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             text = title,
             color = MaterialTheme.colorScheme.onSurface,

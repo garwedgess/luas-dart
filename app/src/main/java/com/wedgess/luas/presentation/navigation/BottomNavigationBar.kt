@@ -32,21 +32,17 @@ fun BottomNavigationBar(
                 label = { Text(text = item.title.asString()) },
                 icon = {
                     if (item is BottomNavItem.Forecast) {
-                        Icon(item.dynamicIcon(), contentDescription = item.title.asString())
+                        Icon(item.dynamicIcon(), contentDescription = null)
                     } else {
-                        Icon(item.icon, contentDescription = item.title.asString())
+                        Icon(item.icon, contentDescription = null)
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                        alpha = 0.6f
-                    ),
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                        alpha = 0.6f
-                    ),
-                    indicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                    selectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
