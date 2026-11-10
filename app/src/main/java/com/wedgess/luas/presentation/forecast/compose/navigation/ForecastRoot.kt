@@ -29,11 +29,14 @@ import com.wedgess.luas.presentation.forecast.compose.dialogs.ForecastDialogs
 import com.wedgess.luas.presentation.forecast.viewmodel.ForecastViewModel
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.navigation.Screens
+import com.wedgess.luas.presentation.navigation.reminder.ReminderTarget
 
 @SuppressLint("InlinedApi")
 @OptIn(ExperimentalPermissionsApi::class)
 fun NavGraphBuilder.forecastRoot(
-    onUpdateAppbarState: (TopAppBarState) -> Unit
+    onUpdateAppbarState: (TopAppBarState) -> Unit,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     composable<Screens.Forecast> {
         val viewModel: ForecastViewModel = hiltViewModel()
@@ -72,7 +75,12 @@ fun NavGraphBuilder.forecastRoot(
                 context.startActivity(intent)
             }
         }
-        ForecastScreen(uiState.transportType, setRefreshAction = { refreshAction = it })
+        ForecastScreen(
+            uiState.transportType,
+            setRefreshAction = { refreshAction = it },
+            reminderTarget = reminderTarget,
+            onReminderComplete = onReminderComplete
+        )
         ForecastDialogs(uiState.dialog, viewModel::onEvent)
     }
 }

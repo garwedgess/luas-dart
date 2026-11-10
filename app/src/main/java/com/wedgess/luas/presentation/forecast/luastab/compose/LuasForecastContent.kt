@@ -11,12 +11,15 @@ import androidx.compose.ui.graphics.Color
 import com.wedgess.luas.presentation.components.AnimatedTabContainer
 import com.wedgess.luas.presentation.forecast.luastab.compose.components.LuasForecastTabContent
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTab
+import com.wedgess.luas.presentation.navigation.reminder.ReminderTarget
 import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun LuasForecastContent(
     setRefreshAction: (() -> Unit) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val luasForecastTabs = remember { LuasForecastTab.all() }
     var currentTab by remember { mutableStateOf(luasForecastTabs.first()) }
@@ -25,11 +28,14 @@ fun LuasForecastContent(
         AnimatedTabContainer(
             modifier = modifier,
             tabItems = luasForecastTabs,
+            selectedPage = reminderTarget?.line?.let { line -> luasForecastTabs.indexOfFirst { it.line == line } },
             indicatorColors = persistentListOf(Color(0xFF66BF63), Color(0xFFE53935)),
             onTabIndexChange = { index -> currentTab = luasForecastTabs[index] }
         ) { tab ->
             LuasForecastTabContent(
                 line = tab.line,
+                reminderTarget = reminderTarget?.takeIf { it.line == tab.line },
+                onReminderComplete = onReminderComplete,
                 onRefreshAction = { action -> setRefreshAction(action) }
             )
         }

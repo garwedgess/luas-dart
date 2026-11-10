@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import com.wedgess.luas.presentation.forecast.compose.navigation.forecastRoot
 import com.wedgess.luas.presentation.main.model.TopAppBarState
 import com.wedgess.luas.presentation.map.compose.navigation.mapRoot
+import com.wedgess.luas.presentation.navigation.reminder.ReminderTarget
 import com.wedgess.luas.presentation.news.navigation.newsRoot
 import com.wedgess.luas.presentation.timetable.compose.timetableRoot
 
@@ -14,14 +15,16 @@ import com.wedgess.luas.presentation.timetable.compose.timetableRoot
 fun MainNavigationGraph(
     navController: NavHostController,
     onUpdateAppbarState: (TopAppBarState) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     NavHost(
         navController = navController,
         startDestination = Screens.Forecast,
         modifier = modifier
     ) {
-        forecastRoot(onUpdateAppbarState)
+        forecastRoot(onUpdateAppbarState, reminderTarget, onReminderComplete)
         mapRoot(onUpdateAppbarState)
         newsRoot(onUpdateAppbarState)
         timetableRoot(onUpdateAppbarState)

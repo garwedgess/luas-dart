@@ -95,4 +95,32 @@ class TimetableUiTest {
             .performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Scheduled 09:10").assertDoesNotExist()
     }
+
+    @Test
+    fun dartDeparturesAreGroupedUnderTheirPublishedDirections() {
+        compose.setContent {
+            LuasTheme {
+                TimetableScreen(
+                    state.copy(
+                        transport = TransportType.DART,
+                        feed = feed.copy(transport = TransportType.DART),
+                        day = TimetableDay(
+                            true,
+                            listOf(
+                                departures[1].copy(tripId = "south", direction = "Southbound", destination = "Bray"),
+                                departures[1].copy(tripId = "north", direction = "Northbound", destination = "Howth")
+                            )
+                        )
+                    ),
+                    {},
+                    {},
+                    {}
+                )
+            }
+        }
+        compose.onNodeWithText("Northbound").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Howth").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Southbound").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Bray").performScrollTo().assertIsDisplayed()
+    }
 }

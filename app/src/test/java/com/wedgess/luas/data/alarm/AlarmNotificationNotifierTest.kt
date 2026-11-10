@@ -3,6 +3,7 @@ package com.wedgess.luas.data.alarm
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.wedgess.luas.MainActivity
 import com.wedgess.luas.domain.alarm.ReminderContent
@@ -16,6 +17,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -144,5 +146,29 @@ class AlarmNotificationNotifierTest {
 
         assertNull(notification(1))
         assertNotNull(notification(2))
+    }
+
+    @Test
+    fun `notification taps retain their own alarm identity and reuse the running activity`() {
+        notifier.notify(alarm("a", 1), ReminderContent.ServiceLost)
+        notifier.notify(alarm("b", 2), ReminderContent.ServiceLost)
+        val first = notification(1)!!.contentIntent
+        val second = notification(2)!!.contentIntent
+        assertNotEquals(first, second)
+        val firstIntent = shadowOf(first).savedIntent
+        val secondIntent = shadowOf(second).savedIntent
+        assertEquals("a", ReminderIntents.alarmId(firstIntent))
+        assertEquals("b", ReminderIntents.alarmId(secondIntent))
+        assertTrue(firstIntent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
+        assertFalse(firstIntent.flags and Intent.FLAG_ACTIVITY_CLEAR_TASK != 0)
+    }
+
+    @Test
+    fun `ordinary launches and malformed reminder URIs cannot select an alarm`() {
+        assertNull(ReminderIntents.alarmId(Intent()))
+        assertNull(ReminderIntents.alarmId(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("luasreminder://other/a"))))
+        assertNull(
+            ReminderIntents.alarmId(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("luasreminder://alarm/a/b")))
+        )
     }
 }

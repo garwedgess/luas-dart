@@ -5,10 +5,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -23,27 +25,37 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wedgess.luas.R
 import com.wedgess.luas.di.ForecastTabViewModelFactory
+import com.wedgess.luas.domain.alarm.AlarmMatch
+import com.wedgess.luas.domain.alarm.matchAlarm
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.LuasLineEntity
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
+import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
+import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
 import com.wedgess.luas.presentation.extensions.toClockTime
-import com.wedgess.luas.presentation.forecast.compose.ForecastStatus
+import com.wedgess.luas.presentation.forecast.compose.ForecastReminders
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.viewmodel.LuasForecastTabViewModel
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.presentation.model.DropdownItem
+import com.wedgess.luas.presentation.navigation.reminder.ReminderTarget
+import com.wedgess.luas.presentation.navigation.reminder.rememberReminderHighlight
+import com.wedgess.luas.presentation.navigation.reminder.reminderHighlight
 import com.wedgess.luas.ui.theme.LuasTheme
+import java.time.Instant
 
 @Composable
 fun LuasForecastTabContent(
     line: LuasLineEntity,
     onRefreshAction: (() -> Unit) -> Unit,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> },
     luasForecastTabViewModel: LuasForecastTabViewModel = hiltViewModel(
         key = line.name,
         creationCallback = { factory: ForecastTabViewModelFactory ->
@@ -103,7 +115,12 @@ fun LuasForecastTabContent(
         onSuccess = { uiState ->
             LuasTabListContent(
                 uiState = uiState,
-                onStopSelect = onStopSelect,
+                reminderTarget = reminderTarget,
+                onReminderComplete = onReminderComplete,
+                onStopSelect = { stop ->
+                    reminderTarget?.let { onReminderComplete(it.token, false) }
+                    onStopSelect(stop)
+                },
                 onToggleFavourite = onToggleFavourite,
                 onShowTravelUpdatesDialog = onShowTravelUpdatesDialog,
                 onTramClick = onTramClick,
@@ -129,7 +146,9 @@ fun LuasTabListContent(
     onStopSelect: (DropdownItem) -> Unit,
     onToggleFavourite: (String, Boolean) -> Unit,
     onTramClick: (Int, String, DepartureDirection, String) -> Unit,
-    onCancelAlarm: (String) -> Unit
+    onCancelAlarm: (String) -> Unit,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     Column {
         RefreshProgressIndicator(
@@ -138,6 +157,8 @@ fun LuasTabListContent(
         )
         LuasTramList(
             uiState = uiState,
+            reminderTarget = reminderTarget,
+            onReminderComplete = onReminderComplete,
             onShowTravelUpdatesDialog = onShowTravelUpdatesDialog,
             onStopSelect = onStopSelect,
             onToggleFavourite = onToggleFavourite,
@@ -156,41 +177,70 @@ private fun LuasTramList(
     onStopSelect: (DropdownItem) -> Unit,
     onToggleFavourite: (String, Boolean) -> Unit,
     onTramClick: (Int, String, DepartureDirection, String) -> Unit,
-    onCancelAlarm: (String) -> Unit
+    onCancelAlarm: (String) -> Unit,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val outbound = uiState.forecast.byDirection(DepartureDirection.OUTBOUND)
     val inbound = uiState.forecast.byDirection(DepartureDirection.INBOUND)
+    val next = uiState.forecast.items.filter { it.dueMins != null && it.expectedAt != null }
+        .minByOrNull { requireNotNull(it.dueMins) }
+    val target = reminderTarget?.takeIf { it.alarm.stationCode.equals(uiState.forecastStationCode, true) }
+    val matched = target?.let { matchAlarm(it.alarm, uiState.forecast, Instant.now()) as? AlarmMatch.Found }
+        ?.takeUnless { it.ambiguous }?.departure
+    val firstDepartureIndex = LUAS_HEADER_ITEMS + if (next == null) 0 else 1
+    val listIndex = when {
+        matched == null -> null
+        matched.direction == DepartureDirection.OUTBOUND -> firstDepartureIndex + outbound.indexOf(matched)
+        else -> firstDepartureIndex + outbound.size + 1 + inbound.indexOf(matched)
+    }
+    val listState = rememberLazyListState()
+    val highlight = rememberReminderHighlight(
+        target,
+        uiState.isStale,
+        listIndex,
+        listState,
+        onReminderComplete
+    )
     LazyColumn(
+        state = listState,
         modifier = Modifier
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         stickyHeader {
-            StationPicker(
-                label = "Stop",
-                selected = uiState.selectedStop,
-                options = uiState.dropdownOptions,
-                favourites = uiState.stationPreferences.favourites,
-                recents = uiState.stationPreferences.recents,
-                onSelect = onStopSelect,
-                onToggleFavourite = onToggleFavourite
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StationPicker(
+                    modifier = Modifier.weight(1f),
+                    label = "Stop",
+                    selected = uiState.selectedStop,
+                    options = uiState.dropdownOptions,
+                    favourites = uiState.stationPreferences.favourites,
+                    recents = uiState.stationPreferences.recents,
+                    onSelect = onStopSelect,
+                    onToggleFavourite = onToggleFavourite
+                )
+                ForecastReminders(uiState.activeAlarms, onCancelAlarm)
+            }
         }
         item {
-            ForecastStatus(uiState.forecast.fetchedAt, uiState.isStale, uiState.activeAlarms, onCancelAlarm)
-        }
-        uiState.forecast.items.filter { it.dueMins != null && it.expectedAt != null }
-            .minByOrNull { requireNotNull(it.dueMins) }?.let { next ->
-                item {
-                    NextDepartureHeader(
-                        destination = next.destination,
-                        dueMins = requireNotNull(next.dueMins),
-                        expectedTime = requireNotNull(next.expectedAt).toClockTime(),
-                        stale = uiState.isStale
-                    )
-                }
+            if (uiState.isStale) {
+                StaleDataBanner(uiState.forecast.fetchedAt)
+            } else {
+                FreshnessBadge(uiState.forecast.fetchedAt)
             }
+        }
+        next?.let { next ->
+            item {
+                NextDepartureHeader(
+                    destination = next.destination,
+                    dueMins = requireNotNull(next.dueMins),
+                    expectedTime = requireNotNull(next.expectedAt).toClockTime(),
+                    stale = uiState.isStale
+                )
+            }
+        }
         item {
             LuasForecastStatusMessage(
                 message = uiState.forecast.message,
@@ -210,6 +260,7 @@ private fun LuasTramList(
         }
         items(outbound) { tram ->
             LuasForecastItemRow(
+                modifier = Modifier.reminderHighlight(highlight && tram == matched),
                 dueIn = tram.dueMins ?: -1,
                 destination = tram.destination,
                 stale = uiState.isStale,
@@ -239,6 +290,7 @@ private fun LuasTramList(
         }
         items(inbound) { tram ->
             LuasForecastItemRow(
+                modifier = Modifier.reminderHighlight(highlight && tram == matched),
                 dueIn = tram.dueMins ?: -1,
                 destination = tram.destination,
                 stale = uiState.isStale,
@@ -265,3 +317,6 @@ private fun ForecastTabContentPreview() {
         }
     }
 }
+
+// Station, freshness, status message and outbound heading; next-departure summary is optional.
+private const val LUAS_HEADER_ITEMS = 4

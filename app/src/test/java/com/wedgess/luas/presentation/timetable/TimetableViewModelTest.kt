@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -115,5 +116,36 @@ class TimetableViewModelTest {
         completion.complete(Result.failure(IOException()))
         assertEquals(TransportType.DART, viewModel.uiState.value.feed?.transport)
         assertFalse(viewModel.uiState.value.updateFailed)
+    }
+
+    @Test
+    fun `date queries keep the current coherent content until the next date is ready`() = runTest {
+        val next = CompletableDeferred<TimetableDay>()
+        coEvery { repository.day(any(), any(), date.plusDays(1)) } coAnswers { next.await() }
+        val shown = mutableListOf<TimetableUiState>()
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect { shown.add(it) } }
+        shown.clear()
+        viewModel.selectDate(date.plusDays(1))
+        runCurrent()
+        assertEquals(date, viewModel.uiState.value.date)
+        assertEquals(feed, viewModel.uiState.value.feed)
+        assertTrue(shown.none { it.loading })
+        next.complete(TimetableDay(true, emptyList()))
+        runCurrent()
+        assertEquals(date.plusDays(1), viewModel.uiState.value.date)
+        assertTrue(shown.none { it.loading })
+    }
+
+    @Test
+    fun `a late cancelled date query cannot replace a newer selected day`() = runTest {
+        val slow = CompletableDeferred<TimetableDay>()
+        coEvery { repository.day(any(), any(), date.plusDays(1)) } coAnswers { slow.await() }
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        viewModel.selectDate(date.plusDays(1))
+        viewModel.selectDate(date.plusDays(2))
+        slow.complete(TimetableDay(false, emptyList()))
+        runCurrent()
+        assertEquals(date.plusDays(2), viewModel.uiState.value.date)
+        assertTrue(viewModel.uiState.value.day.published)
     }
 }

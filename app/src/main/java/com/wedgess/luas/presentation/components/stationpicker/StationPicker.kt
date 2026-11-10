@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 import com.wedgess.luas.presentation.model.DropdownItem
@@ -54,7 +55,9 @@ fun StationPicker(
         Text(
             text = "$label: ${selected.text}",
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
     }

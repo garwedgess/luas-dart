@@ -89,4 +89,12 @@
         <item quantity="one">%d reminder</item>
         <item quantity="other">%d reminders</item>
     </plurals>
+    <string name="reminder_opening">Opening departure reminder…</string>
+    <string name="reminder_open_failed">This reminder or its station is no longer available.</string>
+    <string name="reminder_departure_unavailable">This departure could not be identified in the current forecast.</string>
+    <string name="reminder_highlighted">Opened from departure reminder</string>
+    <string name="news_loading">Loading travel updates…</string>
+    <string name="news_load_failed">Unable to load Luas travel updates.</string>
+    <string name="news_open_browser">Open in browser</string>
+    <string name="next_departure_compact">Next: %1$s</string>
 </resources>

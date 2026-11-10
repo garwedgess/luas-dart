@@ -3,7 +3,7 @@ package com.wedgess.luas
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.presentation.components.sectionedlist.model.Section
@@ -63,8 +63,8 @@ class DartForecastUiTest {
 
         compose.onNode(hasContentDescription("Next departure to Greystones", substring = true)).assertIsDisplayed()
         compose.onNode(hasContentDescription("Live times, updated at", substring = true)).assertIsDisplayed()
-        // Index 1 is the row; index 0 is inside the next-departure header.
-        compose.onAllNodesWithText("Greystones", useUnmergedTree = true)[1].performClick()
+        // The compact summary says "Next: Greystones"; this selects the departure row itself.
+        compose.onNodeWithText("Greystones", useUnmergedTree = true).performClick()
         assertEquals("E134", clicked?.trainCode)
     }
 
@@ -75,8 +75,8 @@ class DartForecastUiTest {
 
         compose.onNode(hasContentDescription("expected around 09:14, not live", substring = true)).assertIsDisplayed()
         compose.onNode(hasContentDescription("Live times, updated at", substring = true)).assertDoesNotExist()
-        // Index 1 is the row; index 0 is inside the next-departure header.
-        compose.onAllNodesWithText("Greystones", useUnmergedTree = true)[1].performClick()
+        // The compact summary says "Next: Greystones"; this selects the departure row itself.
+        compose.onNodeWithText("Greystones", useUnmergedTree = true).performClick()
         assertEquals(false, clicked)
     }
 }

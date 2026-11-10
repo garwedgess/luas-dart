@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -18,11 +19,12 @@ fun <T> SectionedList(
     onSectionToggle: (sectionId: Long) -> Unit,
     modifier: Modifier = Modifier,
     sectionHeader: @Composable (LazyItemScope.() -> Unit)? = null,
+    listState: LazyListState = rememberLazyListState(),
     itemContent: @Composable (item: T) -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
-        state = rememberLazyListState(),
+        state = listState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         state.sections.forEachIndexed { index, section ->

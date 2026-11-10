@@ -69,7 +69,7 @@ class AlarmNotificationNotifier @Inject constructor(
             .setOngoing(true)
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
-            .setContentIntent(contentIntent())
+            .setContentIntent(contentIntent(alarm))
             .addAction(R.drawable.ic_close, context.getString(R.string.action_dismiss), dismiss)
             .setDeleteIntent(dismiss)
             .build()
@@ -101,9 +101,11 @@ class AlarmNotificationNotifier @Inject constructor(
         return ((seconds + SECONDS_PER_MINUTE / 2) / SECONDS_PER_MINUTE).toInt()
     }
 
-    private fun contentIntent(): PendingIntent {
+    private fun contentIntent(alarm: Alarm): PendingIntent {
         val intent = Intent(context, navigator.mainActivityClass()).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            action = Intent.ACTION_VIEW
+            data = ReminderIntents.uri(alarm.id)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         return PendingIntent.getActivity(
             context,

@@ -36,14 +36,20 @@ fun <T : TabItem> AnimatedTabContainer(
     modifier: Modifier = Modifier,
     indicatorColors: ImmutableList<Color> = persistentListOf(MaterialTheme.colorScheme.primary),
     onTabIndexChange: ((index: Int) -> Unit)? = null,
+    selectedPage: Int? = null,
     onTabSelected: @Composable (T) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
+        initialPage = selectedPage?.takeIf { it in tabItems.indices } ?: 0,
         pageCount = {
             tabItems.size
         }
     )
+
+    LaunchedEffect(selectedPage) {
+        selectedPage?.takeIf { it in tabItems.indices }?.let { pagerState.scrollToPage(it) }
+    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }

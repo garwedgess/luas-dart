@@ -1,10 +1,7 @@
 package com.wedgess.luas.presentation.forecast.compose
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,44 +15,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
 import com.wedgess.luas.domain.model.Alarm
-import com.wedgess.luas.presentation.components.FreshnessBadge
-import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.forecast.luastab.compose.components.LuasForecastAlarmRow
-import java.time.Instant
 
-/** Reminders stay one compact control; their number never pushes departures down the screen. */
+/** The station-row control opens reminder details without displacing departure rows. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ForecastStatus(
-    fetchedAt: Instant,
-    stale: Boolean,
-    alarms: List<Alarm>,
-    onCancel: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var showReminders by remember { mutableStateOf(false) }
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (stale) StaleDataBanner(fetchedAt)
-        if (!stale || alarms.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                if (!stale) FreshnessBadge(fetchedAt)
-                if (alarms.isNotEmpty()) {
-                    TextButton(onClick = { showReminders = true }) {
-                        Text(pluralStringResource(R.plurals.active_reminders, alarms.size, alarms.size))
-                    }
-                }
-            }
+fun ForecastReminders(alarms: List<Alarm>, onCancel: (String) -> Unit, modifier: Modifier = Modifier) {
+    var showReminders by remember(alarms.isEmpty()) { mutableStateOf(false) }
+    if (alarms.isNotEmpty()) {
+        TextButton(onClick = { showReminders = true }, modifier = modifier) {
+            Text(pluralStringResource(R.plurals.active_reminders, alarms.size, alarms.size))
         }
     }
     if (showReminders && alarms.isNotEmpty()) {

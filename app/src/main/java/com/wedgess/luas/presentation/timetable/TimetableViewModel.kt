@@ -53,6 +53,7 @@ class TimetableViewModel @Inject constructor(
         savedState.get<Long>("timetable_date")?.let(LocalDate::ofEpochDay)
             ?: LocalDate.now(clock.withZone(TimetableZone))
     )
+    private var lastContent: TimetableUiState? = null
     private val revision = MutableStateFlow(0)
     private val updates = MutableStateFlow<Map<TransportType, UpdateState>>(emptyMap())
 
@@ -61,7 +62,8 @@ class TimetableViewModel @Inject constructor(
         .flatMapLatest { (transport, date) ->
             flow {
                 val initial = TimetableUiState(transport = transport, date = date, now = clock.instant())
-                emit(initial)
+                val previous = lastContent?.takeIf { it.transport == transport }
+                if (previous == null) emit(initial)
                 val loaded = resultOf {
                     val feed = repository.feed(transport)
                     val stations = repository.stations(transport)
@@ -70,7 +72,10 @@ class TimetableViewModel @Inject constructor(
                     val day = station?.let { repository.day(transport, it.id, date) }
                         ?: TimetableDay(false, emptyList())
                     initial.copy(feed = feed, stations = stations, station = station, day = day, loading = false)
-                }.getOrElse { initial.copy(loading = false, loadFailed = true) }
+                }.getOrElse {
+                    previous?.copy(loadFailed = true) ?: initial.copy(loading = false, loadFailed = true)
+                }
+                lastContent = loaded
                 emit(loaded)
             }
         }

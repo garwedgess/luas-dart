@@ -4,23 +4,28 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
+import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
 import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
+import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
-import com.wedgess.luas.presentation.forecast.compose.ForecastStatus
+import com.wedgess.luas.presentation.forecast.compose.ForecastReminders
 import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
@@ -28,12 +33,17 @@ import com.wedgess.luas.presentation.forecast.dart.viewmodel.DartForecastViewMod
 import com.wedgess.luas.presentation.forecast.luastab.compose.dialogs.NotificationTimeDialog
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.presentation.model.DropdownItem
+import com.wedgess.luas.presentation.navigation.reminder.ReminderTarget
+import com.wedgess.luas.presentation.navigation.reminder.rememberReminderHighlight
+import com.wedgess.luas.presentation.navigation.reminder.reminderHighlight
 
 @Composable
 fun DartForecastContent(
     setRefreshAction: (() -> Unit) -> Unit,
     modifier: Modifier = Modifier,
-    dartForecastViewModel: DartForecastViewModel = hiltViewModel()
+    dartForecastViewModel: DartForecastViewModel = hiltViewModel(),
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     val uiResult by dartForecastViewModel.uiResult.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
@@ -61,7 +71,10 @@ fun DartForecastContent(
                 )
                 DartListContent(
                     uiState = uiState,
+                    reminderTarget = reminderTarget,
+                    onReminderComplete = onReminderComplete,
                     onStopSelect = { stop ->
+                        reminderTarget?.let { onReminderComplete(it.token, false) }
                         dartForecastViewModel.onEvent(
                             DartForecastTabContract.Event.OnStationSelected(stop.text)
                         )
@@ -101,8 +114,33 @@ fun DartListContent(
     onStopSelect: (DropdownItem) -> Unit,
     onRowClick: (DartForecastSectionRowData) -> Unit,
     onCancelAlarm: (String) -> Unit,
-    onEvent: (DartForecastTabContract.Event) -> Unit
+    onEvent: (DartForecastTabContract.Event) -> Unit,
+    reminderTarget: ReminderTarget? = null,
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
 ) {
+    val listState = rememberLazyListState()
+    val target = reminderTarget?.takeIf { it.isForDartStation(uiState.forecastStationCode) }
+    val sections = uiState.sectionedListState.sections
+    val sectionIndex = sections.indexOfFirst { section -> section.items.any { target?.matches(it.content) == true } }
+    val section = sections.getOrNull(sectionIndex)
+    val expanded = section?.let { uiState.sectionedListState.expandedSections[it.id] != false } ?: true
+    val toggleSection by rememberUpdatedState(onSectionToggle)
+    LaunchedEffect(target?.token, section?.id, expanded) {
+        if (section != null && !expanded) toggleSection(section.id)
+    }
+    val rowIndex = section?.items?.indexOfFirst { target?.matches(it.content) == true } ?: -1
+    val listIndex = if (rowIndex >= 0 && expanded) {
+        sections.take(sectionIndex).sumOf { it.items.size + 2 } + 1 + rowIndex
+    } else {
+        null
+    }
+    val highlight = rememberReminderHighlight(
+        target,
+        uiState.isStale || !expanded,
+        listIndex,
+        listState,
+        onReminderComplete
+    )
     uiState.alarmDraft?.let { draft ->
         NotificationTimeDialog(
             currentMinutes = draft.notifyMinutesBefore,
@@ -118,21 +156,25 @@ fun DartListContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        ForecastStatus(uiState.fetchedAt, uiState.isStale, uiState.activeAlarms, onCancelAlarm)
-        StationPicker(
-            label = "Station",
-            selected = uiState.selectedStation,
-            options = uiState.dropdownOptions,
-            favourites = uiState.stationPreferences.favourites,
-            recents = uiState.stationPreferences.recents,
-            onSelect = onStopSelect,
-            onToggleFavourite = { name, favourite ->
-                onEvent(DartForecastTabContract.Event.OnToggleFavourite(name, favourite))
-            }
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StationPicker(
+                modifier = Modifier.weight(1f),
+                label = "Station",
+                selected = uiState.selectedStation,
+                options = uiState.dropdownOptions,
+                favourites = uiState.stationPreferences.favourites,
+                recents = uiState.stationPreferences.recents,
+                onSelect = onStopSelect,
+                onToggleFavourite = { name, favourite ->
+                    onEvent(DartForecastTabContract.Event.OnToggleFavourite(name, favourite))
+                }
+            )
+            ForecastReminders(uiState.activeAlarms, onCancelAlarm)
+        }
+        if (uiState.isStale) StaleDataBanner(uiState.fetchedAt) else FreshnessBadge(uiState.fetchedAt)
         uiState.sectionedListState.sections.flatMap { it.items }.map { it.content }
             .minByOrNull { it.dueIn }?.let { next ->
                 NextDepartureHeader(
@@ -146,9 +188,11 @@ fun DartListContent(
             modifier = Modifier.fillMaxSize(),
             sectionHeader = { DartForecastHeader() },
             state = uiState.sectionedListState,
+            listState = listState,
             onSectionToggle = onSectionToggle
         ) { rowData ->
             DartForecastItemRow(
+                modifier = Modifier.reminderHighlight(highlight && target?.matches(rowData) == true),
                 destination = rowData.destination,
                 eta = rowData.expectedAt,
                 dueIn = rowData.dueIn,

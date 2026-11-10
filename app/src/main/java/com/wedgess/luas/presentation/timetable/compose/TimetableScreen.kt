@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.timetable.compose
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
@@ -41,6 +43,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 @Suppress("LongParameterList") // Stateless screen callbacks.
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TimetableScreen(
     state: TimetableUiState,
@@ -129,13 +132,7 @@ fun TimetableScreen(
                         )
                     }
                 }
-                itemsIndexed(
-                    departures,
-                    key = { _, d -> "${d.serviceDate}-${d.tripId}-${d.stopSequence}-${d.scheduledAt}" }
-                ) { index, departure ->
-                    ScheduledDepartureRow(departure, state.date)
-                    if (index < departures.lastIndex) HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
-                }
+                directionGroups(departures, state.date)
             }
         }
         item {
@@ -223,6 +220,31 @@ private fun LazyListScope.downloadStatus(state: TimetableUiState, onUpdate: () -
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+private fun LazyListScope.directionGroups(departures: List<ScheduledDeparture>, date: LocalDate) {
+    val directionOrder = listOf("Northbound", "Southbound", "Outbound", "Inbound")
+    departures.groupBy { it.direction }.entries.sortedBy { (direction, _) ->
+        directionOrder.indexOf(direction).takeIf { it >= 0 } ?: Int.MAX_VALUE
+    }.forEach { (direction, services) ->
+        stickyHeader(key = "direction-$direction") {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Text(
+                    direction,
+                    modifier = Modifier.fillMaxWidth().padding(8.dp).semantics { heading() },
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        }
+        itemsIndexed(
+            services,
+            key = { _, d -> "${d.serviceDate}-${d.tripId}-${d.stopSequence}-${d.scheduledAt}" }
+        ) { index, departure ->
+            ScheduledDepartureRow(departure, date)
+            if (index < services.lastIndex) HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
+        }
+    }
+}
+
 @Composable
 private fun ScheduledDepartureRow(departure: ScheduledDeparture, date: LocalDate) {
     Column(
@@ -236,7 +258,7 @@ private fun ScheduledDepartureRow(departure: ScheduledDeparture, date: LocalDate
             )
             Text(departure.destination, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         }
-        Text("${departure.line} · ${departure.direction}", style = MaterialTheme.typography.bodySmall)
+        Text(departure.line, style = MaterialTheme.typography.bodySmall)
         if (departure.serviceDate != date) {
             Text(
                 stringResource(R.string.timetable_service_day, departure.serviceDate.formatDate()),
