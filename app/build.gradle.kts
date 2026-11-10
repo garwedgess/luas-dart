@@ -1,3 +1,5 @@
+import com.wedgess.verification.Verify16KbNativeLibraries
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -50,6 +52,9 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    packaging {
+        jniLibs.useLegacyPackaging = false
     }
     testOptions {
         unitTests {
@@ -137,4 +142,18 @@ protobuf {
             }
         }
     }
+}
+
+val verify16KbNativeLibraries by tasks.registering(Verify16KbNativeLibraries::class) {
+    group = "verification"
+    description = "Verify 16KB ELF alignment of every packaged 64-bit native library."
+    dependsOn("assembleDebug", "assembleRelease")
+    apks.from(
+        layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"),
+        layout.buildDirectory.file("outputs/apk/release/app-release-unsigned.apk")
+    )
+}
+
+tasks.named("check") {
+    dependsOn(verify16KbNativeLibraries)
 }

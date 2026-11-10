@@ -2,13 +2,13 @@ package com.wedgess.luas
 
 import android.app.Application
 import android.content.pm.ApplicationInfo
-import com.mapbox.mapboxsdk.Mapbox
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.maplibre.android.MapLibre
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -22,7 +22,7 @@ class LuasApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Mapbox.getInstance(this)
+        MapLibre.getInstance(this)
         // Release builds plant no tree, so nothing (including network payloads) is logged there.
         if (isDebuggable()) {
             Timber.plant(Timber.DebugTree())

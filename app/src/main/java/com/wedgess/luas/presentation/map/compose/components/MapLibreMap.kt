@@ -16,27 +16,27 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.maps.MapView
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.expressions.Expression
-import com.mapbox.mapboxsdk.style.layers.CircleLayer
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.UserLocation
 import kotlinx.collections.immutable.ImmutableList
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import timber.log.Timber
 
 private const val ROUTE_WIDTH = 4f
@@ -115,7 +115,7 @@ private fun TransitMap(
     val latestPermission = rememberUpdatedState(locationPermissionGranted)
 
     DisposableEffect(mapView) {
-        val listener = MapboxMap.OnMapClickListener { point ->
+        val listener = MapLibreMap.OnMapClickListener { point ->
             mapView.getMapAsync { map ->
                 val pixel = map.projection.toScreenLocation(point)
                 val radius = STATION_HIT_RADIUS_DP * context.resources.displayMetrics.density
@@ -272,7 +272,7 @@ private fun Style.updateTransportSources(line: MapLine, selected: LocationEntity
 }
 
 @SuppressLint("MissingPermission")
-private fun MapboxMap.updateLocation(style: Style, context: Context, granted: Boolean, followUser: Boolean = true) {
+private fun MapLibreMap.updateLocation(style: Style, context: Context, granted: Boolean, followUser: Boolean = true) {
     try {
         if (granted && !locationComponent.isLocationComponentActivated) {
             locationComponent.activateLocationComponent(
