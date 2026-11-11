@@ -1,13 +1,8 @@
 package com.wedgess.luas.data.alarm
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import androidx.core.app.NotificationChannelCompat
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.wedgess.luas.R
 import com.wedgess.luas.domain.alarm.AlarmNotifier
 import com.wedgess.luas.domain.alarm.ReminderContent
 import com.wedgess.luas.domain.model.Alarm
@@ -15,119 +10,110 @@ import com.wedgess.luas.domain.model.AlarmVerification
 import com.wedgess.luas.domain.navigation.ServiceNavigator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-
-private const val SECONDS_PER_MINUTE = 60L
-private val IRELAND_ZONE: ZoneId = ZoneId.of("Europe/Dublin")
-private val CLOCK_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+import javax.inject.Singleton
 
 /**
- * Shows the reminder. The notification is keyed by the alarm's own request code under a fixed tag, so posting it again
- * replaces it instead of adding a second one. A reminder that was not confirmed against live data says so.
+ * Owns visible reminders under their request codes. Updates and dismissal share a lock so a late response cannot
+ * resurrect a dismissed notification. The foreground service uses the same untagged notification ID.
  */
+@Singleton
 class AlarmNotificationNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clock: Clock,
-    private val navigator: ServiceNavigator
+    navigator: ServiceNavigator,
+    private val liveNotifications: LiveNotificationController
 ) : AlarmNotifier {
 
+    private val factory = ReminderNotificationFactory(context, clock, navigator)
     private val manager = NotificationManagerCompat.from(context)
+    private val lock = Any()
+    private val visible = mutableMapOf<String, VisibleReminder>()
 
     override fun areNotificationsEnabled(): Boolean = manager.areNotificationsEnabled()
 
-    @SuppressLint("MissingPermission") // Guarded by areNotificationsEnabled(), which covers the runtime permission.
+    @SuppressLint("MissingPermission") // Checked before posting and again by Android.
     override fun notify(alarm: Alarm, content: ReminderContent): Boolean {
         if (!areNotificationsEnabled()) return false
-        createChannel()
-        manager.notify(NOTIFICATION_TAG, alarm.requestCode, build(alarm, content))
+        factory.createChannel()
+        val checked = if (
+            content is ReminderContent.Upcoming && content.verification == AlarmVerification.LIVE_VERIFIED
+        ) {
+            content.copy(lastCheckedAt = content.lastCheckedAt ?: clock.instant())
+        } else {
+            content
+        }
+        val tracking = checked is ReminderContent.Upcoming && checked.expectedAt != null
+        synchronized(lock) {
+            visible[alarm.id] = VisibleReminder(alarm, checked, tracking)
+            // Migrate previously delivered tagged notifications without duplicating them.
+            manager.cancel(LEGACY_NOTIFICATION_TAG, alarm.requestCode)
+            manager.notify(alarm.requestCode, factory.build(alarm, checked, tracking))
+        }
+        if (tracking && !liveNotifications.start(alarm.id)) finishTracking(alarm.id)
         return true
     }
 
-    override fun dismiss(alarm: Alarm) = manager.cancel(NOTIFICATION_TAG, alarm.requestCode)
-
-    private fun build(alarm: Alarm, content: ReminderContent): android.app.Notification {
-        val dismiss = PendingIntent.getBroadcast(
-            context,
-            0,
-            Intent(context, AlarmReceiver::class.java).apply {
-                action = AlarmReceiver.ACTION_DISMISS
-                data = AlarmReceiver.alarmUri(alarm.id)
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(alarm.destination?.let { "${alarm.stationName} --> $it" } ?: alarm.stationName)
-            .setContentText(text(content))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text(content)))
-            .setSmallIcon(R.drawable.ic_tram)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setOngoing(true)
-            .setAutoCancel(false)
-            .setOnlyAlertOnce(true)
-            .setContentIntent(contentIntent(alarm))
-            .addAction(R.drawable.ic_close, context.getString(R.string.action_dismiss), dismiss)
-            .setDeleteIntent(dismiss)
-            .build()
+    override fun dismiss(alarm: Alarm) {
+        remove(alarm)
+        liveNotifications.stop(alarm.id)
     }
 
-    private fun text(content: ReminderContent): String = when (content) {
-        is ReminderContent.Upcoming -> upcomingText(content)
-        ReminderContent.ServiceLost -> context.getString(R.string.alarm_text_service_lost)
-        is ReminderContent.Missed ->
-            context.getString(R.string.alarm_text_missed, content.expectedAt?.toClockTime().orEmpty())
+    internal fun remove(alarm: Alarm) = synchronized(lock) {
+        visible.remove(alarm.id)
+        manager.cancel(alarm.requestCode)
+        manager.cancel(LEGACY_NOTIFICATION_TAG, alarm.requestCode)
     }
 
-    private fun upcomingText(content: ReminderContent.Upcoming): String {
-        val expected = content.expectedAt
-        return when {
-            // Only a result confirmed live moments ago may be shown as a countdown.
-            content.verification == AlarmVerification.LIVE_VERIFIED && expected != null -> {
-                val minutes = minutesUntil(expected)
-                val due = context.resources.getQuantityString(R.plurals.due_minutes, minutes, minutes)
-                if (content.ambiguous) context.getString(R.string.alarm_text_ambiguous, due) else due
-            }
-            expected != null -> context.getString(R.string.alarm_text_unverified, expected.toClockTime())
-            else -> context.getString(R.string.alarm_text_unverified_unknown)
+    internal fun snapshot(id: String): VisibleReminder? = synchronized(lock) {
+        visible[id]?.takeIf { it.tracking }
+    }
+
+    internal fun isVisible(alarm: Alarm): Boolean = manager.activeNotifications.any {
+        it.id == alarm.requestCode && it.tag == null && it.notification.extras.getString(
+            EXTRA_NOTIFICATION_ALARM_ID
+        ) == alarm.id
+    }
+
+    internal fun foregroundNotification(snapshot: VisibleReminder): android.app.Notification =
+        factory.build(snapshot.alarm, snapshot.content, tracking = true)
+
+    @SuppressLint("MissingPermission") // Permission can change while tracking; stop instead of re-posting then.
+    internal fun update(id: String, content: ReminderContent): Boolean = synchronized(lock) {
+        val current = visible[id] ?: return false
+        if (!areNotificationsEnabled() || !isVisible(current.alarm)) return false
+        visible[id] = current.copy(content = content)
+        manager.notify(current.alarm.requestCode, factory.build(current.alarm, content, tracking = true))
+        true
+    }
+
+    @SuppressLint("MissingPermission")
+    internal fun finishTracking(id: String, finalContent: ReminderContent? = null) = synchronized(lock) {
+        val current = visible.remove(id) ?: return
+        if (!areNotificationsEnabled() || !isVisible(current.alarm)) return
+        val content = finalContent ?: (current.content as? ReminderContent.Upcoming)?.copy(
+            verification = AlarmVerification.UNVERIFIED
+        ) ?: current.content
+        manager.notify(current.alarm.requestCode, factory.build(current.alarm, content, tracking = false))
+    }
+
+    @SuppressLint("MissingPermission") // Restores old reminders as snapshots, never as a new live session.
+    fun stopOrphanedTracking() = synchronized(lock) {
+        if (!areNotificationsEnabled()) return
+        manager.activeNotifications.filter {
+            it.tag == LEGACY_NOTIFICATION_TAG ||
+                (
+                    it.notification.extras.getBoolean(EXTRA_TRACKING) &&
+                        it.notification.extras.getString(EXTRA_NOTIFICATION_ALARM_ID) !in visible
+                    )
+        }.forEach {
+            manager.notify(it.tag, it.id, factory.unavailable(it.notification, it.tag == LEGACY_NOTIFICATION_TAG))
         }
-    }
-
-    private fun minutesUntil(expected: Instant): Int {
-        val seconds = Duration.between(clock.instant(), expected).seconds.coerceAtLeast(0)
-        return ((seconds + SECONDS_PER_MINUTE / 2) / SECONDS_PER_MINUTE).toInt()
-    }
-
-    private fun contentIntent(alarm: Alarm): PendingIntent {
-        val intent = Intent(context, navigator.mainActivityClass()).apply {
-            action = Intent.ACTION_VIEW
-            data = ReminderIntents.uri(alarm.id)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        return PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-    }
-
-    private fun createChannel() {
-        val channel = NotificationChannelCompat.Builder(CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_HIGH)
-            .setName(context.getString(R.string.alarm_channel_name))
-            .setDescription(context.getString(R.string.alarm_channel_description))
-            .setVibrationEnabled(true)
-            .build()
-        manager.createNotificationChannel(channel)
     }
 
     private companion object {
-        const val CHANNEL_ID = "countdown_channel"
-        const val NOTIFICATION_TAG = "luas-alarm"
+        const val LEGACY_NOTIFICATION_TAG = "luas-alarm"
     }
 }
 
-private fun Instant.toClockTime(): String = CLOCK_TIME_FORMAT.format(atZone(IRELAND_ZONE))
+internal data class VisibleReminder(val alarm: Alarm, val content: ReminderContent, val tracking: Boolean)

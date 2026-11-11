@@ -2,6 +2,7 @@ package com.wedgess.luas
 
 import android.app.Application
 import android.content.pm.ApplicationInfo
+import com.wedgess.luas.data.alarm.AlarmNotificationNotifier
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,9 @@ class LuasApplication : Application() {
     @Inject
     lateinit var alarmCoordinator: AlarmCoordinator
 
+    @Inject
+    lateinit var alarmNotifier: AlarmNotificationNotifier
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
@@ -29,7 +33,10 @@ class LuasApplication : Application() {
         }
         // Alarm registrations belong to the OS and are lost on some events; the database is authoritative, so rebuild
         // them whenever the process starts (idempotent).
-        appScope.launch { alarmCoordinator.reconcile() }
+        appScope.launch {
+            alarmNotifier.stopOrphanedTracking()
+            alarmCoordinator.reconcile()
+        }
     }
 
     private fun isDebuggable() = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

@@ -26,8 +26,13 @@ sealed interface ReminderContent {
     data class Upcoming(
         val expectedAt: Instant?,
         val verification: AlarmVerification,
-        val ambiguous: Boolean = false
+        val ambiguous: Boolean = false,
+        val lastCheckedAt: Instant? = null,
+        val countdownFinished: Boolean = false
     ) : ReminderContent
+
+    /** Tracking has ended; the expected time is historical, not confirmation that the vehicle arrived. */
+    data class TrackingFinished(val expectedAt: Instant?) : ReminderContent
 
     /** The pinned service was missing from live results; nothing is claimed about why. */
     data object ServiceLost : ReminderContent

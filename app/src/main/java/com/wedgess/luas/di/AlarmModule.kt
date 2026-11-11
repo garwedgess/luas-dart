@@ -2,6 +2,8 @@ package com.wedgess.luas.di
 
 import com.wedgess.luas.data.alarm.AlarmManagerScheduler
 import com.wedgess.luas.data.alarm.AlarmNotificationNotifier
+import com.wedgess.luas.data.alarm.AndroidLiveNotificationController
+import com.wedgess.luas.data.alarm.LiveNotificationController
 import com.wedgess.luas.domain.alarm.AlarmNotifier
 import com.wedgess.luas.domain.alarm.AlarmScheduler
 import com.wedgess.luas.domain.navigation.ServiceNavigator
@@ -24,6 +26,12 @@ abstract class AlarmModule {
     @Binds
     @Singleton
     abstract fun bindAlarmNotifier(notifier: AlarmNotificationNotifier): AlarmNotifier
+
+    @Binds
+    @Singleton
+    abstract fun bindLiveNotificationController(
+        controller: AndroidLiveNotificationController
+    ): LiveNotificationController
 
     companion object {
         @Provides

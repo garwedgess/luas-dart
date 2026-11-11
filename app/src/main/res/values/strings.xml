@@ -113,4 +113,9 @@
     <string name="forecast_reminder_set">Reminder set</string>
     <string name="forecast_refresh">Refresh</string>
     <string name="forecast_offline_paused">Offline · Auto refresh paused. Refreshing will resume when you reconnect.</string>
+    <string name="alarm_updates_live">Live departure updates</string>
+    <string name="alarm_updates_paused">Live updates paused</string>
+    <string name="alarm_live_unavailable">Last expected around %1$s. Live updates are unavailable.</string>
+    <string name="alarm_tracking_finished">Last expected at %1$s. Live tracking has finished.</string>
+    <string name="alarm_old_snapshot">This reminder is no longer being updated. Open Forecast for current times.</string>
 </resources>
