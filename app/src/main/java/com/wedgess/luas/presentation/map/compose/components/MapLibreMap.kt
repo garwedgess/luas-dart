@@ -5,12 +5,14 @@ import android.content.Context
 import android.graphics.RectF
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -51,7 +53,9 @@ private const val DUBLIN_LATITUDE = 53.3498
 private const val DUBLIN_LONGITUDE = -6.2603
 
 // Provider configuration. MapLibre retains the style's attribution control.
-private const val MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
+internal const val LIGHT_MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
+internal const val DARK_MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark"
+private const val DARK_SURFACE_LUMINANCE = 0.5f
 
 @Suppress("LongParameterList") // Stateless map input and callbacks.
 @Composable
@@ -108,6 +112,8 @@ private fun TransitMap(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val dark = MaterialTheme.colorScheme.surface.luminance() < DARK_SURFACE_LUMINANCE
+    val styleUrl = if (dark) DARK_MAP_STYLE_URL else LIGHT_MAP_STYLE_URL
     val mapView = rememberMapView()
     val latestGroups = rememberUpdatedState(groups)
     val latestSelection = rememberUpdatedState(selectedStation)
@@ -149,6 +155,15 @@ private fun TransitMap(
         }
     }
 
+    LaunchedEffect(styleUrl) {
+        mapView.getMapAsync { map ->
+            map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
+                latestGroups.value.forEach { style.addTransportLayers(it, latestSelection.value, dark) }
+                map.updateLocation(style, context, latestPermission.value, followUser = latestSelection.value == null)
+            }
+        }
+    }
+
     AndroidView(
         modifier = modifier.fillMaxSize(),
         factory = {
@@ -161,15 +176,6 @@ private fun TransitMap(
                             DEFAULT_LOCATION_ZOOM
                         )
                     )
-                    map.setStyle(Style.Builder().fromUri(MAP_STYLE_URL)) { style ->
-                        latestGroups.value.forEach { style.addTransportLayers(it, latestSelection.value) }
-                        map.updateLocation(
-                            style,
-                            context,
-                            latestPermission.value,
-                            followUser = latestSelection.value == null
-                        )
-                    }
                 }
             }
         },
@@ -228,18 +234,24 @@ private fun MapLine.lineFeatures(): FeatureCollection = FeatureCollection.fromFe
     }
 )
 
-private fun Style.addTransportLayers(line: MapLine, selected: LocationEntity?) {
+private fun Style.addTransportLayers(line: MapLine, selected: LocationEntity?, dark: Boolean) {
+    val colour = if (dark) {
+        if (line.id == "red") "#EF5350" else "#81C784"
+    } else {
+        line.color
+    }
+    val halo = if (dark) "#151A20" else "#FFFFFF"
     addSource(GeoJsonSource("${line.id}-route", line.lineFeatures()))
     addSource(GeoJsonSource("${line.id}-markers", line.markerFeatures(selected)))
     addLayer(
         LineLayer("${line.id}-line", "${line.id}-route").withProperties(
-            PropertyFactory.lineColor(line.color),
+            PropertyFactory.lineColor(colour),
             PropertyFactory.lineWidth(ROUTE_WIDTH)
         )
     )
     addLayer(
         CircleLayer("${line.id}-stations", "${line.id}-markers").withProperties(
-            PropertyFactory.circleColor(line.color),
+            PropertyFactory.circleColor(colour),
             PropertyFactory.circleRadius(
                 Expression.switchCase(
                     Expression.get("selected"),
@@ -247,7 +259,7 @@ private fun Style.addTransportLayers(line: MapLine, selected: LocationEntity?) {
                     Expression.literal(MARKER_RADIUS)
                 )
             ),
-            PropertyFactory.circleStrokeColor("#FFFFFF"),
+            PropertyFactory.circleStrokeColor(halo),
             PropertyFactory.circleStrokeWidth(2f)
         )
     )
@@ -256,8 +268,8 @@ private fun Style.addTransportLayers(line: MapLine, selected: LocationEntity?) {
             PropertyFactory.textField(Expression.get("name")),
             PropertyFactory.textSize(LABEL_SIZE),
             PropertyFactory.textFont(arrayOf("Noto Sans Regular")),
-            PropertyFactory.textColor("#17241D"),
-            PropertyFactory.textHaloColor("#FFFFFF"),
+            PropertyFactory.textColor(if (dark) "#F5F7F8" else "#17241D"),
+            PropertyFactory.textHaloColor(halo),
             PropertyFactory.textHaloWidth(2f),
             PropertyFactory.textOffset(arrayOf(0f, LABEL_OFFSET)),
             PropertyFactory.textAnchor("top"),

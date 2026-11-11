@@ -14,3 +14,9 @@ val TransitMist = Color(0xFFDEE5DC)
 val TransitSlate = Color(0xFF414942)
 val TransitBlue = Color(0xFF38656B)
 val TransitBlueLight = Color(0xFFA0CFD5)
+
+val TransitLiveGreen = Color(0xFF38C96A)
+val LuasGreenLine = Color(0xFF66BF63)
+val LuasRedLine = Color(0xFFE53935)
+
+val TransitDelayRed = Color(0xFFBA1A1A)

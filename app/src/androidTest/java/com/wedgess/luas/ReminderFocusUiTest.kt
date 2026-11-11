@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextReplacement
@@ -30,6 +31,7 @@ import com.wedgess.luas.ui.theme.LuasTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentMap
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -69,7 +71,11 @@ class ReminderFocusUiTest {
                     (0 until 20).map {
                         SectionItem(
                             "N$it",
-                            row.copy(trainCode = "N$it", direction = DepartureDirection.NORTHBOUND)
+                            row.copy(
+                                trainCode = "N$it",
+                                destination = "North $it",
+                                direction = DepartureDirection.NORTHBOUND
+                            )
                         )
                     }
                         .toImmutableList()
@@ -85,6 +91,7 @@ class ReminderFocusUiTest {
         compose.mainClock.autoAdvance = false
         var state by mutableStateOf(state())
         var completed = 0
+        var target by mutableStateOf(ReminderTarget("tap", alarm))
         compose.setContent {
             LuasTheme {
                 DartListContent(
@@ -92,7 +99,10 @@ class ReminderFocusUiTest {
                     onSectionToggle = { id ->
                         state = state.copy(
                             sectionedListState = state.sectionedListState.copy(
-                                expandedSections = persistentMapOf(id to true)
+                                expandedSections = state.sectionedListState.expandedSections.toPersistentMap().put(
+                                    id,
+                                    true
+                                )
                             )
                         )
                     },
@@ -100,7 +110,7 @@ class ReminderFocusUiTest {
                     onRowClick = {},
                     onCancelAlarm = {},
                     onEvent = {},
-                    reminderTarget = ReminderTarget("tap", alarm),
+                    reminderTarget = target,
                     onReminderComplete = { _, unavailable ->
                         assertEquals(false, unavailable)
                         completed++
@@ -116,6 +126,19 @@ class ReminderFocusUiTest {
         compose.runOnIdle { state = state.copy(fetchedAt = now.plusSeconds(40)) }
         compose.mainClock.advanceTimeBy(1_800)
         compose.runOnIdle { assertEquals(1, completed) }
+        compose.runOnIdle {
+            state = state.copy(
+                sectionedListState = state.sectionedListState.copy(
+                    expandedSections = persistentMapOf(1L to false, 2L to false)
+                )
+            )
+            target = ReminderTarget("second tap", alarm)
+        }
+        compose.mainClock.advanceTimeBy(400)
+        compose.onNode(hasStateDescription("Opened from departure reminder")).assertIsDisplayed()
+        compose.onNodeWithText("North 0").assertDoesNotExist()
+        compose.mainClock.advanceTimeBy(1_800)
+        compose.runOnIdle { assertEquals(2, completed) }
     }
 
     @Test
@@ -170,7 +193,10 @@ class ReminderFocusUiTest {
         }
         val after = compose.onNodeWithText("Northbound").fetchSemanticsNode().boundsInRoot.top
         assertEquals(before, after, 1f)
-        compose.onNodeWithText("5 reminders").performClick()
+        val firstRow = compose.onNodeWithText("North 0").fetchSemanticsNode().boundsInRoot.top
+        val height = compose.onRoot().fetchSemanticsNode().boundsInRoot.height
+        assertTrue("Reminders must leave departures in the top third", firstRow < height / 3)
+        compose.onNodeWithContentDescription("5 reminders").performClick()
         compose.onNodeWithText("Departure reminders").assertIsDisplayed()
         compose.onNodeWithContentDescription("Cancel reminder from Station 0 to Bray").performClick()
         compose.runOnIdle { assertEquals("a0", cancelled) }

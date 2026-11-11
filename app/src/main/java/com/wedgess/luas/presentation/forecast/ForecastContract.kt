@@ -11,7 +11,8 @@ interface ForecastContract {
     data class UiState(
         val dialog: ForecastDialogState = ForecastDialogState.None,
         val notificationPermission: Permission = Permission.Unknown,
-        val transportType: TransportType = TransportType.LUAS
+        val transportType: TransportType = TransportType.LUAS,
+        val isOnline: Boolean = true
     )
 
     sealed interface Event {

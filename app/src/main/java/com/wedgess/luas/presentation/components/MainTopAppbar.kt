@@ -1,9 +1,9 @@
 package com.wedgess.luas.presentation.components
 
 import android.annotation.SuppressLint
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.wedgess.luas.domain.model.TransportType
@@ -18,10 +18,10 @@ fun MainTopAppbar(
     modifier: Modifier = Modifier,
     onTransportTypeChange: (TransportType) -> Unit
 ) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         modifier = modifier,
         title = {
-            Text(topAppBarState.title)
+            Text(topAppBarState.title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         },
         actions = {
             // Add your custom actions first

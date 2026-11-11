@@ -1,15 +1,19 @@
 package com.wedgess.luas.presentation.components.sectionedlist
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.NorthEast
+import androidx.compose.material.icons.filled.SouthEast
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,10 +26,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
-import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
 fun SectionHeader(
@@ -34,59 +37,43 @@ fun SectionHeader(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     showIcon: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    connected: Boolean = false
 ) {
-    val rotation by animateFloatAsState(
-        targetValue = if (isExpanded) 0f else -180f,
-        animationSpec = tween(500),
-        label = "Icon rotation"
-    )
-
+    val rotation by animateFloatAsState(if (isExpanded) 0f else COLLAPSED_ROTATION, label = "Direction expansion")
     val expansionState = stringResource(if (isExpanded) R.string.expanded else R.string.collapsed)
     Surface(
-        modifier = modifier.semantics(mergeDescendants = true) { stateDescription = expansionState }
+        modifier = modifier.fillMaxWidth().padding(bottom = if (connected) 0.dp else 14.dp)
+            .semantics(mergeDescendants = true) { stateDescription = expansionState }
             .then(if (showIcon) Modifier.clickable(onClick = onToggle) else Modifier),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = MaterialTheme.shapes.small
+        shape = RoundedCornerShape(
+            topStart = 20.dp,
+            topEnd = 20.dp,
+            bottomStart = if (connected) 0.dp else 20.dp,
+            bottomEnd = if (connected) 0.dp else 20.dp
+        )
     ) {
         Row(
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .padding(8.dp),
+            modifier = Modifier.heightIn(min = 64.dp).padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                subTitle?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
-            }
-            AnimatedVisibility(visible = showIcon) {
+            val outward = title.equals("Outbound", true) || title.equals("Northbound", true)
+            Surface(color = MaterialTheme.colorScheme.primary, shape = MaterialTheme.shapes.small) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
+                    if (outward) Icons.Filled.NorthEast else Icons.Filled.SouthEast,
                     contentDescription = null,
-                    modifier = Modifier.rotate(rotation)
+                    modifier = Modifier.padding(6.dp).size(24.dp)
                 )
             }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                subTitle?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            }
+            if (showIcon) Icon(Icons.Default.KeyboardArrowUp, null, Modifier.rotate(rotation))
         }
     }
 }
 
-@Preview
-@Composable
-private fun SectionRowPreview() {
-    LuasTheme {
-        SectionHeader(title = "Title", subTitle = "Sub title", isExpanded = true, showIcon = true, onToggle = {})
-    }
-}
+private const val COLLAPSED_ROTATION = -180f

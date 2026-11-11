@@ -1,5 +1,6 @@
 package com.wedgess.luas.presentation.map.viewmodel
 
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.model.Departure
 import com.wedgess.luas.domain.model.DepartureDirection
 import com.wedgess.luas.domain.model.Departures
@@ -42,6 +43,10 @@ class MapStationViewModelTest {
     private val luas = mockk<LuasRepository>()
     private val dart = mockk<DartRepository>()
     private val transport = MutableStateFlow(TransportType.LUAS)
+    private val online = MutableStateFlow(true)
+    private val networkMonitor = object : NetworkMonitor {
+        override val isOnline = online
+    }
     private val transportUseCase = mockk<FetchSelectedTransportTypeUseCase>()
     private val clock = mockk<Clock>()
     private val now = Instant.parse("2026-11-10T09:00:00Z")
@@ -67,7 +72,7 @@ class MapStationViewModelTest {
         coEvery { dart.cachedForecast(any()) } returns null
         coEvery { luas.fetchForecast(any()) } returns Result.success(forecast)
         coEvery { dart.fetchForecast(any()) } returns Result.success(forecast.copy(stationCode = "BRAY"))
-        viewModel = MapStationViewModel(luas, dart, transportUseCase, clock)
+        viewModel = MapStationViewModel(luas, dart, transportUseCase, clock, networkMonitor)
     }
 
     @After
@@ -160,5 +165,25 @@ class MapStationViewModelTest {
         viewModel.select(stop.copy(stationCode = ""))
         assertNull(viewModel.stationState.value)
         coVerify(exactly = 0) { luas.fetchForecast(any()) }
+    }
+
+    @Test
+    fun `map forecasts also pause offline and refresh on reconnection`() = runTest {
+        backgroundScope.launch(dispatcher) { viewModel.stationState.collect {} }
+        viewModel.select(stop)
+        coVerify(exactly = 1) { luas.fetchForecast("HAR") }
+        online.value = false
+        runCurrent()
+        assertTrue(requireNotNull(viewModel.stationState.value).isOffline)
+        assertTrue(requireNotNull(viewModel.stationState.value).isStale)
+        viewModel.retry()
+        advanceTimeBy(120_000)
+        runCurrent()
+        coVerify(exactly = 1) { luas.fetchForecast("HAR") }
+        online.value = true
+        runCurrent()
+        coVerify(exactly = 2) { luas.fetchForecast("HAR") }
+        assertFalse(requireNotNull(viewModel.stationState.value).isOffline)
+        assertFalse(requireNotNull(viewModel.stationState.value).isStale)
     }
 }

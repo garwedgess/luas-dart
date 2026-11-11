@@ -97,4 +97,20 @@
     <string name="news_load_failed">Unable to load Luas travel updates.</string>
     <string name="news_open_browser">Open in browser</string>
     <string name="next_departure_compact">Next: %1$s</string>
+    <string name="reminders_empty">No active reminders.</string>
+    <string name="timetable_info">Timetable information</string>
+    <string name="timetable_short_notice">Scheduled — not live</string>
+    <string name="timetable_scheduled_column">Scheduled</string>
+    <string name="timetable_destination_column">Destination</string>
+    <plurals name="timetable_departure_count">
+        <item quantity="one">%d departure</item>
+        <item quantity="other">%d departures</item>
+    </plurals>
+    <string name="forecast_refresh_countdown">Live · Refreshes in %1$ds</string>
+    <string name="forecast_set_reminder">Set reminder</string>
+    <string name="forecast_scheduled_eta">Scheduled %1$s · ETA %2$s</string>
+    <string name="forecast_no_trams">No trams forecast</string>
+    <string name="forecast_reminder_set">Reminder set</string>
+    <string name="forecast_refresh">Refresh</string>
+    <string name="forecast_offline_paused">Offline · Auto refresh paused. Refreshing will resume when you reconnect.</string>
 </resources>

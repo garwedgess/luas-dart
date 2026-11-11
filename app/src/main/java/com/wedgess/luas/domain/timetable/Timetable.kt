@@ -18,7 +18,7 @@ data class ScheduledDeparture(
     val stopSequence: Long = 0
 )
 
-data class TimetableStation(val id: String, val name: String)
+data class TimetableStation(val id: String, val name: String, val lines: Set<String> = emptySet())
 
 data class TimetableFeed(
     val transport: TransportType,

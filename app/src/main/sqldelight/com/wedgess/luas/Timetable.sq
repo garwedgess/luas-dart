@@ -62,6 +62,11 @@ SELECT * FROM TimetableFeed WHERE Transport = ?;
 selectStations:
 SELECT * FROM TimetableStation WHERE Transport = ? ORDER BY Name COLLATE NOCASE;
 
+selectStationLines:
+SELECT DISTINCT s.StationId, t.Line
+FROM TimetableTime s JOIN TimetableTrip t ON s.Transport = t.Transport AND s.TripId = t.TripId
+WHERE s.Transport = ?;
+
 selectCalendars:
 SELECT * FROM TimetableCalendar WHERE Transport = ?;
 

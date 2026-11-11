@@ -7,9 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -25,6 +24,7 @@ import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
 import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
+import com.wedgess.luas.presentation.components.OfflineBanner
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.extensions.toClockTime
 import com.wedgess.luas.presentation.map.model.MapStationState
@@ -48,6 +48,7 @@ fun MapStationSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.semantics { heading() }
             )
+            if (state.isOffline) OfflineBanner()
             state.result.Compose(
                 onLoading = { LoadingContent(stringResource(R.string.map_loading_departures)) },
                 onEmpty = { EmptyContent(stringResource(R.string.map_no_departures)) },
@@ -79,7 +80,7 @@ private fun MapDepartures(departures: Departures, stale: Boolean) {
                         modifier = Modifier.semantics { heading() }
                     )
                 }
-                itemsIndexed(items) { index, departure ->
+                items(items) { departure ->
                     Row(
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) {},
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -104,7 +105,6 @@ private fun MapDepartures(departures: Departures, stale: Boolean) {
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-                    if (index < items.lastIndex) HorizontalDivider()
                 }
             }
         }

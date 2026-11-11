@@ -2,6 +2,7 @@ package com.wedgess.luas.presentation.map.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.isOffline
 import com.wedgess.luas.domain.model.LocationEntity
 import com.wedgess.luas.domain.model.TransportType
@@ -37,7 +38,8 @@ class MapStationViewModel @Inject constructor(
     private val luasRepository: LuasRepository,
     private val dartRepository: DartRepository,
     fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase,
-    private val clock: Clock
+    private val clock: Clock,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
     private val selected = MutableStateFlow<LocationEntity?>(null)
     private val refresh =
@@ -48,6 +50,8 @@ class MapStationViewModel @Inject constructor(
         station?.takeIf { (it is LocationEntity.Dart) == (transport == TransportType.DART) }
     }.flatMapLatest { station ->
         if (station == null) flowOf(null) else departures(station)
+    }.combine(networkMonitor.isOnline) { state, online ->
+        state?.copy(isOffline = !online)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(replayExpirationMillis = 0), null)
 
     fun select(station: LocationEntity) {
@@ -74,6 +78,7 @@ class MapStationViewModel @Inject constructor(
             pollFlow(
                 intervalMillis = if (dart) DART_REFRESH_MILLIS else LUAS_REFRESH_MILLIS,
                 refresh = refresh,
+                online = networkMonitor.isOnline,
                 initial = cached
             ) {
                 if (dart) {
@@ -87,7 +92,8 @@ class MapStationViewModel @Inject constructor(
                 val displayable = polled.displayable(clock.instant())
                 val result = when {
                     displayable != null -> UiResult.Success(displayable)
-                    polled.error?.isOffline() == true -> UiResult.Offline("")
+                    polled.error == null -> UiResult.Loading
+                    polled.error.isOffline() -> UiResult.Offline("")
                     else -> UiResult.Error("")
                 }
                 MapStationState(station, result, isStale = !polled.isLive)

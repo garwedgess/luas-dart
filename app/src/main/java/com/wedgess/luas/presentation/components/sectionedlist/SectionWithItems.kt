@@ -9,11 +9,18 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.wedgess.luas.presentation.components.sectionedlist.model.Section
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -35,7 +42,8 @@ fun <T> LazyListScope.sectionWithItems(
                 subTitle = section.subTitle,
                 isExpanded = isExpanded,
                 onToggle = onToggle,
-                showIcon = section.items.isNotEmpty()
+                showIcon = section.items.isNotEmpty(),
+                connected = isExpanded && section.items.isNotEmpty()
             )
             if (isExpanded && section.items.isNotEmpty()) {
                 sectionHeader?.invoke(this@stickyHeader)
@@ -43,10 +51,10 @@ fun <T> LazyListScope.sectionWithItems(
         }
     }
 
-    items(
+    itemsIndexed(
         items = section.items,
-        key = { it.id }
-    ) { item ->
+        key = { _, item -> item.id }
+    ) { index, item ->
         AnimatedVisibility(
             visible = isExpanded,
             modifier = if (section.items.size > 1) {
@@ -57,7 +65,20 @@ fun <T> LazyListScope.sectionWithItems(
             enter = fadeIn(tween(300)) + expandVertically(tween(300)),
             exit = fadeOut(tween(300)) + shrinkVertically(tween(300))
         ) {
-            itemContent(item.content)
+            val last = index == section.items.lastIndex
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(bottom = if (last) 14.dp else 0.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(
+                    bottomStart = if (last) 20.dp else 0.dp,
+                    bottomEnd = if (last) 20.dp else 0.dp
+                )
+            ) {
+                Column(Modifier.padding(horizontal = 12.dp)) {
+                    itemContent(item.content)
+                    if (!last) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
         }
     }
 }

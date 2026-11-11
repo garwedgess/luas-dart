@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
 import com.wedgess.luas.domain.usecase.UpdateIgnoreNotificationPermissionUseCase
@@ -31,7 +32,8 @@ class ForecastViewModel @Inject constructor(
     private val wasNotificationPermissionRequestedUseCase: WasNotificationPermissionRequestedUseCase,
     private val updateNotificationPermissionRequestedUseCase: UpdateNotificationPermissionRequestedUseCase,
     private val updateIgnoreNotificationPermissionUseCase: UpdateIgnoreNotificationPermissionUseCase,
-    fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase
+    fetchSelectedTransportTypeUseCase: FetchSelectedTransportTypeUseCase,
+    networkMonitor: NetworkMonitor
 ) : ViewModel(),
     SideEffectViewModel<ForecastContract.Effect> by SideEffectViewModelImpl() {
 
@@ -39,8 +41,9 @@ class ForecastViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(initialState)
 
-    val uiState = _uiState.combine(fetchSelectedTransportTypeUseCase()) { state, transportType ->
-        state.copy(transportType = transportType)
+    val uiState = combine(_uiState, fetchSelectedTransportTypeUseCase(), networkMonitor.isOnline) {
+            state, transportType, online ->
+        state.copy(transportType = transportType, isOnline = online)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState)
 
     @OptIn(ExperimentalPermissionsApi::class)

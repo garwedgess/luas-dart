@@ -26,8 +26,12 @@ class TimetableDao @Inject constructor(private val db: LuasDatabase) {
         )
     }
 
-    fun stations(transport: TransportType): List<TimetableStation> =
-        queries.selectStations(transport.name).executeAsList().map { TimetableStation(it.StationId, it.Name) }
+    fun stations(transport: TransportType): List<TimetableStation> {
+        val lines = queries.selectStationLines(transport.name).executeAsList().groupBy({ it.StationId }, { it.Line })
+        return queries.selectStations(transport.name).executeAsList().map {
+            TimetableStation(it.StationId, it.Name, lines[it.StationId].orEmpty().toSet())
+        }
+    }
 
     fun day(transport: TransportType, stationId: String, date: LocalDate): TimetableDay = db.transactionWithResult {
         val feed = feed(transport) ?: return@transactionWithResult TimetableDay(false, emptyList())

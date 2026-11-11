@@ -1,6 +1,5 @@
 package com.wedgess.luas.presentation.forecast.luastab.compose.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
@@ -15,8 +14,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +23,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
+import com.wedgess.luas.presentation.forecast.compose.DepartureCountdown
+import com.wedgess.luas.presentation.forecast.compose.DepartureReminderIcon
 import com.wedgess.luas.ui.theme.LuasTheme
 
 @Composable
@@ -33,6 +34,7 @@ fun LuasForecastItemRow(
     modifier: Modifier = Modifier,
     stale: Boolean = false,
     expectedTime: String? = null,
+    reminderSet: Boolean = false,
     onRowClick: (Int, String) -> Unit
 ) {
     val animatedValue by animateIntAsState(
@@ -46,26 +48,21 @@ fun LuasForecastItemRow(
             .clickable(enabled = !stale) { onRowClick(dueIn, destination) }
             .heightIn(min = 48.dp)
             .padding(vertical = 4.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            modifier = Modifier.weight(0.6f),
+            modifier = Modifier.weight(1f),
             text = destination,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
         )
-        AnimatedVisibility(
-            modifier = Modifier.weight(0.4f),
-            visible = animatedValue != -1 && (!stale || expectedTime != null)
-        ) {
-            Text(
-                text = when {
-                    // Stale data is never counted down; show the absolute time it was last predicted for.
-                    stale -> stringResource(R.string.label_expected_at, expectedTime.orEmpty())
-                    animatedValue == 0 -> stringResource(R.string.now)
-                    else -> pluralStringResource(R.plurals.dart_minutes, animatedValue, animatedValue)
-                },
-                style = MaterialTheme.typography.bodyLarge
-            )
+        if (stale && expectedTime != null) {
+            Text(stringResource(R.string.label_expected_at, expectedTime), style = MaterialTheme.typography.labelLarge)
+        } else if (!stale && dueIn >= 0) {
+            DepartureCountdown(animatedValue)
+        }
+        if (reminderSet || (!stale && dueIn >= 0)) {
+            DepartureReminderIcon(reminderSet)
         }
     }
 }

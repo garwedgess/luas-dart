@@ -5,11 +5,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,18 +33,22 @@ import com.wedgess.luas.presentation.forecast.luastab.compose.components.LuasFor
 @Composable
 fun ForecastReminders(alarms: List<Alarm>, onCancel: (String) -> Unit, modifier: Modifier = Modifier) {
     var showReminders by remember(alarms.isEmpty()) { mutableStateOf(false) }
-    if (alarms.isNotEmpty()) {
-        TextButton(onClick = { showReminders = true }, modifier = modifier) {
-            Text(pluralStringResource(R.plurals.active_reminders, alarms.size, alarms.size))
+    IconButton(onClick = { showReminders = true }, modifier = modifier) {
+        BadgedBox(badge = { if (alarms.isNotEmpty()) Badge { Text(alarms.size.toString()) } }) {
+            Icon(
+                Icons.Outlined.Notifications,
+                contentDescription = pluralStringResource(R.plurals.active_reminders, alarms.size, alarms.size)
+            )
         }
     }
-    if (showReminders && alarms.isNotEmpty()) {
+    if (showReminders) {
         ModalBottomSheet(onDismissRequest = { showReminders = false }) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { Text(stringResource(R.string.reminders_title), style = MaterialTheme.typography.titleLarge) }
+                if (alarms.isEmpty()) item { Text(stringResource(R.string.reminders_empty)) }
                 items(alarms, key = { it.id }) { alarm -> LuasForecastAlarmRow(alarm, onCancelAlarm = onCancel) }
             }
         }

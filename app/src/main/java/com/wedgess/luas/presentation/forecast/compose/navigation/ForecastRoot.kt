@@ -23,6 +23,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.wedgess.luas.R
 import com.wedgess.luas.presentation.base.CollectSideEffect
 import com.wedgess.luas.presentation.forecast.ForecastContract
+import com.wedgess.luas.presentation.forecast.compose.ForecastRefreshCycle
 import com.wedgess.luas.presentation.forecast.compose.ForecastScreen
 import com.wedgess.luas.presentation.forecast.compose.actions.ForecastAppBarActions
 import com.wedgess.luas.presentation.forecast.compose.dialogs.ForecastDialogs
@@ -43,13 +44,21 @@ fun NavGraphBuilder.forecastRoot(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val context = LocalContext.current
         var refreshAction by remember { mutableStateOf({}) }
+        var refreshCycle by remember { mutableStateOf<ForecastRefreshCycle?>(null) }
         val permissionState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
+        LaunchedEffect(uiState.transportType) { refreshCycle = null }
         LaunchedEffect(Unit) {
             onUpdateAppbarState(
                 TopAppBarState(
                     title = context.getString(R.string.nav_title_forecast),
-                    actions = { ForecastAppBarActions(onRefresh = refreshAction) },
+                    actions = {
+                        ForecastAppBarActions(
+                            transportType = uiState.transportType,
+                            refreshCycle = refreshCycle.takeIf { uiState.isOnline },
+                            onRefresh = refreshAction
+                        )
+                    },
                     hasProgress = true
                 )
             )
@@ -77,7 +86,9 @@ fun NavGraphBuilder.forecastRoot(
         }
         ForecastScreen(
             uiState.transportType,
+            isOnline = uiState.isOnline,
             setRefreshAction = { refreshAction = it },
+            onRefreshCycleChange = { refreshCycle = it },
             reminderTarget = reminderTarget,
             onReminderComplete = onReminderComplete
         )

@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
@@ -51,16 +52,18 @@ fun NextDepartureHeader(
         shape = MaterialTheme.shapes.large
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 stringResource(R.string.next_departure_compact, destination),
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Text(dueText, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+            Text(dueText, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
         }
     }
 }

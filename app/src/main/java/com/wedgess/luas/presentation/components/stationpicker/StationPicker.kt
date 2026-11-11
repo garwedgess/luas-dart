@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,9 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
+import com.wedgess.luas.domain.model.TransportType
+import com.wedgess.luas.presentation.components.TransitStationCard
 import com.wedgess.luas.presentation.model.DropdownItem
 import com.wedgess.luas.presentation.model.DropdownTrailingContent
 
@@ -48,19 +47,19 @@ fun StationPicker(
     recents: List<String>,
     onSelect: (DropdownItem) -> Unit,
     onToggleFavourite: (String, Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    transport: TransportType = TransportType.LUAS,
+    supportingContent: (@Composable () -> Unit)? = null
 ) {
     var open by remember { mutableStateOf(false) }
-    OutlinedButton(onClick = { open = true }, modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "$label: ${selected.text}",
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-    }
+    TransitStationCard(
+        station = selected.text,
+        description = "$label: ${selected.text}",
+        onClick = { open = true },
+        modifier = modifier.fillMaxWidth(),
+        transport = transport,
+        supportingContent = supportingContent
+    )
     if (open) {
         var query by remember { mutableStateOf("") }
         ModalBottomSheet(onDismissRequest = { open = false }) {

@@ -18,21 +18,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wedgess.luas.presentation.components.EmptyContent
 import com.wedgess.luas.presentation.components.ErrorContent
-import com.wedgess.luas.presentation.components.FreshnessBadge
 import com.wedgess.luas.presentation.components.LoadingContent
-import com.wedgess.luas.presentation.components.NextDepartureHeader
 import com.wedgess.luas.presentation.components.OfflineContent
 import com.wedgess.luas.presentation.components.StaleDataBanner
 import com.wedgess.luas.presentation.components.sectionedlist.SectionedList
 import com.wedgess.luas.presentation.components.stationpicker.StationPicker
+import com.wedgess.luas.presentation.forecast.compose.ForecastRefreshCycle
 import com.wedgess.luas.presentation.forecast.compose.ForecastReminders
-import com.wedgess.luas.presentation.forecast.compose.RefreshProgressIndicator
+import com.wedgess.luas.presentation.forecast.compose.ForecastStationStatus
+import com.wedgess.luas.presentation.forecast.compose.hasActiveReminder
 import com.wedgess.luas.presentation.forecast.dart.DartForecastTabContract
 import com.wedgess.luas.presentation.forecast.dart.model.DartForecastSectionRowData
 import com.wedgess.luas.presentation.forecast.dart.viewmodel.DartForecastViewModel
 import com.wedgess.luas.presentation.forecast.luastab.compose.dialogs.NotificationTimeDialog
 import com.wedgess.luas.presentation.model.Compose
 import com.wedgess.luas.presentation.model.DropdownItem
+import com.wedgess.luas.presentation.model.currentState
 import com.wedgess.luas.presentation.navigation.reminder.ReminderTarget
 import com.wedgess.luas.presentation.navigation.reminder.rememberReminderHighlight
 import com.wedgess.luas.presentation.navigation.reminder.reminderHighlight
@@ -43,9 +44,14 @@ fun DartForecastContent(
     modifier: Modifier = Modifier,
     dartForecastViewModel: DartForecastViewModel = hiltViewModel(),
     reminderTarget: ReminderTarget? = null,
-    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> },
+    onRefreshCycleChange: (ForecastRefreshCycle?) -> Unit = {}
 ) {
     val uiResult by dartForecastViewModel.uiResult.collectAsStateWithLifecycle()
+    val cycle = uiResult.currentState()?.takeUnless { it.isStale }?.let {
+        ForecastRefreshCycle(it.fetchedAt, DartForecastTabContract.REFRESH_INTERVAL_MILLIS)
+    }
+    LaunchedEffect(cycle, onRefreshCycleChange) { onRefreshCycleChange(cycle) }
     LaunchedEffect(Unit) {
         setRefreshAction { dartForecastViewModel.onEvent(DartForecastTabContract.Event.OnRefresh) }
     }
@@ -65,12 +71,9 @@ fun DartForecastContent(
         },
         onSuccess = { uiState ->
             Column(modifier) {
-                RefreshProgressIndicator(
-                    cycleKey = uiState.fetchedAt,
-                    intervalMillis = DartForecastTabContract.REFRESH_INTERVAL_MILLIS
-                )
                 DartListContent(
                     uiState = uiState,
+                    showReminders = false,
                     reminderTarget = reminderTarget,
                     onReminderComplete = onReminderComplete,
                     onStopSelect = { stop ->
@@ -116,7 +119,8 @@ fun DartListContent(
     onCancelAlarm: (String) -> Unit,
     onEvent: (DartForecastTabContract.Event) -> Unit,
     reminderTarget: ReminderTarget? = null,
-    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> }
+    onReminderComplete: (String, Boolean) -> Unit = { _, _ -> },
+    showReminders: Boolean = true
 ) {
     val listState = rememberLazyListState()
     val target = reminderTarget?.takeIf { it.isForDartStation(uiState.forecastStationCode) }
@@ -130,7 +134,7 @@ fun DartListContent(
     }
     val rowIndex = section?.items?.indexOfFirst { target?.matches(it.content) == true } ?: -1
     val listIndex = if (rowIndex >= 0 && expanded) {
-        sections.take(sectionIndex).sumOf { it.items.size + 2 } + 1 + rowIndex
+        sections.take(sectionIndex).sumOf { it.items.size + 1 } + 1 + rowIndex
     } else {
         null
     }
@@ -157,12 +161,13 @@ fun DartListContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             StationPicker(
                 modifier = Modifier.weight(1f),
                 label = "Station",
+                transport = com.wedgess.luas.domain.model.TransportType.DART,
                 selected = uiState.selectedStation,
                 options = uiState.dropdownOptions,
                 favourites = uiState.stationPreferences.favourites,
@@ -170,23 +175,20 @@ fun DartListContent(
                 onSelect = onStopSelect,
                 onToggleFavourite = { name, favourite ->
                     onEvent(DartForecastTabContract.Event.OnToggleFavourite(name, favourite))
+                },
+                supportingContent = {
+                    ForecastStationStatus(
+                        uiState.fetchedAt,
+                        uiState.isStale,
+                        DartForecastTabContract.REFRESH_INTERVAL_MILLIS
+                    )
                 }
             )
-            ForecastReminders(uiState.activeAlarms, onCancelAlarm)
+            if (showReminders) ForecastReminders(uiState.activeAlarms, onCancelAlarm)
         }
-        if (uiState.isStale) StaleDataBanner(uiState.fetchedAt) else FreshnessBadge(uiState.fetchedAt)
-        uiState.sectionedListState.sections.flatMap { it.items }.map { it.content }
-            .minByOrNull { it.dueIn }?.let { next ->
-                NextDepartureHeader(
-                    destination = next.destination,
-                    dueMins = next.dueIn,
-                    expectedTime = next.expectedAt,
-                    stale = uiState.isStale
-                )
-            }
+        if (uiState.isStale) StaleDataBanner(uiState.fetchedAt)
         SectionedList(
-            modifier = Modifier.fillMaxSize(),
-            sectionHeader = { DartForecastHeader() },
+            modifier = Modifier.weight(1f),
             state = uiState.sectionedListState,
             listState = listState,
             onSectionToggle = onSectionToggle
@@ -199,6 +201,7 @@ fun DartListContent(
                 scheduledTime = rowData.scheduledAt,
                 late = rowData.late,
                 showCountdown = !uiState.isStale,
+                reminderSet = rowData.hasActiveReminder(uiState.activeAlarms, uiState.forecastStationCode),
                 onClick = if (uiState.isStale) null else ({ onRowClick(rowData) })
             )
         }

@@ -7,5 +7,6 @@ import com.wedgess.luas.presentation.model.UiResult
 data class MapStationState(
     val station: LocationEntity,
     val result: UiResult<Departures> = UiResult.Loading,
-    val isStale: Boolean = false
+    val isStale: Boolean = false,
+    val isOffline: Boolean = false
 )

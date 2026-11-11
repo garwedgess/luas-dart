@@ -2,6 +2,7 @@ package com.wedgess.luas.presentation.forecast.dart.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import com.wedgess.luas.domain.isOffline
 import com.wedgess.luas.domain.model.AlarmKind
@@ -15,6 +16,7 @@ import com.wedgess.luas.domain.pollFlow
 import com.wedgess.luas.domain.repository.DartRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.domain.repository.StationPreferencesRepository
+import com.wedgess.luas.domain.restartOnReconnect
 import com.wedgess.luas.presentation.components.sectionedlist.model.Section
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionItem
 import com.wedgess.luas.presentation.components.sectionedlist.model.SectionedListState
@@ -55,7 +57,8 @@ class DartForecastViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val alarmCoordinator: AlarmCoordinator,
     private val stationPreferencesRepository: StationPreferencesRepository,
-    private val clock: Clock
+    private val clock: Clock,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DartForecastTabContract.UiState())
@@ -65,7 +68,9 @@ class DartForecastViewModel @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    private val stopsAndStationFlow = dartRepository.fetchStations().combine(
+    private val stopsAndStationFlow = dartRepository.fetchStations().restartOnReconnect(
+        networkMonitor.isOnline
+    ).combine(
         preferencesRepository.fetchSelectedDartStation()
     ) { stopsResult, currentSelectedStop ->
         stopsResult.mapCatching { stations ->
@@ -105,13 +110,14 @@ class DartForecastViewModel @Inject constructor(
                                 pollFlow(
                                     intervalMillis = DartForecastTabContract.REFRESH_INTERVAL_MILLIS,
                                     refresh = refreshTrigger,
+                                    online = networkMonitor.isOnline,
                                     initial = dartRepository.cachedForecast(selectedStop.code)
                                 ) { dartRepository.fetchForecast(selectedStop.code) }
                             )
                         }.combine(_expandedSections) { polled, expandedSections ->
                             val departures = polled.displayable(clock.instant())
                             if (departures == null) {
-                                polled.error.toErrorResult()
+                                polled.error?.toErrorResult() ?: UiResult.Loading
                             } else {
                                 UiResult.Success(
                                     _uiState.updateAndGet {

@@ -3,10 +3,12 @@ package com.wedgess.luas.presentation.main.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,13 +31,15 @@ fun TransportTypeDropdown(
 ) {
     var isDropdownExpanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
-        IconButton(
+        OutlinedButton(
             onClick = { isDropdownExpanded = !isDropdownExpanded }
         ) {
             Icon(
                 painter = selectedTransportType.image(),
                 contentDescription = "Transport options"
             )
+            Text(if (selectedTransportType == TransportType.LUAS) "Luas" else "DART")
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
         }
 
         DropdownMenu(

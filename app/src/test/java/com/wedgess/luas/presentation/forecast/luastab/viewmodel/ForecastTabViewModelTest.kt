@@ -2,6 +2,7 @@ package com.wedgess.luas.presentation.forecast.luastab.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import com.wedgess.luas.domain.model.Alarm
 import com.wedgess.luas.domain.model.AlarmCapabilities
@@ -60,6 +61,10 @@ class ForecastTabViewModelTest {
     val instantExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
+    private val online = MutableStateFlow(true)
+    private val networkMonitor = object : NetworkMonitor {
+        override val isOnline = online
+    }
     private val luasLine = LuasLineEntity.GREEN
 
     @MockK
@@ -160,7 +165,8 @@ class ForecastTabViewModelTest {
             preferencesRepository = preferencesRepository,
             alarmCoordinator = alarmCoordinator,
             stationPreferencesRepository = stationPreferencesRepository,
-            clock = clock
+            clock = clock,
+            networkMonitor = networkMonitor
         )
     }
 
@@ -715,5 +721,34 @@ class ForecastTabViewModelTest {
         viewModel.onEvent(LuasForecastTabContract.Event.OnStopSelected("Harcourt"))
         viewModel.onEvent(LuasForecastTabContract.Event.OnStartNotification(1))
         coVerify(exactly = 0) { alarmCoordinator.create(any()) }
+    }
+
+    @Test
+    fun `connectivity pauses forecasts and immediately refreshes on reconnect`() = runTest {
+        var requests = 0
+        coEvery { luasRepository.fetchForecast(any()) } answers {
+            requests++
+            forecastResult
+        }
+        viewModel.uiResult.test {
+            assertFalse((awaitItem() as UiResult.Success).data.isStale)
+            assertEquals(1, requests)
+            online.value = false
+            assertTrue((awaitItem() as UiResult.Success).data.isStale)
+            viewModel.onEvent(LuasForecastTabContract.Event.OnRefresh)
+            advanceTimeBy(120_000)
+            runCurrent()
+            assertEquals(1, requests)
+            cancelAndIgnoreRemainingEvents()
+        }
+        online.value = true
+        viewModel.uiResult.test {
+            // WhileSubscribed retains the active collector for five seconds, so reconnection refreshes it directly.
+            var state = (awaitItem() as UiResult.Success).data
+            while (state.isStale) state = (awaitItem() as UiResult.Success).data
+            assertFalse(state.isStale)
+            assertEquals(2, requests)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

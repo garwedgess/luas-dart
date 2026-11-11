@@ -1,12 +1,16 @@
 package com.wedgess.luas.domain
 
 import app.cash.turbine.test
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -166,6 +170,103 @@ class PollingTest {
         val value = Any()
         poll { Result.success(value) }.test {
             assertSame(value, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `starting offline makes no requests including manual refresh until reconnect`() = runTest {
+        val online = MutableStateFlow(false)
+        val refresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        var calls = 0
+        pollFlow(interval, refresh, online = online) { Result.success(++calls) }.test {
+            assertTrue(awaitItem().error?.isOffline() == true)
+            refresh.tryEmit(Unit)
+            advanceTimeBy(interval * 4)
+            runCurrent()
+            assertEquals(0, calls)
+            online.value = true
+            assertTrue(awaitItem().isCached)
+            assertEquals(1, awaitItem().data)
+            advanceTimeBy(interval)
+            assertEquals(2, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `disconnect marks the last result not live and reconnect fetches immediately`() = runTest {
+        val online = MutableStateFlow(true)
+        var calls = 0
+        pollFlow(interval, emptyFlow(), online = online) { Result.success(++calls) }.test {
+            assertTrue(awaitItem().isLive)
+            online.value = false
+            val offline = awaitItem()
+            assertEquals(1, offline.data)
+            assertFalse(offline.isLive)
+            advanceTimeBy(interval * 4)
+            runCurrent()
+            assertEquals(1, calls)
+            expectMostRecentItem()
+            online.value = true
+            assertTrue(awaitItem().isCached)
+            assertEquals(2, awaitItem().data)
+            advanceTimeBy(interval - 1)
+            expectNoEvents()
+            advanceTimeBy(1)
+            assertEquals(3, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `going offline cancels the current request and stale results cannot arrive later`() = runTest {
+        val online = MutableStateFlow(true)
+        val cancelled = CompletableDeferred<Unit>()
+        var calls = 0
+        pollFlow(interval, emptyFlow(), online = online) {
+            calls++
+            if (calls == 1) {
+                try {
+                    awaitCancellation()
+                } finally {
+                    cancelled.complete(Unit)
+                }
+            }
+            Result.success(calls)
+        }.test {
+            runCurrent()
+            assertEquals(1, calls)
+            online.value = false
+            assertTrue(awaitItem().error?.isOffline() == true)
+            assertTrue(cancelled.isCompleted)
+            online.value = true
+            assertTrue(awaitItem().isCached)
+            assertEquals(2, awaitItem().data)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `duplicate online notifications do not reset polling and reconnect clears failure backoff`() = runTest {
+        val online = MutableSharedFlow<Boolean>(replay = 1)
+        online.emit(true)
+        var calls = 0
+        pollFlow<Int>(interval, emptyFlow(), backoffMillis = listOf(60_000), online = online) {
+            calls++
+            if (calls == 1) Result.failure(IllegalStateException("server")) else Result.success(calls)
+        }.test {
+            assertEquals("server", awaitItem().error?.message)
+            online.emit(true)
+            runCurrent()
+            assertEquals(1, calls)
+            online.emit(false)
+            assertTrue(awaitItem().error?.isOffline() == true)
+            online.emit(true)
+            assertTrue(awaitItem().isCached)
+            assertEquals(2, awaitItem().data)
+            advanceTimeBy(interval)
+            assertEquals(3, awaitItem().data)
             cancelAndIgnoreRemainingEvents()
         }
     }

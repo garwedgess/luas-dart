@@ -3,6 +3,7 @@ package com.wedgess.luas.presentation.forecast.luastab.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wedgess.luas.di.ForecastTabViewModelFactory
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import com.wedgess.luas.domain.isOffline
 import com.wedgess.luas.domain.model.AlarmKind
@@ -16,6 +17,7 @@ import com.wedgess.luas.domain.pollFlow
 import com.wedgess.luas.domain.repository.LuasRepository
 import com.wedgess.luas.domain.repository.PreferencesRepository
 import com.wedgess.luas.domain.repository.StationPreferencesRepository
+import com.wedgess.luas.domain.restartOnReconnect
 import com.wedgess.luas.presentation.forecast.luastab.LuasForecastTabContract
 import com.wedgess.luas.presentation.forecast.luastab.extensions.toDropdownItem
 import com.wedgess.luas.presentation.forecast.luastab.model.LuasForecastTabDialogState
@@ -47,6 +49,7 @@ import java.util.UUID
 
 private const val SECONDS_PER_MINUTE = 60L
 
+@Suppress("LongParameterList") // Assisted line plus the repositories, alarm coordinator, clock and connectivity.
 @HiltViewModel(assistedFactory = ForecastTabViewModelFactory::class)
 class LuasForecastTabViewModel @AssistedInject constructor(
     @Assisted val luasLine: LuasLineEntity,
@@ -54,7 +57,8 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val alarmCoordinator: AlarmCoordinator,
     private val stationPreferencesRepository: StationPreferencesRepository,
-    private val clock: Clock
+    private val clock: Clock,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LuasForecastTabContract.UiState())
@@ -64,7 +68,7 @@ class LuasForecastTabViewModel @AssistedInject constructor(
     )
 
     private val stopsAndStationFlow = combine(
-        luasRepository.fetchStops(luasLine),
+        luasRepository.fetchStops(luasLine).restartOnReconnect(networkMonitor.isOnline),
         selectedStopName()
     ) { stopsResult, currentSelectedStopName ->
         stopsResult.mapCatching { stops ->
@@ -105,13 +109,14 @@ class LuasForecastTabViewModel @AssistedInject constructor(
                                 pollFlow(
                                     intervalMillis = LuasForecastTabContract.REFRESH_INTERVAL_MILLIS,
                                     refresh = refreshTrigger,
+                                    online = networkMonitor.isOnline,
                                     initial = luasRepository.cachedForecast(selectedStop.abbreviation)
                                 ) { luasRepository.fetchForecast(selectedStop.abbreviation) }
                             )
                         }.map { polled ->
                             val departures = polled.displayable(clock.instant())
                             if (departures == null) {
-                                polled.error.toErrorResult()
+                                polled.error?.toErrorResult() ?: UiResult.Loading
                             } else {
                                 _uiState.update {
                                     it.copy(

@@ -4,6 +4,8 @@ package com.wedgess.luas.di
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.wedgess.luas.data.network.AndroidNetworkMonitor
+import com.wedgess.luas.domain.NetworkMonitor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,6 +36,10 @@ private const val CACHE_SIZE: Long = 10 * 1024 * 1024
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideNetworkMonitor(monitor: AndroidNetworkMonitor): NetworkMonitor = monitor
 
     @Provides
     @Singleton

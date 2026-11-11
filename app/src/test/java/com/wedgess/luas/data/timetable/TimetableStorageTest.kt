@@ -133,6 +133,8 @@ class TimetableStorageTest {
         }
         assertEquals("fixture", dao.feed(TransportType.DART)?.version)
         assertEquals("Abbey Street", dao.stations(TransportType.LUAS).single().name)
+        assertEquals(setOf("Green"), dao.stations(TransportType.LUAS).single().lines)
+        assertEquals(setOf("DART"), dao.stations(TransportType.DART).first().lines)
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.usecase.FetchSelectedTransportTypeUseCase
 import com.wedgess.luas.domain.usecase.IsNotificationPermissionIgnoredUseCase
@@ -23,6 +24,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -31,6 +33,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -44,6 +47,10 @@ class ForecastViewModelTest {
     val instantExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
+    private val online = MutableStateFlow(true)
+    private val networkMonitor = object : NetworkMonitor {
+        override val isOnline = online
+    }
 
     @MockK
     private lateinit var isNotificationPermissionIgnoredUseCase: IsNotificationPermissionIgnoredUseCase
@@ -79,7 +86,8 @@ class ForecastViewModelTest {
             wasNotificationPermissionRequestedUseCase,
             updateNotificationPermissionRequestedUseCase,
             updateIgnoreNotificationPermissionUseCase,
-            fetchSelectedTransportTypeUseCase
+            fetchSelectedTransportTypeUseCase,
+            networkMonitor
         )
     }
 
@@ -317,4 +325,16 @@ class ForecastViewModelTest {
             // Assert
             coVerify { updateIgnoreNotificationPermissionUseCase(false) }
         }
+
+    @Test
+    fun `offline banner state clears immediately on reconnect without waiting for forecast data`() = runTest {
+        viewModel.uiState.test {
+            assertTrue(awaitItem().isOnline)
+            online.value = false
+            assertFalse(awaitItem().isOnline)
+            online.value = true
+            assertTrue(awaitItem().isOnline)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

@@ -57,13 +57,12 @@ class DartForecastUiTest {
     }
 
     @Test
-    fun liveRowShowsNextDepartureAndIsClickable() {
+    fun liveRowShowsCountdownAndIsClickable() {
         var clicked: DartForecastSectionRowData? = null
         show(stale = false) { clicked = it }
 
-        compose.onNode(hasContentDescription("Next departure to Greystones", substring = true)).assertIsDisplayed()
+        compose.onNodeWithText("8 mins").assertIsDisplayed()
         compose.onNode(hasContentDescription("Live times, updated at", substring = true)).assertIsDisplayed()
-        // The compact summary says "Next: Greystones"; this selects the departure row itself.
         compose.onNodeWithText("Greystones", useUnmergedTree = true).performClick()
         assertEquals("E134", clicked?.trainCode)
     }
@@ -73,9 +72,9 @@ class DartForecastUiTest {
         var clicked = false
         show(stale = true) { clicked = true }
 
-        compose.onNode(hasContentDescription("expected around 09:14, not live", substring = true)).assertIsDisplayed()
+        compose.onNodeWithText("Scheduled 09:14 · ETA 09:14").assertIsDisplayed()
+        compose.onNodeWithText("8 mins").assertDoesNotExist()
         compose.onNode(hasContentDescription("Live times, updated at", substring = true)).assertDoesNotExist()
-        // The compact summary says "Next: Greystones"; this selects the departure row itself.
         compose.onNodeWithText("Greystones", useUnmergedTree = true).performClick()
         assertEquals(false, clicked)
     }

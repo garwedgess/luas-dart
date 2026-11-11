@@ -2,6 +2,7 @@ package com.wedgess.luas.presentation.forecast.dart.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import com.wedgess.luas.domain.NetworkMonitor
 import com.wedgess.luas.domain.alarm.AlarmCoordinator
 import com.wedgess.luas.domain.model.Alarm
 import com.wedgess.luas.domain.model.AlarmCapabilities
@@ -56,6 +57,10 @@ class DartForecastViewModelTest {
     val instantExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
+    private val online = MutableStateFlow(true)
+    private val networkMonitor = object : NetworkMonitor {
+        override val isOnline = online
+    }
 
     @MockK
     private lateinit var dartRepository: DartRepository
@@ -157,7 +162,8 @@ class DartForecastViewModelTest {
             preferencesRepository = preferencesRepository,
             alarmCoordinator = alarmCoordinator,
             stationPreferencesRepository = stationPreferencesRepository,
-            clock = clock
+            clock = clock,
+            networkMonitor = networkMonitor
         )
     }
 
@@ -593,5 +599,34 @@ class DartForecastViewModelTest {
         viewModel.onEvent(DartForecastTabContract.Event.OnStationSelected("Dublin Pearse"))
         viewModel.onEvent(DartForecastTabContract.Event.OnStartAlarm(1))
         coVerify(exactly = 0) { alarmCoordinator.create(any()) }
+    }
+
+    @Test
+    fun `connectivity pauses forecasts and immediately refreshes on reconnect`() = runTest {
+        var requests = 0
+        coEvery { dartRepository.fetchForecast(any()) } answers {
+            requests++
+            forecastResult
+        }
+        viewModel.uiResult.test {
+            assertFalse(awaitState().isStale)
+            assertEquals(1, requests)
+            online.value = false
+            assertTrue(awaitState().isStale)
+            viewModel.onEvent(DartForecastTabContract.Event.OnRefresh)
+            advanceTimeBy(120_000)
+            runCurrent()
+            assertEquals(1, requests)
+            cancelAndIgnoreRemainingEvents()
+        }
+        online.value = true
+        viewModel.uiResult.test {
+            // WhileSubscribed retains the active collector for five seconds, so reconnection refreshes it directly.
+            var state = awaitState()
+            while (state.isStale) state = awaitState()
+            assertFalse(state.isStale)
+            assertEquals(2, requests)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }
