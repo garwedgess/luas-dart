@@ -1,5 +1,6 @@
 package com.wedgess.luas.data.timetable
 
+import com.wedgess.luas.domain.model.StationNames
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.domain.timetable.TimetableStation
 import java.io.File

@@ -96,4 +96,14 @@ class StationPreferenceDaoTest {
         assertEquals(emptyList<String>(), repository.observe(TransportType.LUAS).first().recents)
         assertEquals(emptySet<String>(), repository.observe(TransportType.DART).first().favourites)
     }
+
+    @Test
+    fun `unstarring a timetable alias also clears the Forecast favourite`() = runTest {
+        repository.setFavourite(TransportType.DART, "Connolly", true)
+        repository.setFavourite(TransportType.DART, "Dublin Connolly", false)
+        assertEquals(emptySet<String>(), repository.observe(TransportType.DART).first().favourites)
+        repository.setFavourite(TransportType.DART, "Dublin Connolly", true)
+        repository.setFavourite(TransportType.DART, "Connolly", false)
+        assertEquals(emptySet<String>(), repository.observe(TransportType.DART).first().favourites)
+    }
 }

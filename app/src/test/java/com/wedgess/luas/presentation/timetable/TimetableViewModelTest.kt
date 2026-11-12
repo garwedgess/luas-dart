@@ -1,7 +1,10 @@
 package com.wedgess.luas.presentation.timetable
 
 import androidx.lifecycle.SavedStateHandle
+import com.wedgess.luas.domain.model.StationPreferences
 import com.wedgess.luas.domain.model.TransportType
+import com.wedgess.luas.domain.repository.PreferencesRepository
+import com.wedgess.luas.domain.repository.StationPreferencesRepository
 import com.wedgess.luas.domain.timetable.TimetableDay
 import com.wedgess.luas.domain.timetable.TimetableFeed
 import com.wedgess.luas.domain.timetable.TimetableRepository
@@ -36,6 +39,13 @@ import java.time.LocalDate
 @OptIn(ExperimentalCoroutinesApi::class)
 class TimetableViewModelTest {
     private val dispatcher = UnconfinedTestDispatcher()
+    private val preferences = mockk<PreferencesRepository>(relaxed = true)
+    private val stationPreferences = mockk<StationPreferencesRepository>()
+    private val green = MutableStateFlow("")
+    private val red = MutableStateFlow("")
+    private val dart = MutableStateFlow("")
+    private val luasPicker = MutableStateFlow(StationPreferences())
+    private val dartPicker = MutableStateFlow(StationPreferences())
     private val repository = mockk<TimetableRepository>()
     private val transport = MutableStateFlow(TransportType.LUAS)
     private val transportUseCase = mockk<FetchSelectedTransportTypeUseCase>()
@@ -50,12 +60,26 @@ class TimetableViewModelTest {
     @Before fun setup() {
         Dispatchers.setMain(dispatcher)
         every { transportUseCase() } returns transport
+        every { preferences.fetchSelectedGreenLineStation() } returns green
+        every { preferences.fetchSelectedRedLineStation() } returns red
+        every { preferences.fetchSelectedDartStation() } returns dart
+        every { stationPreferences.observe(TransportType.LUAS) } returns luasPicker
+        every { stationPreferences.observe(TransportType.DART) } returns dartPicker
+        coEvery { stationPreferences.markUsed(any(), any()) } returns Result.success(Unit)
+        coEvery { stationPreferences.setFavourite(any(), any(), any()) } returns Result.success(Unit)
         coEvery { repository.feed(any()) } answers { feed.copy(transport = firstArg()) }
         coEvery { repository.stations(any()) } returns listOf(first, second)
         coEvery { repository.day(any(), any(), any()) } returns TimetableDay(true, emptyList())
         coEvery { repository.refresh(any(), any()) } returns Result.success(Unit)
         saved = SavedStateHandle()
-        viewModel = TimetableViewModel(repository, transportUseCase, Clock.fixed(now, TimetableZone), saved)
+        viewModel = TimetableViewModel(
+            repository,
+            transportUseCase,
+            Clock.fixed(now, TimetableZone),
+            saved,
+            preferences,
+            stationPreferences
+        )
     }
 
     @After fun teardown() {
@@ -147,5 +171,92 @@ class TimetableViewModelTest {
         runCurrent()
         assertEquals(date.plusDays(2), viewModel.uiState.value.date)
         assertTrue(viewModel.uiState.value.day.published)
+    }
+
+    @Test
+    fun `timetables initially opens the saved Forecast DART station`() = runTest {
+        transport.value = TransportType.DART
+        dart.value = second.name
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        assertEquals(second, viewModel.uiState.value.station)
+        coVerify { repository.day(TransportType.DART, second.id, date) }
+    }
+
+    @Test
+    fun `Luas starts from the most recently chosen Forecast line station`() = runTest {
+        green.value = first.name
+        red.value = second.name
+        luasPicker.value = StationPreferences(recents = listOf(second.name, first.name))
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        assertEquals(second, viewModel.uiState.value.station)
+    }
+
+    @Test
+    fun `a timetable choice overrides Forecast and never changes the Forecast selection`() = runTest {
+        transport.value = TransportType.DART
+        dart.value = second.name
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        viewModel.selectStation(first)
+        dart.value = first.name
+        dart.value = second.name
+        assertEquals(first, viewModel.uiState.value.station)
+        coVerify(exactly = 0) { preferences.updateSelectedDartStation(any()) }
+        coVerify(exactly = 0) { preferences.updateSelectedRedLineStation(any()) }
+        coVerify(exactly = 0) { preferences.updateSelectedGreenLineStation(any()) }
+        coVerify { stationPreferences.markUsed(TransportType.DART, first.name) }
+    }
+
+    @Test
+    fun `a restored timetable selection takes priority over the Forecast default`() = runTest {
+        transport.value = TransportType.DART
+        dart.value = first.name
+        val restored = TimetableViewModel(
+            repository,
+            transportUseCase,
+            Clock.fixed(now, TimetableZone),
+            SavedStateHandle(mapOf("timetable_station_DART" to second.id)),
+            preferences,
+            stationPreferences
+        )
+        backgroundScope.launch(dispatcher) { restored.uiState.collect {} }
+        assertEquals(second, restored.uiState.value.station)
+    }
+
+    @Test
+    fun `a Forecast station missing from the timetable falls back to an available station`() = runTest {
+        transport.value = TransportType.DART
+        dart.value = "Unavailable station"
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        assertEquals(first, viewModel.uiState.value.station)
+    }
+
+    @Test
+    fun `feed aliases and accents resolve the same Forecast station`() = runTest {
+        transport.value = TransportType.DART
+        dart.value = "Dún Laoghaire Mallin"
+        val timetable = TimetableStation("dun laoghaire", "Dun Laoghaire")
+        coEvery { repository.stations(TransportType.DART) } returns listOf(first, timetable)
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        assertEquals(timetable, viewModel.uiState.value.station)
+    }
+
+    @Test
+    fun `shared favourites update immediately without reloading the timetable`() = runTest {
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        luasPicker.value = StationPreferences(favourites = setOf(second.name))
+        assertEquals(setOf(second.name), viewModel.uiState.value.stationPreferences.favourites)
+        coVerify(exactly = 1) { repository.day(any(), any(), any()) }
+        transport.value = TransportType.DART
+        dartPicker.value = StationPreferences(favourites = setOf(first.name))
+        assertEquals(setOf(first.name), viewModel.uiState.value.stationPreferences.favourites)
+    }
+
+    @Test
+    fun `favouriting from timetable uses the same per-transport store as Forecast`() = runTest {
+        transport.value = TransportType.DART
+        backgroundScope.launch(dispatcher) { viewModel.uiState.collect {} }
+        viewModel.toggleFavourite(second.name, true)
+        coVerify(exactly = 1) { stationPreferences.setFavourite(TransportType.DART, second.name, true) }
+        coVerify(exactly = 0) { stationPreferences.setFavourite(TransportType.LUAS, any(), any()) }
     }
 }

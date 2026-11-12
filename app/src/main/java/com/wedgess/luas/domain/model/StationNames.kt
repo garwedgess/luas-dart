@@ -1,6 +1,5 @@
-package com.wedgess.luas.data.timetable
+package com.wedgess.luas.domain.model
 
-import com.wedgess.luas.domain.model.TransportType
 import java.text.Normalizer
 import java.util.Locale
 
@@ -25,6 +24,8 @@ internal object StationNames {
 
     fun canonical(transport: TransportType, name: String): String =
         (if (transport == TransportType.LUAS) luas else dart)[key(name)] ?: name.trim()
+
+    fun matchKey(transport: TransportType, name: String): String = key(canonical(transport, name))
 
     fun key(name: String): String = Normalizer.normalize(name, Normalizer.Form.NFD)
         .replace(Regex("\\p{M}+"), "").lowercase(Locale.ROOT)

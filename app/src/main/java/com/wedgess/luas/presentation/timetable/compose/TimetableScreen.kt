@@ -69,7 +69,8 @@ fun TimetableScreen(
     onStationSelect: (TimetableStation) -> Unit,
     onDateSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    showInfoAction: Boolean = true
+    showInfoAction: Boolean = true,
+    onToggleFavourite: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     var stationPicker by rememberSaveable(state.transport) { mutableStateOf(false) }
     var datePicker by rememberSaveable { mutableStateOf(false) }
@@ -154,10 +155,17 @@ fun TimetableScreen(
     }
     if (info) TimetableInfoSheet(state, onUpdate, { info = false })
     if (stationPicker) {
-        TimetableStationPicker(lineStations, {
-            stationPicker = false
-            onStationSelect(it)
-        }, { stationPicker = false })
+        TimetableStationPicker(
+            lineStations,
+            {
+                stationPicker = false
+                onStationSelect(it)
+            },
+            { stationPicker = false },
+            preferences = state.stationPreferences,
+            transport = state.transport,
+            onToggleFavourite = onToggleFavourite
+        )
     }
     if (datePicker) {
         TimetableDatePicker(state.date, {

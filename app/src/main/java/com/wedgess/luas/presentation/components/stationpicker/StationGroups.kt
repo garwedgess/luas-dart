@@ -1,5 +1,8 @@
 package com.wedgess.luas.presentation.components.stationpicker
 
+import com.wedgess.luas.domain.model.StationNames
+import com.wedgess.luas.domain.model.StationPreferences
+import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.presentation.model.DropdownItem
 
 data class StationGroups(
@@ -7,6 +10,15 @@ data class StationGroups(
     val recents: List<DropdownItem>,
     val all: List<DropdownItem>
 )
+
+/** Resolve stored names against this picker's catalogue without confusing neighbouring stations. */
+internal fun StationPreferences.forOptions(transport: TransportType, names: List<String>): StationPreferences {
+    val available = names.associateBy { StationNames.matchKey(transport, it) }
+    return StationPreferences(
+        favourites.mapNotNull { available[StationNames.matchKey(transport, it)] }.toSet(),
+        recents.mapNotNull { available[StationNames.matchKey(transport, it)] }.distinct()
+    )
+}
 
 /**
  * Groups stations for the picker. Without a search query there are favourites, then recents (not already favourites),

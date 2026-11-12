@@ -47,6 +47,7 @@ fun NavGraphBuilder.timetableRoot(onUpdateAppbarState: (TopAppBarState) -> Unit)
                 showInfoAction = false,
                 onUpdate = { viewModel.update() },
                 onStationSelect = viewModel::selectStation,
+                onToggleFavourite = viewModel::toggleFavourite,
                 onDateSelect = viewModel::selectDate
             )
         }

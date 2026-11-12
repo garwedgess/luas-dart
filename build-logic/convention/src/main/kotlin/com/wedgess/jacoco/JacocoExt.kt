@@ -5,6 +5,7 @@ import com.wedgess.config.libs
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
@@ -50,10 +51,11 @@ internal fun Project.configureJacoco() {
 
     androidComponentsExtension.onVariants { variant ->
         val testTaskName = "test${variant.name.capitalize()}UnitTest"
+        val testTask = providers.provider { tasks.named(testTaskName, Test::class.java).get() }
         val reportTask =
             tasks.register("jacoco${testTaskName.capitalize()}Report", JacocoReport::class.java) {
                 group = "reporting"
-                dependsOn(testTaskName)
+                dependsOn(testTask)
                 reports {
                     xml.required.set(true)
                     html.required.set(true)
@@ -61,10 +63,12 @@ internal fun Project.configureJacoco() {
 
                 classDirectories.setFrom(
                     files(
-                        fileTree(layout.buildDirectory.dir("intermediates/javac/")) {
+                        fileTree(layout.buildDirectory.dir(
+                            "intermediates/javac/${variant.name}/compile${variant.name.capitalize()}JavaWithJavac/classes"
+                        )) {
                             exclude(coverageExclusions)
                         },
-                        fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/")) {
+                        fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/${variant.name}")) {
                             exclude(coverageExclusions)
                         }
                     )
@@ -74,9 +78,7 @@ internal fun Project.configureJacoco() {
                     layout.projectDirectory.dir("src/main/kotlin")
                 )
                 executionData.setFrom(
-                    files(
-                        fileTree(layout.buildDirectory) { include(listOf("**/*.exec", "**/*.ec")) }
-                    )
+                    testTask.map { it.extensions.getByType<JacocoTaskExtension>().destinationFile }
                 )
             }
 

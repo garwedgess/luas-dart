@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wedgess.luas.R
+import com.wedgess.luas.domain.model.StationPreferences
 import com.wedgess.luas.domain.model.TransportType
 import com.wedgess.luas.presentation.components.TransitStationCard
 import com.wedgess.luas.presentation.model.DropdownItem
@@ -61,25 +62,72 @@ fun StationPicker(
         supportingContent = supportingContent
     )
     if (open) {
-        var query by remember { mutableStateOf("") }
-        ModalBottomSheet(onDismissRequest = { open = false }) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text(stringResource(R.string.station_search)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            )
-            val groups = groupStations(options, query, favourites, recents)
-            LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
-                section(R.string.station_favourites, groups.favourites, favourites, onSelect, onToggleFavourite) {
-                    open = false
-                }
-                section(R.string.station_recents, groups.recents, favourites, onSelect, onToggleFavourite) {
-                    open = false
-                }
-                section(R.string.station_all, groups.all, favourites, onSelect, onToggleFavourite) { open = false }
+        StationPickerSheet(
+            options,
+            favourites,
+            recents,
+            onSelect,
+            onToggleFavourite,
+            { open = false },
+            transport = transport
+        )
+    }
+}
+
+@Suppress("LongParameterList") // Shared searchable sheet, with one callback per user action.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StationPickerSheet(
+    options: List<DropdownItem>,
+    favourites: Set<String>,
+    recents: List<String>,
+    onSelect: (DropdownItem) -> Unit,
+    onToggleFavourite: (String, Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    transport: TransportType = TransportType.LUAS
+) {
+    var query by remember { mutableStateOf("") }
+    val preferences = remember(options, favourites, recents, transport) {
+        StationPreferences(favourites, recents).forOptions(transport, options.map { it.text })
+    }
+    ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text(stringResource(R.string.station_search)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        )
+        val groups = groupStations(options, query, preferences.favourites, preferences.recents)
+        LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
+            if (groups.all.isEmpty() && groups.favourites.isEmpty() && groups.recents.isEmpty()) {
+                item { Text(stringResource(R.string.map_no_stations), Modifier.padding(16.dp)) }
             }
+            section(
+                R.string.station_favourites,
+                groups.favourites,
+                preferences.favourites,
+                onSelect,
+                onToggleFavourite,
+                onDismiss
+            )
+            section(
+                R.string.station_recents,
+                groups.recents,
+                preferences.favourites,
+                onSelect,
+                onToggleFavourite,
+                onDismiss
+            )
+            section(
+                R.string.station_all,
+                groups.all,
+                preferences.favourites,
+                onSelect,
+                onToggleFavourite,
+                onDismiss
+            )
         }
     }
 }
