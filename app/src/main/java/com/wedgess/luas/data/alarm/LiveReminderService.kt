@@ -10,9 +10,13 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.wedgess.luas.domain.Polled
 import com.wedgess.luas.domain.alarm.LiveReminderSession
 import com.wedgess.luas.domain.alarm.ReminderContent
+import com.wedgess.luas.domain.model.Alarm
 import com.wedgess.luas.domain.model.AlarmVerification
+import com.wedgess.luas.domain.model.Departures
+import com.wedgess.luas.domain.model.TransportType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +24,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -33,6 +40,7 @@ class LiveReminderService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val sessions = linkedMapOf<String, Session>()
+    private val forecasts = mutableMapOf<Pair<TransportType, String>, SharedFlow<Polled<Departures>>>()
     private var host: String? = null
     private var latestStartId = 0
     private val dismissReceiver = object : BroadcastReceiver() {
@@ -52,7 +60,8 @@ class LiveReminderService : Service() {
         scope.launch {
             while (true) {
                 delay(VISIBILITY_CHECK_MILLIS)
-                sessions.values.filter { !notifier.isVisible(it.snapshot.alarm) }
+                val visible = notifier.visibleIds()
+                sessions.values.filter { it.snapshot.alarm.id !in visible }
                     .map { it.snapshot.alarm.id }.forEach { stopTracking(it) }
             }
         }
@@ -67,7 +76,13 @@ class LiveReminderService : Service() {
             return START_NOT_STICKY
         }
         if (host == null && !promote(snapshot)) {
-            notifier.finishTracking(snapshot.alarm.id)
+            notifier.finishTracking(
+                snapshot.alarm.id,
+                (snapshot.content as ReminderContent.Upcoming).copy(
+                    verification = AlarmVerification.UNVERIFIED,
+                    backgroundRestricted = true
+                )
+            )
             stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -83,7 +98,14 @@ class LiveReminderService : Service() {
         sessions[id] = session
         session.job = scope.launch {
             try {
-                liveSession.updates(snapshot.alarm, content).collect { updated ->
+                val forecast = forecasts.getOrPut(snapshot.alarm.forecastKey()) {
+                    liveSession.forecasts(snapshot.alarm).shareIn(
+                        scope,
+                        SharingStarted.WhileSubscribed(replayExpirationMillis = 0),
+                        replay = 1
+                    )
+                }
+                liveSession.updates(snapshot.alarm, content, forecast).collect { updated ->
                     if (updated !is ReminderContent.Upcoming) {
                         stopTracking(id, updated)
                     } else if (!notifier.update(id, updated)) {
@@ -101,14 +123,15 @@ class LiveReminderService : Service() {
     }
 
     private fun promote(snapshot: VisibleReminder): Boolean = try {
-        ServiceCompat.startForeground(
-            this,
-            snapshot.alarm.requestCode,
-            notifier.foregroundNotification(snapshot),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
-        )
-        host = snapshot.alarm.id
-        true
+        notifier.promote(snapshot.alarm.id) { code, notification ->
+            ServiceCompat.startForeground(
+                this,
+                code,
+                notification,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
+            )
+            host = snapshot.alarm.id
+        }
     } catch (e: IllegalStateException) {
         Timber.w(e, "Android did not allow foreground reminder tracking")
         false
@@ -123,10 +146,12 @@ class LiveReminderService : Service() {
         if (host == id) {
             val next = sessions.keys.firstNotNullOfOrNull(notifier::snapshot)
             if (next == null || !promote(next)) {
-                stopAllTracking()
+                stopAllTracking(removeNotification = content == null)
             }
         }
         if (content == null) notifier.remove(removed.snapshot.alarm) else notifier.finishTracking(id, content)
+        val key = removed.snapshot.alarm.forecastKey()
+        if (sessions.values.none { it.snapshot.alarm.forecastKey() == key }) forecasts.remove(key)
         if (sessions.isEmpty()) stopSelf(latestStartId)
     }
 
@@ -135,11 +160,12 @@ class LiveReminderService : Service() {
         stopSelf()
     }
 
-    private fun stopAllTracking() {
-        stopForeground(STOP_FOREGROUND_DETACH)
+    private fun stopAllTracking(removeNotification: Boolean = false) {
+        if (host != null) stopForeground(if (removeNotification) STOP_FOREGROUND_REMOVE else STOP_FOREGROUND_DETACH)
         host = null
         val active = sessions.values.toList()
         sessions.clear()
+        forecasts.clear()
         active.forEach {
             it.job?.cancel()
             notifier.finishTracking(it.snapshot.alarm.id)
@@ -160,6 +186,8 @@ class LiveReminderService : Service() {
     companion object {
         internal const val EXTRA_ALARM_ID = "live_reminder_alarm_id"
         internal const val ACTION_DISMISS = "com.wedgess.luas.DISMISS_LIVE_TRACKING"
-        private const val VISIBILITY_CHECK_MILLIS = 1_000L
+        private const val VISIBILITY_CHECK_MILLIS = 5_000L
     }
 }
+
+private fun Alarm.forecastKey() = transport to stationCode.trim().uppercase(java.util.Locale.ROOT)

@@ -17,7 +17,8 @@ import javax.inject.Inject
 /**
  * Entry point for everything the OS tells us about alarms: a registration firing, the notification being dismissed,
  * and the system events after which registrations must be rebuilt (reboot, app update, clock, time zone and
- * exact-alarm permission changes). All behaviour lives in [AlarmCoordinator]; this only routes broadcasts to it.
+ * exact-alarm permission changes). Dismissal is synchronous to block late notification posts; other actions are
+ * delegated to [AlarmCoordinator].
  */
 @AndroidEntryPoint
 class AlarmReceiver : BroadcastReceiver() {
@@ -25,7 +26,14 @@ class AlarmReceiver : BroadcastReceiver() {
     @Inject
     lateinit var coordinator: AlarmCoordinator
 
+    @Inject lateinit var notifier: AlarmNotificationNotifier
+
     override fun onReceive(context: Context, intent: Intent) {
+        val id = intent.data?.takeIf { it.scheme == ALARM_SCHEME }?.lastPathSegment
+        if (intent.action == ACTION_DISMISS && id != null && intent.hasExtra(EXTRA_REQUEST_CODE)) {
+            notifier.dismiss(id, intent.getIntExtra(EXTRA_REQUEST_CODE, 0))
+            return
+        }
         val work = alarmWork(intent, coordinator) ?: return
 
         // The broadcast stays alive while the coordinator works; it bounds its own network wait (a few seconds).
@@ -39,6 +47,9 @@ class AlarmReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_ALARM_DUE = "com.wedgess.luas.ACTION_ALARM_DUE"
         const val ACTION_DISMISS = "com.wedgess.luas.ACTION_DISMISS"
+        const val ACTION_RESUME = "com.wedgess.luas.ACTION_RESUME"
+        internal const val EXTRA_REQUEST_CODE = "reminder_request_code"
+        internal const val EXTRA_EXPECTED_AT = "reminder_expected_at"
         internal const val ALARM_SCHEME = "luasalarm"
 
         /** The permission-change broadcast only exists on Android 12+, so it is referenced by value. */
@@ -70,6 +81,16 @@ internal fun alarmWork(intent: Intent, coordinator: AlarmCoordinator): (suspend 
     return when (val action = intent.action) {
         AlarmReceiver.ACTION_ALARM_DUE -> alarmId?.let { { coordinator.onAlarmDue(it) } }
         AlarmReceiver.ACTION_DISMISS -> alarmId?.let { { coordinator.dismissNotification(it) } }
+        AlarmReceiver.ACTION_RESUME -> alarmId?.let {
+            {
+                coordinator.resumeNotification(
+                    it,
+                    java.time.Instant.ofEpochMilli(
+                        intent.getLongExtra(AlarmReceiver.EXTRA_EXPECTED_AT, 0)
+                    )
+                )
+            }
+        }
         else -> if (action in AlarmReceiver.RECONCILE_ACTIONS) ({ coordinator.reconcile() }) else null
     }
 }

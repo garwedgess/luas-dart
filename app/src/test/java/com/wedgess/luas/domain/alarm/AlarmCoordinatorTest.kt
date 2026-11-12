@@ -748,4 +748,41 @@ class AlarmCoordinatorTest {
         assertEquals(listOf(alarm.requestCode), notifier.dismissed)
         assertEquals(AlarmState.FIRED, stored("alarm-1").state)
     }
+
+    @Test
+    fun `resuming a delivered notification restarts only its tracking without registering another alarm`() = runTest {
+        coordinator.create(dartRequest(expectedInMinutes = 8))
+        clock.now = at(5)
+        coordinator.onAlarmDue("dart-1")
+        val registrations = scheduler.registerCalls
+        notifier.posted.clear()
+        val latestEta = at(9)
+        coordinator.resumeNotification("dart-1", latestEta)
+        val content = notifier.posted.single().second as ReminderContent.Upcoming
+        assertEquals(latestEta, content.expectedAt)
+        assertEquals(AlarmVerification.UNVERIFIED, content.verification)
+        assertEquals(registrations, scheduler.registerCalls)
+        assertEquals(AlarmState.FIRED, stored("dart-1").state)
+    }
+
+    @Test
+    fun `resume never reactivates a cancelled or still pending reminder`() = runTest {
+        coordinator.create(luasRequest())
+        coordinator.resumeNotification("alarm-1", at(30))
+        coordinator.cancel("alarm-1")
+        coordinator.resumeNotification("alarm-1", at(30))
+        coordinator.resumeNotification("missing", at(30))
+        assertTrue(notifier.posted.isEmpty())
+    }
+
+    @Test
+    fun `resuming after the last expected arrival leaves a finished snapshot`() = runTest {
+        coordinator.create(dartRequest(expectedInMinutes = 8))
+        clock.now = at(5)
+        coordinator.onAlarmDue("dart-1")
+        notifier.posted.clear()
+        clock.now = at(10)
+        coordinator.resumeNotification("dart-1", at(8))
+        assertEquals(ReminderContent.TrackingFinished(at(8)), notifier.posted.single().second)
+    }
 }

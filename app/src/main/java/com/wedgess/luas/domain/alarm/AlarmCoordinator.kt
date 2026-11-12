@@ -27,6 +27,7 @@ import javax.inject.Singleton
  * delivery still happens, marked as not live-verified. Nothing here depends on a ViewModel or running UI.
  */
 @Singleton
+@Suppress("TooManyFunctions") // Includes explicit notification resume and dismissal entry points for the receiver.
 class AlarmCoordinator @Inject constructor(
     private val alarms: AlarmConfigRepository,
     private val scheduler: AlarmScheduler,
@@ -66,6 +67,17 @@ class AlarmCoordinator @Inject constructor(
     /** Removes the shown notification only; the alarm itself has already finished. */
     suspend fun dismissNotification(id: String) {
         alarms.get(id).getOrNull()?.let(notifier::dismiss)
+    }
+
+    /** A notification action gives Android permission to restart background tracking, without firing a new alarm. */
+    suspend fun resumeNotification(id: String, expectedAt: Instant) {
+        val alarm = alarms.get(id).getOrNull()?.takeIf { it.state == AlarmState.FIRED } ?: return
+        val content = if (expectedAt.plus(MissedGrace).isAfter(clock.instant())) {
+            ReminderContent.Upcoming(expectedAt, com.wedgess.luas.domain.model.AlarmVerification.UNVERIFIED)
+        } else {
+            ReminderContent.TrackingFinished(expectedAt)
+        }
+        notifier.notify(alarm, content)
     }
 
     /** The OS woke us for this alarm. Does nothing unless it is still ACTIVE, so duplicate wake-ups are harmless. */

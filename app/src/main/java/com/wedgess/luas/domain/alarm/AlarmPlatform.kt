@@ -28,7 +28,8 @@ sealed interface ReminderContent {
         val verification: AlarmVerification,
         val ambiguous: Boolean = false,
         val lastCheckedAt: Instant? = null,
-        val countdownFinished: Boolean = false
+        val countdownFinished: Boolean = false,
+        val backgroundRestricted: Boolean = false
     ) : ReminderContent
 
     /** Tracking has ended; the expected time is historical, not confirmation that the vehicle arrived. */

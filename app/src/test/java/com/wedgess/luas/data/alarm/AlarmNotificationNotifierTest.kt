@@ -84,7 +84,7 @@ class AlarmNotificationNotifierTest {
         notifier.notify(alarm(), ReminderContent.Upcoming(now.plusSeconds(180), AlarmVerification.UNVERIFIED))
 
         val shown = text(1)
-        assertTrue(shown, shown.contains("Not checked against live times"))
+        assertTrue(shown, shown.contains("retrying automatically"))
         assertFalse(shown.contains("Due in"))
         assertTrue(shown.contains("22:03")) // Dublin is on GMT in November
     }
@@ -212,7 +212,7 @@ class AlarmNotificationNotifierTest {
             )
         )
         assertFalse(requireNotNull(notification(1)).extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
-        assertTrue(text(1).contains("Live updates are unavailable"))
+        assertTrue(text(1).contains("retrying automatically"))
     }
 
     @Test
@@ -234,7 +234,11 @@ class AlarmNotificationNotifierTest {
         assertFalse(shown.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(shown.flags and Notification.FLAG_AUTO_CANCEL != 0)
         assertFalse(shown.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
-        assertTrue(text(1).contains("Live updates are unavailable"))
+        assertTrue(text(1).contains("Android blocked background tracking"))
+        val resume = shown.actions.first { it.title.toString() == "Resume updates" }
+        val intent = shadowOf(resume.actionIntent).savedIntent
+        assertEquals(AlarmReceiver.ACTION_RESUME, intent.action)
+        assertEquals(now.plusSeconds(180).toEpochMilli(), intent.getLongExtra(AlarmReceiver.EXTRA_EXPECTED_AT, 0))
     }
 
     @Test
@@ -275,5 +279,47 @@ class AlarmNotificationNotifierTest {
         assertFalse(restored.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(restored.flags and Notification.FLAG_AUTO_CANCEL != 0)
         assertFalse(restored.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+    }
+
+    @Test
+    fun `dismissal before service promotion prevents a stale start from reposting the reminder`() {
+        notifier.notify(alarm(), ReminderContent.Upcoming(now.plusSeconds(180), AlarmVerification.LIVE_VERIFIED))
+        assertNotNull(notifier.snapshot("a"))
+        notifier.dismiss("a", 1)
+        var promoted = false
+        assertFalse(notifier.promote("a") { _, _ -> promoted = true })
+        assertFalse(promoted)
+        notifier.finishTracking("a")
+        assertNull(notification(1))
+    }
+
+    @Test
+    fun `a delayed duplicate delivery after dismissal cannot show the reminder again`() {
+        notifier.notify(alarm(), ReminderContent.Upcoming(now.plusSeconds(180), AlarmVerification.LIVE_VERIFIED))
+        notifier.dismiss("a", 1)
+        val content = ReminderContent.Upcoming(now.plusSeconds(180), AlarmVerification.LIVE_VERIFIED)
+        assertFalse(notifier.notify(alarm(), content))
+        assertNull(notification(1))
+    }
+
+    @Test
+    fun `process recovery cannot restore a dismissed notification from a stale Android snapshot`() {
+        notifier.notify(alarm(), ReminderContent.Upcoming(now.plusSeconds(180), AlarmVerification.LIVE_VERIFIED))
+        val pending = requireNotNull(notification(1))
+        notifier.dismiss("a", 1)
+        manager.notify(1, pending) // Android has not yet removed its foreground notification record.
+        notifier.stopOrphanedTracking()
+        assertTrue(requireNotNull(notification(1)).extras.getBoolean(EXTRA_TRACKING))
+        notifier.remove(alarm())
+        assertNull(notification(1))
+    }
+
+    @Test
+    fun `the dismiss intent carries the notification id without needing a database lookup`() {
+        notifier.notify(alarm(), ReminderContent.ServiceLost)
+        val shown = requireNotNull(notification(1))
+        val intent = shadowOf(shown.deleteIntent).savedIntent
+        assertEquals(AlarmReceiver.ACTION_DISMISS, intent.action)
+        assertEquals(1, intent.getIntExtra(AlarmReceiver.EXTRA_REQUEST_CODE, 0))
     }
 }

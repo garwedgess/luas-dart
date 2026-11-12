@@ -9,6 +9,7 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.wedgess.luas.R
+import com.wedgess.luas.domain.alarm.MissedGrace
 import com.wedgess.luas.domain.alarm.ReminderContent
 import com.wedgess.luas.domain.model.Alarm
 import com.wedgess.luas.domain.model.AlarmVerification
@@ -33,6 +34,7 @@ internal class ReminderNotificationFactory(
             Intent(context, AlarmReceiver::class.java).apply {
                 action = AlarmReceiver.ACTION_DISMISS
                 data = AlarmReceiver.alarmUri(alarm.id)
+                putExtra(AlarmReceiver.EXTRA_REQUEST_CODE, alarm.requestCode)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -43,10 +45,10 @@ internal class ReminderNotificationFactory(
             putString(EXTRA_NOTIFICATION_ALARM_ID, alarm.id)
             putBoolean(EXTRA_TRACKING, tracking)
         }
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(alarm.destination?.let { "${alarm.stationName} --> $it" } ?: alarm.stationName)
-            .setContentText(text(content))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text(content)))
+            .setContentText(text(content, tracking))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text(content, tracking)))
             .setSmallIcon(if (alarm.transport == TransportType.DART) R.drawable.ic_train else R.drawable.ic_tram)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -61,13 +63,19 @@ internal class ReminderNotificationFactory(
             .addExtras(extras)
             .setOnlyAlertOnce(true)
             .setContentIntent(contentIntent(alarm))
-            .addAction(R.drawable.ic_close, context.getString(R.string.action_dismiss), dismiss)
             .setDeleteIntent(dismiss)
-            .build()
+        if (!tracking && upcoming?.expectedAt?.plus(MissedGrace)?.isAfter(clock.instant()) == true) {
+            builder.addAction(
+                R.drawable.ic_refresh,
+                context.getString(R.string.alarm_resume_updates),
+                resumeIntent(alarm.id, upcoming.expectedAt)
+            )
+        }
+        return builder.addAction(R.drawable.ic_close, context.getString(R.string.action_dismiss), dismiss).build()
     }
 
-    private fun text(content: ReminderContent): String = when (content) {
-        is ReminderContent.Upcoming -> upcomingText(content)
+    private fun text(content: ReminderContent, tracking: Boolean): String = when (content) {
+        is ReminderContent.Upcoming -> upcomingText(content, tracking)
         is ReminderContent.TrackingFinished -> context.getString(
             R.string.alarm_tracking_finished,
             content.expectedAt?.toClockTime().orEmpty()
@@ -77,7 +85,7 @@ internal class ReminderNotificationFactory(
             context.getString(R.string.alarm_text_missed, content.expectedAt?.toClockTime().orEmpty())
     }
 
-    private fun upcomingText(content: ReminderContent.Upcoming): String {
+    private fun upcomingText(content: ReminderContent.Upcoming, tracking: Boolean): String {
         val expected = content.expectedAt
         return when {
             // Only a result confirmed live moments ago may be shown as a countdown.
@@ -86,12 +94,26 @@ internal class ReminderNotificationFactory(
                 val due = context.resources.getQuantityString(R.plurals.due_minutes, minutes, minutes)
                 if (content.ambiguous) context.getString(R.string.alarm_text_ambiguous, due) else due
             }
+            content.backgroundRestricted && expected != null ->
+                context.getString(R.string.alarm_background_blocked, expected.toClockTime())
+            tracking && expected != null -> context.getString(R.string.alarm_updates_retrying, expected.toClockTime())
             expected != null && content.lastCheckedAt != null ->
                 context.getString(R.string.alarm_live_unavailable, expected.toClockTime())
             expected != null -> context.getString(R.string.alarm_text_unverified, expected.toClockTime())
             else -> context.getString(R.string.alarm_text_unverified_unknown)
         }
     }
+
+    private fun resumeIntent(alarmId: String, expectedAt: Instant): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        0,
+        Intent(context, AlarmReceiver::class.java).apply {
+            action = AlarmReceiver.ACTION_RESUME
+            data = AlarmReceiver.alarmUri(alarmId)
+            putExtra(AlarmReceiver.EXTRA_EXPECTED_AT, expectedAt.toEpochMilli())
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
 
     private fun trackingStatus(content: ReminderContent.Upcoming?, tracking: Boolean): String? = when {
         !tracking -> null
@@ -134,7 +156,7 @@ internal class ReminderNotificationFactory(
             context.getString(R.string.alarm_live_unavailable, Instant.ofEpochMilli(notification.`when`).toClockTime())
         }
         val extras = Bundle().apply { putBoolean(EXTRA_TRACKING, false) }
-        return Notification.Builder.recoverBuilder(context, notification)
+        val builder = Notification.Builder.recoverBuilder(context, notification)
             .setContentText(message)
             .setStyle(Notification.BigTextStyle().bigText(message))
             .setSubText(null)
@@ -145,7 +167,18 @@ internal class ReminderNotificationFactory(
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
             .addExtras(extras)
-            .build()
+        val alarmId = notification.extras.getString(EXTRA_NOTIFICATION_ALARM_ID)
+        val expectedAt = Instant.ofEpochMilli(notification.`when`)
+        if (!legacy && alarmId != null && expectedAt.plus(MissedGrace).isAfter(clock.instant())) {
+            builder.addAction(
+                Notification.Action.Builder(
+                    android.graphics.drawable.Icon.createWithResource(context, R.drawable.ic_refresh),
+                    context.getString(R.string.alarm_resume_updates),
+                    resumeIntent(alarmId, expectedAt)
+                ).build()
+            )
+        }
+        return builder.build()
     }
 }
 

@@ -67,4 +67,14 @@ class AlarmWorkRoutingTest {
         assertNull(alarmWork(Intent("android.intent.action.SOMETHING_ELSE"), coordinator))
         assertNull(alarmWork(Intent(), coordinator))
     }
+
+    @Test
+    fun `resume routes the saved ETA to tracking without firing the reminder again`() = runTest {
+        val expected = java.time.Instant.parse("2026-11-11T12:00:00Z")
+        val intent = Intent(AlarmReceiver.ACTION_RESUME).setData(AlarmReceiver.alarmUri("alarm-1"))
+            .putExtra(AlarmReceiver.EXTRA_EXPECTED_AT, expected.toEpochMilli())
+        alarmWork(intent, coordinator)!!.invoke()
+        coVerify(exactly = 1) { coordinator.resumeNotification("alarm-1", expected) }
+        coVerify(exactly = 0) { coordinator.onAlarmDue(any()) }
+    }
 }

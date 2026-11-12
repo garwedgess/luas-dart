@@ -18,7 +18,13 @@ import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -224,5 +230,61 @@ class LiveReminderSessionTest {
             assertTrue((awaitItem() as ReminderContent.Upcoming).countdownFinished)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `a slow successful DART refresh is not cut off by the alarm receivers delivery timeout`() = runTest {
+        val train = departure.copy(transport = TransportType.DART, tripCode = "E134", operatingDate = date)
+        coEvery { dart.fetchForecast("PHI") } coAnswers {
+            delay(12_000)
+            Result.success(forecast(train))
+        }
+        session.updates(
+            alarm.copy(transport = TransportType.DART, tripCode = "E134", operatingDate = date),
+            initial.copy(verification = AlarmVerification.UNVERIFIED)
+        ).test {
+            awaitItem()
+            clock.now = now.plusSeconds(12)
+            advanceTimeBy(12_000)
+            val updated = awaitItem() as ReminderContent.Upcoming
+            assertEquals(AlarmVerification.LIVE_VERIFIED, updated.verification)
+            assertEquals(clock.now, updated.lastCheckedAt)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `an empty DART result has no station code and ends tracking instead of claiming network failure`() = runTest {
+        coEvery { dart.fetchForecast("PHI") } returns Result.success(forecast().copy(stationCode = ""))
+        session.updates(alarm.copy(transport = TransportType.DART), initial).test {
+            var result = awaitItem()
+            if (result is ReminderContent.Upcoming) result = awaitItem()
+            assertEquals(ReminderContent.ServiceLost, result)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `reminders sharing a station poll once and stop requests after their last subscriber leaves`() = runTest {
+        coEvery { luas.fetchForecast("PHI") } answers { Result.success(forecast(departure)) }
+        val shared = session.forecasts(alarm).shareIn(
+            backgroundScope,
+            SharingStarted.WhileSubscribed(replayExpirationMillis = 0),
+            replay = 1
+        )
+        val first = backgroundScope.launch { session.updates(alarm, initial, shared).collect() }
+        val second = backgroundScope.launch { session.updates(alarm.copy(id = "b"), initial, shared).collect() }
+        runCurrent()
+        coVerify(exactly = 1) { luas.fetchForecast("PHI") }
+        first.cancelAndJoin()
+        clock.now = now.plusSeconds(15)
+        advanceTimeBy(15_000)
+        runCurrent()
+        coVerify(exactly = 2) { luas.fetchForecast("PHI") }
+        second.cancelAndJoin()
+        runCurrent()
+        advanceTimeBy(120_000)
+        runCurrent()
+        coVerify(exactly = 2) { luas.fetchForecast("PHI") }
     }
 }

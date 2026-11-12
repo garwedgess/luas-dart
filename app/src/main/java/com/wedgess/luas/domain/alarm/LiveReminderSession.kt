@@ -1,6 +1,7 @@
 package com.wedgess.luas.domain.alarm
 
 import com.wedgess.luas.domain.NetworkMonitor
+import com.wedgess.luas.domain.Polled
 import com.wedgess.luas.domain.model.Alarm
 import com.wedgess.luas.domain.model.AlarmKind
 import com.wedgess.luas.domain.model.AlarmVerification
@@ -33,15 +34,25 @@ class LiveReminderSession @Inject constructor(
     private val clock: Clock
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun updates(alarm: Alarm, initial: ReminderContent.Upcoming): Flow<ReminderContent> = flow {
+    fun updates(
+        alarm: Alarm,
+        initial: ReminderContent.Upcoming,
+        forecasts: Flow<Polled<Departures>> = forecasts(alarm)
+    ): Flow<ReminderContent> = flow {
         val state = TrackingState(alarm, initial, clock.instant())
-        val interval = if (alarm.transport == TransportType.LUAS) LUAS_INTERVAL else DART_INTERVAL
-        val results = pollFlow(interval, emptyFlow(), online = network.isOnline) {
-            withTimeoutOrNull(LiveTimeout.toMillis()) { fetch(alarm) }
-                ?: Result.failure(IOException("Live reminder request timed out"))
-        }.map { Tick.Result(it.data.takeIf { _ -> it.isLive }) }
+        val results = forecasts.map { Tick.Result(it.data.takeIf { _ -> it.isLive }) }
         emitAllUpdates(merge(results, ticks()), state)
     }.distinctUntilChanged()
+
+    fun forecasts(alarm: Alarm): Flow<Polled<Departures>> =
+        pollFlow(
+            if (alarm.transport == TransportType.LUAS) LUAS_INTERVAL else DART_INTERVAL,
+            emptyFlow(),
+            online = network.isOnline
+        ) {
+            withTimeoutOrNull(REQUEST_TIMEOUT.toMillis()) { fetch(alarm) }
+                ?: Result.failure(IOException("Live reminder request timed out"))
+        }
 
     private suspend fun fetch(alarm: Alarm): Result<Departures> = when (alarm.transport) {
         TransportType.LUAS -> luas.fetchForecast(alarm.stationCode)
@@ -99,7 +110,7 @@ private class TrackingState(alarm: Alarm, initial: ReminderContent.Upcoming, sta
     }
 
     private fun update(departures: Departures?, now: Instant): ReminderContent? {
-        if (departures == null || !departures.stationCode.equals(target.stationCode, true)) {
+        if (departures == null || !departures.isFor(target)) {
             current = current.copy(verification = AlarmVerification.UNVERIFIED)
             return null
         }
@@ -137,8 +148,14 @@ private class TrackingState(alarm: Alarm, initial: ReminderContent.Upcoming, sta
         current.expectedAt?.plus(MissedGrace)?.let { !now.isBefore(it) } == true
 }
 
+private fun Departures.isFor(alarm: Alarm): Boolean =
+    if (stationCode.isBlank()) items.isEmpty() else stationCode.trim().equals(alarm.stationCode.trim(), true)
+
 private const val LUAS_INTERVAL = 15_000L
 private const val DART_INTERVAL = 40_000L
 private const val CLOCK_TICK_MILLIS = 1_000L
 private val MAX_TRACKING_DURATION: Duration = Duration.ofMinutes(30)
 private val MAX_LIVE_AGE: Duration = Duration.ofSeconds(70)
+
+// Continuous foreground tracking is not bound by the receiver's six-second delivery deadline.
+private val REQUEST_TIMEOUT: Duration = Duration.ofSeconds(20)
