@@ -59,6 +59,14 @@ jobs:
       - name: Set up build tools
         uses: ./.github/actions/setup-android-build
 
+      - name: Cache Robolectric Android SDKs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: ${{ runner.os }}-${{ runner.arch }}-robolectric-v1-${{ hashFiles('gradle/libs.versions.toml', 'app/build.gradle.kts', 'app/src/test/resources/robolectric.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-robolectric-v1-
+
       - name: Run unit tests and generate JaCoCo coverage
         run: |
           bash gradlew --no-daemon --stacktrace --continue --max-workers=2 \

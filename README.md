@@ -15,6 +15,11 @@ UI tests are not part of this workflow.
 Quality checks, unit tests/JaCoCo and APK builds run as three parallel jobs, with shared build-tool setup.
 Codecov depends only on the tests job, so a lint or APK build failure does not prevent coverage upload.
 
+Gradle dependencies, wrapper distributions and cacheable task outputs are cached using `setup-gradle`.
+Each job saves its build state on the default branch; feature branches and pull requests restore it read-only.
+Robolectric's downloaded Android SDK jars have a separate cache in the tests job. The first run populates the
+caches; subsequent runs can reuse them. The three parallel jobs do not share a live cache within the same run.
+
 Test results, analysis reports, coverage and APKs are available as workflow artifacts. Codecov uploads use GitHub
 OIDC authentication, so no `CODECOV_TOKEN` secret is needed. Uploads run for trusted branches and pull requests;
 fork and Dependabot pull requests still run all build and test checks. Coverage policy lives in [codecov.yml](codecov.yml).
