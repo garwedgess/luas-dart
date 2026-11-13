@@ -1,4 +1,9 @@
 *.iml
+*.jks
+*.keystore
+*.p12
+/.signing/
+**/signing.json
 .gradle
 /local.properties
 /.idea/caches
